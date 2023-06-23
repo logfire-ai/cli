@@ -1,0 +1,114 @@
+project_name: logfire
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+    goarm:
+      - 6
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+    main: ./main.go
+    ldflags: -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    binary: logfire
+archives:
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: x86
+      amd64: x86_64
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+signs:
+  - cmd: gpg
+    args:
+      - --output
+      - $signature
+      - --detach-sig
+      - $artifact
+    signature: ${artifact}.sig
+    artifacts: none
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^conf:'
+release:
+  github:
+    owner: logfire-sh
+    name: cli
+  draft: true
+  prerelease: auto
+  discussion_category_name: General
+  header: |
+    ## Features
+
+    List of newly introduced features:
+
+    - Item 1
+    - Item 2
+
+    ## Bug fixes
+
+    List of fixed issues:
+
+    - Item 1
+    - Item 2
+
+    ## Code changes
+
+    - Item 1
+    - Item 2
+  footer: |
+    ## Thanks!
+
+brews:
+  - tap:
+      name: tap
+      owner: logfire-sh
+    ids:
+    description: "Logfire command line interface"
+    homepage: "https://github.com/logfire-sh/cli"
+    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    download_strategy: CurlDownloadStrategy
+    folder: Formula
+    license: "Apache 2.0"
+    dependencies:
+      - name: git
+    commit_author:
+      name: logfire
+      email: constient-altrova@constient.com
+    install: bin.install "logfire"
+    test: |
+      system "#{bin/logfire}"
+nfpms:
+  - maintainer: logfire-sh
+    id: logfire
+    description: "Logfire command line tool"
+    homepage: "https://github.com/logfire-sh/cli"
+    package_name: cli
+    formats:
+      - deb
+      - rpm
+    replacements:
+      darwin: Darwin
+    bindir: /usr/bin
+    release: 1
+
