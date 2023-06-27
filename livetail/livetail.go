@@ -113,7 +113,11 @@ func getAllSourcesByTeamId(token, teamId string) ([]models.Source, error) {
 
 	// Check if it is a successful response
 	if !sourceResp.IsSuccessful {
+<<<<<<< HEAD
+		fmt.Println("Internal Server Error!")
+=======
 		fmt.Println(sourceResp.Message)
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 		return []models.Source{}, errors.New("Api error!")
 	}
 	return sourceResp.Data, nil

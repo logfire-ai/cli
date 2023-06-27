@@ -2,7 +2,10 @@ project_name: logfire
 before:
   hooks:
     - go mod tidy
+<<<<<<< HEAD
+=======
     - go mod download
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 builds:
   - goos:
       - linux
@@ -11,6 +14,10 @@ builds:
     goarch:
       - amd64
       - 386
+<<<<<<< HEAD
+      - arm
+=======
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
       - arm64
     goarm:
       - 6
@@ -24,9 +31,12 @@ builds:
     binary: logfire
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+<<<<<<< HEAD
+=======
     format_overrides:
       - goos: windows
         format: zip
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
     replacements:
       darwin: Darwin
       linux: Linux
@@ -34,7 +44,11 @@ archives:
       386: x86
       amd64: x86_64
 snapshot:
+<<<<<<< HEAD
+  name_template: SNAPSHOT-{{ .Commit }}
+=======
   name_template: SNAPSHOT-{{ .Tag }}-{{ .Commit }}
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
 signs:
