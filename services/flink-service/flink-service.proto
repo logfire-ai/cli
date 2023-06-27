@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package sh.logfire;
+
+option go_package = "logfire/flink-service";
+
+import "google/protobuf/timestamp.proto";
+
+enum SeverityLevel {
+  INFO = 0;
+  TRACE = 1;
+  DEBUG = 2;
+  WARNING = 3;
+  ERROR = 4;
+  FATAL = 5;
+  INFORMATIONAL = 6;
+  NOTICE = 7;
+  CRITICAL = 8;
+  ALERT = 9;
+}
+
+message DateTimeFilter {
+  google.protobuf.Timestamp startTimeStamp = 1;
+  google.protobuf.Timestamp endTimeStamp = 2;
+}
+
+message RecordDetails {
+  string record = 1;
+}
+
+message Source {
+  string sourceID = 1;
+  string sourceName = 2;
+  uint64 startingOffset = 3;
+  uint64 endingOffset = 4;
+  string teamID = 5;
+}
+
+message FilterCancellationRequest {
+  string jobName = 1;
+}
+
+message FilterCancellationResponse {
+  bool success = 1;
+}
+
+message FieldBasedFilter {
+  enum Operator {
+    CONTAINS = 0;
+    DOES_NOT_CONTAIN = 1;
+    EQUALS = 2;
+    NOT_EQUALS = 3;
+    GREATER_THAN = 4;
+    GREATER_THAN_EQUALS = 5;
+    LESS_THAN = 6;
+    LESS_THAN_EQUALS = 7;
+  }
+
+  string fieldName = 1;
+  string fieldValue = 2;
+  Operator operator = 3;
+}
+
+message FilterRequest {
+  repeated SeverityLevel severityLevels = 1;
+  DateTimeFilter dateTimeFilter = 2;
+  repeated string searchQueries = 3;
+  string sqlQuery = 4;
+  repeated FieldBasedFilter fieldBasedFilters = 5;
+  repeated Source sources = 6;
+  uint32 batchSize = 9;
+  bool isScrollDown = 10;
+}
+
+message FilteredRecord {
+  uint64 offset = 1;
+  string message = 2;
+  string dt = 3;
+  string level = 4;
+  string sourceName = 5;
+}
+
+message FilteredRecords {
+  repeated FilteredRecord records = 1;
+  bool isScrollDown = 2;
+  repeated Source sources = 3;
+}
+
+message FilterResponse {
+  string record = 1;
+  string jobName = 2;
+}
+
+service FlinkService {
+  rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
+}
