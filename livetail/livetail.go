@@ -8,23 +8,73 @@ import (
 	"log"
 	"logfire/models"
 	"net/http"
-	"os"
-	"os/signal"
 	"sort"
-	"syscall"
 	"time"
 
-	pb "logfire/logfire/flink-service"
+	pb "logfire/services/flink-service"
 
-	"github.com/fatih/color"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var host = viper.GetString("host")
+var port = viper.GetInt("port")
+
+type Livetail struct {
+	Logs          string
+	pbSources     []*pb.Source
+	sourcesOffset map[string]uint64
+}
+
+func NewLivetail(token, teamId string) (*Livetail, error) {
+	sources, err := getAllSourcesByTeamId(token, teamId)
+	if err != nil {
+		return &Livetail{}, err
+	}
+
+	livetail := &Livetail{
+		Logs:          "",
+		pbSources:     createGrpcSource(sources),
+		sourcesOffset: make(map[string]uint64),
+	}
+	return livetail, nil
+}
+
+func (l *Livetail) GenerateLogs() {
+	for {
+		response, err := makeGrpcCall(l.pbSources)
+		if err != nil {
+			continue
+		}
+
+		if len(response.Records) > 0 {
+			sort.Sort(ByOffset(response.Records))
+			l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
+			l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
+			new_logs := showLogsWithColor(response.Records)
+			l.Logs += new_logs
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+// Convert logs with colors
+func showLogsWithColor(records []*pb.FilteredRecord) string {
+	stream := ""
+	for _, record := range records {
+		stream += fmt.Sprintf("[yellow]" + record.Dt +
+			"[green] " + record.SourceName +
+			"[blue] " + record.Level + " [white]" +
+			record.Message + "\n")
+	}
+	return stream
+}
+
 func getAllSourcesByTeamId(token, teamId string) ([]models.Source, error) {
-	url := "https://api.logfire.sh/api/team/" + teamId + "/source"
+	url := fmt.Sprintf("https://%s:%d/api/team/%s/source", host, port, teamId)
 
 	// Create a new HTTP client
 	client := &http.Client{}
@@ -63,7 +113,11 @@ func getAllSourcesByTeamId(token, teamId string) ([]models.Source, error) {
 
 	// Check if it is a successful response
 	if !sourceResp.IsSuccessful {
+<<<<<<< HEAD
 		fmt.Println("Internal Server Error!")
+=======
+		fmt.Println(sourceResp.Message)
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 		return []models.Source{}, errors.New("Api error!")
 	}
 	return sourceResp.Data, nil
@@ -106,9 +160,9 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 		DateTimeFilter: &pb.DateTimeFilter{
 			StartTimeStamp: timestamppb.New(time.Now().Add(-5 * time.Second)),
 		},
-		FieldBasedFilters: []*pb.FieldBasedFilter{
-			{}, // Adjust or populate the field-based filters if needed
-		},
+		// FieldBasedFilters: []*pb.FieldBasedFilter{
+		// 	{}, // Adjust or populate the field-based filters if needed
+		// },
 		Sources:      sources,
 		BatchSize:    100,
 		IsScrollDown: true,
@@ -125,7 +179,8 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
-	conn, err := grpc.Dial("api.logfire.sh:443", grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+	grpc_url := fmt.Sprintf("%s:%d", host, port)
+	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
@@ -143,15 +198,6 @@ func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
 	return response, nil
 }
 
-func showLogsWithColor(records []*pb.FilteredRecord) {
-	for _, record := range records {
-		color.New(color.FgCyan).Print(record.Dt)
-		color.New(color.FgGreen).Print(" [" + record.SourceName + "]")
-		color.New(color.FgBlue).Print(" [" + record.Level + "] ")
-		color.New(color.FgWhite).Print(record.Message + "\n")
-	}
-}
-
 func getOffsets(offsets map[string]uint64, records []*pb.FilteredRecord) map[string]uint64 {
 	for _, record := range records {
 		if offsets[record.SourceName] == 0 || record.Offset >= offsets[record.SourceName] {
@@ -159,46 +205,4 @@ func getOffsets(offsets map[string]uint64, records []*pb.FilteredRecord) map[str
 		}
 	}
 	return offsets
-}
-
-func gracefulShutdown() {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-
-	// Start a goroutine to handle the interrupt signal
-	go func() {
-		<-signalChan
-		color.Red("Closing livetail.")
-		os.Exit(0)
-	}()
-}
-
-func ShowLivetail(token, teamID string) error {
-	color.Green("Starting livetail.")
-
-	gracefulShutdown()
-
-	sources, err := getAllSourcesByTeamId(token, teamID)
-	if err != nil {
-		return errors.Wrap(err, "Error while getting sources!!!")
-	}
-
-	pbSources := createGrpcSource(sources)
-	sourcesOffset := make(map[string]uint64)
-
-	for {
-		response, err := makeGrpcCall(pbSources)
-		if err != nil {
-			log.Println("Err while getting logs!")
-			continue
-		}
-
-		if len(response.Records) > 0 {
-			sort.Sort(ByOffset(response.Records))
-			sourcesOffset = getOffsets(sourcesOffset, response.Records)
-			pbSources = addOffset(pbSources, sourcesOffset)
-			showLogsWithColor(response.Records)
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
 }

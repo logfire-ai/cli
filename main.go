@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"logfire/livetail"
+	"log"
+	"logfire/gui"
 	"logfire/models"
 	"logfire/sources"
 	"net/http"
@@ -68,8 +69,8 @@ type SigninPasswordRequest struct {
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "agent",
-		Short: "A simple CLI application",
+		Use:   "logfire",
+		Short: "A simple CLI application to interact with logfire.sh",
 	}
 
 	registerCmd := &cobra.Command{
@@ -80,14 +81,14 @@ func main() {
 	}
 
 	signinCmd := &cobra.Command{
-		Use:   "signin [config_file]",
-		Short: "Sign in to the application",
+		Use:   "login [config_file]",
+		Short: "login to the application",
 		Args:  cobra.ExactArgs(1),
 		Run:   signinPassword,
 	}
 
 	sourceCmd := &cobra.Command{
-		Use:   "sources [list] [config_file]",
+		Use:   "sources [list/create/delete] [config_file]",
 		Short: "manage the sources",
 		Args:  cobra.ExactArgs(2),
 		Run:   sourceManage,
@@ -567,8 +568,8 @@ func livetailShow(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	host := viper.GetString("host")
-	port := viper.GetInt("port")
+	// host := viper.GetString("host")
+	// port := viper.GetInt("port")
 
 	fmt.Println("Enter your Token:")
 	reader := bufio.NewReader(os.Stdin)
@@ -579,13 +580,18 @@ func livetailShow(cmd *cobra.Command, args []string) {
 	teamId, _ := reader.ReadString('\n')
 	teamId = strings.TrimSuffix(teamId, "\n")
 
-	url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
-
-	url += teamId + "/source"
-
-	err = livetail.ShowLivetail(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"))
-	if err == nil {
-		fmt.Printf("LiveTail displayed\n")
+	ui := gui.NewUI(token, teamId)
+	if err := ui.Run(); err != nil {
+		log.Fatal(err)
 	}
+
+	// url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
+
+	// url += teamId + "/source"
+
+	// err = livetail.ShowLivetail(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"))
+	// if err == nil {
+	// 	fmt.Printf("LiveTail displayed\n")
+	// }
 
 }

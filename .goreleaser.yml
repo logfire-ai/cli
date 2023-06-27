@@ -2,6 +2,10 @@ project_name: logfire
 before:
   hooks:
     - go mod tidy
+<<<<<<< HEAD
+=======
+    - go mod download
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 builds:
   - goos:
       - linux
@@ -10,7 +14,10 @@ builds:
     goarch:
       - amd64
       - 386
+<<<<<<< HEAD
       - arm
+=======
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
       - arm64
     goarm:
       - 6
@@ -24,6 +31,12 @@ builds:
     binary: logfire
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+<<<<<<< HEAD
+=======
+    format_overrides:
+      - goos: windows
+        format: zip
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
     replacements:
       darwin: Darwin
       linux: Linux
@@ -31,7 +44,11 @@ archives:
       386: x86
       amd64: x86_64
 snapshot:
+<<<<<<< HEAD
   name_template: SNAPSHOT-{{ .Commit }}
+=======
+  name_template: SNAPSHOT-{{ .Tag }}-{{ .Commit }}
+>>>>>>> 8980a108521bc1a10340af2cdccbb4e7c105732c
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
 signs:
@@ -112,3 +129,29 @@ nfpms:
     bindir: /usr/bin
     release: 1
 
+# .goreleaser.yaml
+chocolateys:
+  -
+    name: logfire
+    owners: logfire-sh
+    title: "Logfire command line interface"
+    authors: logfire-sh
+    project_url: https://logfire.sh/
+    url_template: "git@github.com:logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    copyright: 2023 Logfire.sh
+    # license_url: https://github.com/logfire-sh/cli-private/main/LICENSE
+    # require_license_acceptance: true
+    project_source_url: https://github.com/logfire-sh/cli-private
+    docs_url: https://github.com/logfire-sh/cli-private/blob/main/README.md
+    summary: Spin up a live tail for your team in minutes. With SQL queries, full text search, alerts and more straight from the command line interface.
+
+    # This the description of your chocolatey package.
+    # Supports markdown.
+    description: |
+      {{ .ProjectName }} installer package.
+      Command line interface for logfire.
+
+    api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
+    source_repo: "https://push.chocolatey.org/"
+    skip_publish: true
+    goamd64: v1
