@@ -56,7 +56,7 @@ changelog:
 release:
   github:
     owner: logfire-sh
-    name: cli
+    name: cli-private
   draft: true
   prerelease: auto
   discussion_category_name: General
@@ -88,8 +88,8 @@ brews:
       owner: logfire-sh
     ids:
     description: "Logfire command line interface"
-    homepage: "https://github.com/logfire-sh/cli"
-    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    homepage: "https://github.com/logfire-sh/cli-private"
+    url_template: "https://github.com/logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     download_strategy: CurlDownloadStrategy
     folder: Formula
     license: "Apache 2.0"
@@ -105,8 +105,8 @@ nfpms:
   - maintainer: logfire-sh
     id: logfire
     description: "Logfire command line tool"
-    homepage: "https://github.com/logfire-sh/cli"
-    package_name: cli
+    homepage: "https://github.com/logfire-sh/cli-private"
+    package_name: cli-private
     formats:
       - deb
       - rpm
@@ -116,28 +116,28 @@ nfpms:
     release: 1
 
 # .goreleaser.yaml
-chocolateys:
-  -
-    name: logfire
-    owners: logfire-sh
-    title: "Logfire command line interface"
-    authors: logfire-sh
-    project_url: https://logfire.sh/
-    url_template: "git@github.com:logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    copyright: 2023 Logfire.sh
-    # license_url: https://github.com/logfire-sh/cli-private/main/LICENSE
-    # require_license_acceptance: true
-    project_source_url: https://github.com/logfire-sh/cli-private
-    docs_url: https://github.com/logfire-sh/cli-private/blob/main/README.md
-    summary: Spin up a live tail for your team in minutes. With SQL queries, full text search, alerts and more straight from the command line interface.
+# chocolateys:
+#   -
+#     name: logfire
+#     owners: logfire-sh
+#     title: "Logfire command line interface"
+#     authors: logfire-sh
+#     project_url: https://logfire.sh/
+#     url_template: "git@github.com:logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#     copyright: 2023 Logfire.sh
+#     # license_url: https://github.com/logfire-sh/cli-private/main/LICENSE
+#     # require_license_acceptance: true
+#     project_source_url: https://github.com/logfire-sh/cli-private
+#     docs_url: https://github.com/logfire-sh/cli-private/blob/main/README.md
+#     summary: Spin up a live tail for your team in minutes. With SQL queries, full text search, alerts and more straight from the command line interface.
 
-    # This the description of your chocolatey package.
-    # Supports markdown.
-    description: |
-      {{ .ProjectName }} installer package.
-      Command line interface for logfire.
+#     # This the description of your chocolatey package.
+#     # Supports markdown.
+#     description: |
+#       {{ .ProjectName }} installer package.
+#       Command line interface for logfire.
 
-    api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
-    source_repo: "https://push.chocolatey.org/"
-    skip_publish: true
-    goamd64: v1
+#     api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
+#     source_repo: "https://push.chocolatey.org/"
+#     skip_publish: true
+#     goamd64: v1

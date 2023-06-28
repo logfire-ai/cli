@@ -1,9 +1,8 @@
 name: Sync Files
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch:
+  release:
+    types:
+      - published
 jobs:
   sync:
     runs-on: ubuntu-latest
