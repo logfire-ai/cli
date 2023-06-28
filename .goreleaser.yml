@@ -56,7 +56,7 @@ changelog:
 release:
   github:
     owner: logfire-sh
-    name: cli-private
+    #name: "{{ env.REPO_NAME }}"
   draft: true
   prerelease: auto
   discussion_category_name: General
@@ -88,8 +88,8 @@ brews:
       owner: logfire-sh
     ids:
     description: "Logfire command line interface"
-    homepage: "https://github.com/logfire-sh/cli-private"
-    url_template: "https://github.com/logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    homepage: "https://github.com/{{ .Env.REPO_NAME }}"
+    url_template: "https://github.com/{{ .Env.REPO_NAME }}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     download_strategy: CurlDownloadStrategy
     folder: Formula
     license: "Apache 2.0"
@@ -105,8 +105,8 @@ nfpms:
   - maintainer: logfire-sh
     id: logfire
     description: "Logfire command line tool"
-    homepage: "https://github.com/logfire-sh/cli-private"
-    package_name: cli-private
+    homepage: "https://github.com/{{ .Env.REPO_NAME }}"
+    package_name: "{{ .ProjectName }}"
     formats:
       - deb
       - rpm

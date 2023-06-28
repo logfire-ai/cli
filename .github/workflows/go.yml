@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
+        name: Set Repository Name
+        run: echo "REPO_NAME=${{ secrets.GITHUB_REPOSITORY }}" >> $GITHUB_ENV
+      -
         name: Checkout
         uses: actions/checkout@v3
         with:
