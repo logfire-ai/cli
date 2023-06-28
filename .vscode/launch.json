@@ -1,0 +1,13 @@
+{
+    "configurations": [
+    {
+        "name": "Launch file",
+        "type": "go",
+        "request": "launch",
+        "args": ["sources", "list", "config.yaml"], 
+        "mode": "debug",
+        "program": "${file}",
+        "console": "integratedTerminal"
+    }
+    ]
+}

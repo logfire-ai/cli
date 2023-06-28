@@ -14,14 +14,10 @@ import (
 	pb "logfire/services/flink-service"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-var host = viper.GetString("host")
-var port = viper.GetInt("port")
 
 type Livetail struct {
 	Logs          string
@@ -74,7 +70,7 @@ func showLogsWithColor(records []*pb.FilteredRecord) string {
 }
 
 func getAllSourcesByTeamId(token, teamId string) ([]models.Source, error) {
-	url := fmt.Sprintf("https://%s:%d/api/team/%s/source", host, port, teamId)
+	url := "https://api.logfire.sh/api/team/" + teamId + "/source"
 
 	// Create a new HTTP client
 	client := &http.Client{}
@@ -175,7 +171,7 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
-	grpc_url := fmt.Sprintf("%s:%d", host, port)
+	grpc_url := fmt.Sprintf("api.logfire.sh:443")
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)

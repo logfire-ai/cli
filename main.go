@@ -75,7 +75,7 @@ func main() {
 
 	registerCmd := &cobra.Command{
 		Use:   "register [config_file]",
-		Short: "Register the application",
+		Short: "Register the logfire application",
 		Args:  cobra.ExactArgs(1),
 		Run:   register,
 	}
@@ -97,7 +97,7 @@ func main() {
 	livetailCmd := &cobra.Command{
 		Use:   "livetail ",
 		Short: "display the livetail",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.ExactArgs(1),
 		Run:   livetailShow,
 	}
 
@@ -557,7 +557,7 @@ func sourceManage(cmd *cobra.Command, args []string) {
 
 func livetailShow(cmd *cobra.Command, args []string) {
 
-	configFile := args[1]
+	configFile := args[0]
 
 	viper.SetConfigFile(configFile)
 	viper.SetConfigType("yaml")
@@ -574,11 +574,14 @@ func livetailShow(cmd *cobra.Command, args []string) {
 	fmt.Println("Enter your Token:")
 	reader := bufio.NewReader(os.Stdin)
 	token, _ := reader.ReadString('\n')
+	token = strings.TrimSuffix(token, "\n")
+	token = strings.TrimSuffix(token, "\r")
 
 	fmt.Println("Enter your TeamId:")
 	reader = bufio.NewReader(os.Stdin)
 	teamId, _ := reader.ReadString('\n')
 	teamId = strings.TrimSuffix(teamId, "\n")
+	teamId = strings.TrimSuffix(teamId, "\r")
 
 	ui := gui.NewUI(token, teamId)
 	if err := ui.Run(); err != nil {

@@ -14,11 +14,11 @@ type UI struct {
 	display *Display
 	token   string
 	teamId  string
+	logs    string
 }
 
 type LivetailStatus struct {
 	LivetailEnabled bool
-	LivetailStopped bool
 }
 
 func NewUI(token, teamId string) *UI {
@@ -36,7 +36,8 @@ func NewUI(token, teamId string) *UI {
 func display(u *UI, l *livetail.Livetail, stop chan bool) {
 	for {
 		u.app.QueueUpdateDraw(func() {
-			u.display.view.SetText(fmt.Sprintf("Livetail:\n%s", l.Logs))
+			u.display.view.SetText(fmt.Sprintf("Livetail Started:\n%s", l.Logs))
+			u.logs = l.Logs
 		})
 		time.Sleep(500 * time.Millisecond)
 		select {
@@ -52,7 +53,6 @@ func (u *UI) SetDisplayCapture() {
 
 	livetailStatus := LivetailStatus{
 		LivetailEnabled: false,
-		LivetailStopped: true,
 	}
 
 	u.display.input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -61,8 +61,9 @@ func (u *UI) SetDisplayCapture() {
 			input := u.display.input.GetText()
 			u.display.input.SetText("")
 			switch input {
-			case "livetail":
+			case "start":
 				if !livetailStatus.LivetailEnabled {
+					u.display.view.SetTextAlign(tview.AlignLeft)
 					livetail, err := livetail.NewLivetail(u.token, u.teamId)
 					if err != nil {
 						u.display.view.SetText(fmt.Sprintf("Errow while initiating livetail:\n%s", err.Error()))
@@ -72,20 +73,24 @@ func (u *UI) SetDisplayCapture() {
 					go display(u, livetail, stop)
 					u.display.view.ScrollToEnd()
 					livetailStatus.LivetailEnabled = true
-					livetailStatus.LivetailStopped = false
 				}
 				return nil
 
 			case "stop":
-				if !livetailStatus.LivetailStopped {
-					livetailStatus.LivetailStopped = true
+				if livetailStatus.LivetailEnabled {
+					livetailStatus.LivetailEnabled = false
 					stop <- true
+					u.logs += "\nLivetail stopped!"
+				} else {
+					u.logs += "\nLivetail is not running!"
 				}
+				u.display.view.SetText(u.logs)
 				return nil
 
 			// Todo: add a pop to show invalid command
 			default:
-				// u.display.view.SetText(fmt.Sprintf("Invalid command: %s. Please use command [blue]livetail [white]for starting livetail and [blue]stop [white]to stop it.", input))
+				u.logs += fmt.Sprintf("\nInvalid command: %s. Please use command [green]start [white]for starting livetail and [green]stop [white]to stop it.", input)
+				u.display.view.SetText(u.logs)
 			}
 			return nil
 		}

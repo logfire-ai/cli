@@ -23,8 +23,10 @@ func NewDisplay() *Display {
 		SetRegions(true).
 		SetScrollable(true)
 
+	textView.SetText("Livetail!\n Type [green]start [white]to start livetail and [green]stop [white]to stop the livetail.").SetTextAlign(tview.AlignCenter)
+
 	grid := tview.NewGrid().SetRows(-1, 1).SetColumns(-1)
-	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, false)
+	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
 	grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
 
 	return &Display{

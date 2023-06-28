@@ -1,4 +1,4 @@
-host: localhost
+host: api.logfire.sh
 port: 8888
 debug: true
-email: "vinuthomas.me@gmail.com"
+email: "vaibhav.vikas@constient.com"
