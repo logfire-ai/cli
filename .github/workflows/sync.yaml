@@ -18,4 +18,4 @@ jobs:
       - name: Fetch Tags
         run: git fetch --tags
       - name: Push Tags to Target Repository
-        run: git push --tags git@github.com:logfire-sh/cli.git
+        run: git push --force --tags git@github.com:logfire-sh/cli.git
