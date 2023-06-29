@@ -9,13 +9,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@main
+      - name: Get Latest Tag
+        id: latest_tag
+        run: echo ::set-output name=tag::$(git describe --abbrev=0 --tags)
       - name: Run GitHub File Sync
-        uses: adrianjost/files-sync-action@v1.0.1
+        uses: BetaHuhn/repo-file-sync-action@v1
         with:
-          TARGET_REPOS: |
-            logfire-sh/cli
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-      - name: Fetch Tags
-        run: git fetch --tags
-      - name: Push Tags to Target Repository
-        run: git push --force --tags git@github.com:logfire-sh/cli.git
+          GH_PAT: ${{ secrets.TOKEN }}
+          source_dir: './'
+          target_repo: 'logfire-sh/cli'
+          target_branch: 'main'
+          target_path: '/'
+          tags: ${{ steps.latest_tag.outputs.tag }}
