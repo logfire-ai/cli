@@ -27,12 +27,12 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: x86
-      amd64: x86_64
+    #replacements:
+     # darwin: Darwin
+      #linux: Linux
+      #windows: Windows
+      #386: x86
+      #amd64: x86_64
 snapshot:
   name_template: SNAPSHOT-{{ .Tag }}-{{ .Commit }}
 checksum:
@@ -110,8 +110,8 @@ nfpms:
     formats:
       - deb
       - rpm
-    replacements:
-      darwin: Darwin
+    #replacements:
+     # darwin: Darwin
     bindir: /usr/bin
     release: 1
 

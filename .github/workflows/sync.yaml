@@ -15,3 +15,7 @@ jobs:
           TARGET_REPOS: |
             logfire-sh/cli
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      - name: Fetch Tags
+        run: git fetch --tags
+      - name: Push Tags to Target Repository
+        run: git push --tags git@github.com:logfire-sh/cli.git

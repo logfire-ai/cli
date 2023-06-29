@@ -70,7 +70,7 @@ type SigninPasswordRequest struct {
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "logfire",
-		Short: "A simple CLI application to interact with logfire.sh",
+		Short: "A simple CLI application to interact with logfire.sh log management system",
 	}
 
 	registerCmd := &cobra.Command{
