@@ -14,11 +14,11 @@ builds:
       - arm64
     goarm:
       - 6
+    goamd64:
+      - v3
     ignore:
       - goos: windows
         goarch: arm
-      - goos: windows
-        goarch: arm64
     main: ./main.go
     ldflags: -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     binary: logfire
@@ -115,29 +115,21 @@ nfpms:
     bindir: /usr/bin
     release: 1
 
-# .goreleaser.yaml
-# chocolateys:
-#   -
-#     name: logfire
-#     owners: logfire-sh
-#     title: "Logfire command line interface"
-#     authors: logfire-sh
-#     project_url: https://logfire.sh/
-#     url_template: "git@github.com:logfire-sh/cli-private/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-#     copyright: 2023 Logfire.sh
-#     # license_url: https://github.com/logfire-sh/cli-private/main/LICENSE
-#     # require_license_acceptance: true
-#     project_source_url: https://github.com/logfire-sh/cli-private
-#     docs_url: https://github.com/logfire-sh/cli-private/blob/main/README.md
-#     summary: Spin up a live tail for your team in minutes. With SQL queries, full text search, alerts and more straight from the command line interface.
-
-#     # This the description of your chocolatey package.
-#     # Supports markdown.
-#     description: |
-#       {{ .ProjectName }} installer package.
-#       Command line interface for logfire.
-
-#     api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
-#     source_repo: "https://push.chocolatey.org/"
-#     skip_publish: true
-#     goamd64: v1
+scoops:
+  -
+    name: logfire
+    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:
+      name: logfire-sh
+    commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://logfire.sh/"
+    description: "Logfire command line interface."
+    skip_upload: false
+    depends: ["git"]
+    shortcuts: [["logfire.exe", "logfire"]]
+    goamd64: v3
+    bucket:
+      owner: logfire-sh
+      name: cli-private
+      branch: master
+      token: "{{ .Env.GITHUB_TOKEN }}"
