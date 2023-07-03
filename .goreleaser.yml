@@ -130,6 +130,6 @@ scoops:
     goamd64: v3
     bucket:
       owner: logfire-sh
-      name: cli-private
-      branch: master
+      name: cli
+      branch: main
       token: "{{ .Env.GITHUB_TOKEN }}"

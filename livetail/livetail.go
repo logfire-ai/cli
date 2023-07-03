@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"logfire/models"
 	"net/http"
 	"sort"
 	"time"
 
-	pb "logfire/services/flink-service"
+	"github.com/logfire-sh/cli/models"
+
+	pb "github.com/logfire-sh/cli/services/flink-service"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
