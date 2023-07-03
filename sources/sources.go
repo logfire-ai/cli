@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"logfire/models"
 	"net/http"
+
+	"github.com/logfire-sh/cli/models"
 )
 
 func GetAllSources(token, teamId, url string) ([]models.Source, error) {
