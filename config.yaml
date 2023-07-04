@@ -1,4 +1,0 @@
-host: api.logfire.sh
-port: 8888
-debug: true
-email: "vaibhav.vikas@constient.com"
