@@ -88,8 +88,8 @@ brews:
       owner: logfire-sh
     ids:
     description: "Logfire command line interface"
-    homepage: "https://github.com/{{ .Env.REPO_NAME }}"
-    url_template: "https://github.com/{{ .Env.REPO_NAME }}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    homepage: "https://github.com/logfire-sh/cli"
+    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     download_strategy: CurlDownloadStrategy
     folder: Formula
     license: "Apache 2.0"
