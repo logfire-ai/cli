@@ -5,7 +5,6 @@ package term
 import (
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/muesli/termenv"
@@ -26,7 +25,6 @@ type Term struct {
 }
 
 // FromEnv initializes a Term from [os.Stdout] and environment variables:
-//   - GH_FORCE_TTY
 //   - NO_COLOR
 //   - CLICOLOR
 //   - CLICOLOR_FORCE
@@ -38,22 +36,8 @@ func FromEnv() Term {
 	var termWidthOverride int
 	var termWidthPercentage int
 
-	spec := os.Getenv("GH_FORCE_TTY")
-	if spec != "" {
-		stdoutIsTTY = true
-		isColorEnabled = !IsColorDisabled()
-
-		if w, err := strconv.Atoi(spec); err == nil {
-			termWidthOverride = w
-		} else if strings.HasSuffix(spec, "%") {
-			if p, err := strconv.Atoi(spec[:len(spec)-1]); err == nil {
-				termWidthPercentage = p
-			}
-		}
-	} else {
-		stdoutIsTTY = IsTerminal(os.Stdout)
-		isColorEnabled = IsColorForced() || (!IsColorDisabled() && stdoutIsTTY)
-	}
+	stdoutIsTTY = IsTerminal(os.Stdout)
+	isColorEnabled = IsColorForced() || (!IsColorDisabled() && stdoutIsTTY)
 
 	isVirtualTerminal := false
 	if stdoutIsTTY {

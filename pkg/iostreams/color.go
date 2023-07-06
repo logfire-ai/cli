@@ -156,6 +156,10 @@ func (c *ColorScheme) WarningIcon() string {
 	return c.Yellow("!")
 }
 
+func (c *ColorScheme) IntermediateIcon() string {
+	return c.Cyan("-")
+}
+
 func (c *ColorScheme) FailureIcon() string {
 	return c.FailureIconWithColor(c.Red)
 }

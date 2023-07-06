@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
+	surveyCore "github.com/AlecAivazis/survey/v2/core"
 	"github.com/logfire-sh/cli/gui"
 	"github.com/logfire-sh/cli/models"
-	"github.com/logfire-sh/cli/pkg/cmd/auth"
+	"github.com/logfire-sh/cli/pkg/cmd/factory"
+	"github.com/logfire-sh/cli/pkg/cmd/root"
 	"github.com/logfire-sh/cli/sources"
+	"github.com/mgutz/ansi"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -66,42 +68,95 @@ type SigninPasswordRequest struct {
 }
 
 func main() {
-	rootCmd := &cobra.Command{
-		Use:   "logfire <command> <subcommand> [flags]",
-		Short: "Logfire CLI",
-		Long:  `Work seamlessly with Logfire.sh log management system from the command line.`,
-		Example: heredoc.Doc(`
-			$ logfire auth login
-			$ logfire livetail show
-		`),
+	cmdFactory := factory.New()
+	stderr := cmdFactory.IOStreams.ErrOut
+
+	rootCmd, err := root.NewCmdRoot(cmdFactory)
+	if err != nil {
+		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
+		return
 	}
 
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "core",
-		Title: "Core commands",
-	})
-
-	sourceCmd := &cobra.Command{
-		Use:   "sources [list/create/delete] [config_file]",
-		Short: "manage the sources",
-		Args:  cobra.ExactArgs(2),
-		Run:   sourceManage,
+	if !cmdFactory.IOStreams.ColorEnabled() {
+		surveyCore.DisableColor = true
+		ansi.DisableColors(true)
+	} else {
+		// override survey's poor choice of color
+		surveyCore.TemplateFuncsWithColor["color"] = func(style string) string {
+			switch style {
+			case "white":
+				return ansi.ColorCode("default")
+			default:
+				return ansi.ColorCode(style)
+			}
+		}
 	}
 
-	livetailCmd := &cobra.Command{
-		Use:   "livetail ",
-		Short: "display the livetail",
-		Args:  cobra.ExactArgs(1),
-		Run:   livetailShow,
+	expandedArgs := []string{}
+	if len(os.Args) > 0 {
+		expandedArgs = os.Args[1:]
 	}
 
-	rootCmd.AddCommand(auth.NewCmdAuth())
-	rootCmd.AddCommand(sourceCmd, livetailCmd)
+	// translate `gh help <command>` to `gh <command> --help` for extensions.
+	if len(expandedArgs) >= 2 && expandedArgs[0] == "help" && isExtensionCommand(rootCmd, expandedArgs[1:]) {
+		expandedArgs = expandedArgs[1:]
+		expandedArgs = append(expandedArgs, "--help")
+	}
+
+	rootCmd.SetArgs(expandedArgs)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(stderr, "failed to run application: %s\n", err)
 	}
 
+	// rootCmd := &cobra.Command{
+	// 	Use:   "logfire <command> <subcommand> [flags]",
+	// 	Short: "Logfire CLI",
+	// 	Long:  `Work seamlessly with Logfire.sh log management system from the command line.`,
+	// 	Example: heredoc.Doc(`
+	// 		$ logfire auth login
+	// 		$ logfire livetail show
+	// 	`),
+	// 	// PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	// 	// 	// require that the user is authenticated before running most commands
+	// 	// 	if cmdutil.IsAuthCheckEnabled(cmd) && !cmdutil.CheckAuth(cfg) {
+	// 	// 		fmt.Fprint(io.ErrOut, authHelp())
+	// 	// 	}
+	// 	// },
+	// }
+
+	// rootCmd.AddGroup(&cobra.Group{
+	// 	ID:    "core",
+	// 	Title: "Core commands",
+	// })
+
+	// sourceCmd := &cobra.Command{
+	// 	Use:   "sources [list/create/delete] [config_file]",
+	// 	Short: "manage the sources",
+	// 	Args:  cobra.ExactArgs(2),
+	// 	Run:   sourceManage,
+	// }
+
+	// livetailCmd := &cobra.Command{
+	// 	Use:   "livetail ",
+	// 	Short: "display the livetail",
+	// 	Args:  cobra.ExactArgs(1),
+	// 	Run:   livetailShow,
+	// }
+
+	// rootCmd.AddCommand(auth.NewCmdAuth())
+	// rootCmd.AddCommand(sourceCmd, livetailCmd)
+
+	// if err := rootCmd.Execute(); err != nil {
+	// 	fmt.Println(err)
+	// }
+
+}
+
+// isExtensionCommand returns true if args resolve to an extension command.
+func isExtensionCommand(rootCmd *cobra.Command, args []string) bool {
+	c, _, err := rootCmd.Find(args)
+	return err == nil && c != nil && c.GroupID == "extension"
 }
 
 func sourceManage(cmd *cobra.Command, args []string) {
@@ -139,6 +194,7 @@ func sourceManage(cmd *cobra.Command, args []string) {
 		if err == nil {
 			fmt.Printf("Source: %+v\n", resp)
 		}
+
 	case "create":
 		fmt.Println("Enter your Token:")
 		reader := bufio.NewReader(os.Stdin)
