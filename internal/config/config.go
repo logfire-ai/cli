@@ -10,28 +10,36 @@ import (
 
 // Config represents the configuration structure
 type AuthConfig struct {
-	Username string `mapstructure:"username"`
-	Token    string `mapstructure:"token"`
+	Username  string `mapstructure:"username"`
+	Token     string `mapstructure:"token"`
+	ProfileID string `mapstructure:"profile_id"`
 }
 
-type Config struct {
-	AuthConfig *AuthConfig
+type Config interface {
+	UpdateConfig(string, string, string) error
+	HasEnvToken() bool
+	Get() *AuthConfig
 }
 
-// InitializeConfig initializes the configuration file
-func NewConfig() (*Config, error) {
+type cfg struct {
+	AuthCfg *AuthConfig
+}
+
+func NewConfig() (Config, error) {
 	// Get user's home directory
 	usr, err := user.Current()
 	if err != nil {
 		return nil, err
 	}
 
-	configFile := filepath.Join(usr.HomeDir, ".logfire.yaml")
+	configFile := filepath.Join(usr.HomeDir, ".logfire")
 
 	// Set up Viper for YAML configuration
 	viper.SetConfigFile(configFile)
+	viper.SetConfigType("yaml")
 	viper.SetDefault("username", "")
 	viper.SetDefault("token", "")
+	viper.SetDefault("profile_id", "")
 
 	// Check if the config file exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
@@ -52,21 +60,31 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{AuthConfig: authConfig}, nil
+	return &cfg{authConfig}, nil
+}
+
+func (c *cfg) Get() *AuthConfig {
+	return c.AuthCfg
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *Config) UpdateConfig(username, token string) error {
+func (c *cfg) UpdateConfig(username, token, profileID string) error {
 	// Write the updated configuration to the file
 	viper.Set("username", username)
 	viper.Set("token", token)
+	viper.Set("profile_id", profileID)
 
 	// Write the updated configuration to the file
 	if err := viper.WriteConfig(); err != nil {
 		return err
 	}
 
-	c.AuthConfig.Username = username
-	c.AuthConfig.Token = token
+	c.AuthCfg.Username = username
+	c.AuthCfg.Token = token
+	c.AuthCfg.ProfileID = profileID
 	return nil
+}
+
+func (c *cfg) HasEnvToken() bool {
+	return c.AuthCfg.Token != "" || c.AuthCfg.Username != "" || c.AuthCfg.ProfileID != ""
 }
