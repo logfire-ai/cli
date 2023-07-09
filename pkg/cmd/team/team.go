@@ -8,7 +8,7 @@ import (
 
 func NewTeamCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "team <command>",
+		Use:     "teams <command>",
 		Short:   "Team details",
 		GroupID: "core",
 	}

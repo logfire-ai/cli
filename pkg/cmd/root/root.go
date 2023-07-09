@@ -8,6 +8,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmd/login"
 	"github.com/logfire-sh/cli/pkg/cmd/signup"
 	"github.com/logfire-sh/cli/pkg/cmd/source"
+	"github.com/logfire-sh/cli/pkg/cmd/stream"
 	"github.com/logfire-sh/cli/pkg/cmd/team"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
@@ -26,7 +27,8 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 		Long:  `Work seamlessly with logfire.sh log management system from the command line.`,
 		Example: heredoc.Doc(`
 			$ logfire login
-			$ logfire livetail show
+			$ logfire stream livetail
+			
 		`),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// require that the user is authenticated before running most commands
@@ -62,5 +64,6 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(login.NewLoginCmd(f))
 	cmd.AddCommand(source.NewCmdSource(f))
 	cmd.AddCommand(team.NewTeamCmd(f))
+	cmd.AddCommand(stream.NewCmdStrea(f))
 	return cmd, nil
 }
