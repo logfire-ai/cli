@@ -2,6 +2,7 @@ package teamlist
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -35,7 +36,7 @@ func NewListCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Args:  cobra.ExactArgs(0),
-		Short: "list teams",
+		Short: "List all the teams",
 		Long: heredoc.Docf(`
 			List teams.
 		`, "`"),
@@ -73,47 +74,50 @@ func listRun(opts *TeamOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	err = TeamsList(opts.HttpClient(), opts.IO, cfg, opts.Prompter)
+	teams, err := TeamsList(opts.HttpClient(), cfg.Get().Token)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	}
+
+	for _, v := range teams {
+		fmt.Fprintf(opts.IO.Out, "%s %s\n", v.Name, v.ID)
+	}
 }
 
-func TeamsList(client *http.Client, io *iostreams.IOStreams, cfg config.Config, prmpt prompter.Prompter) error {
+func TeamsList(client *http.Client, token string) ([]Team, error) {
 	url := "https://api.logfire.sh/api/team"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err
+		return []Team{}, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+cfg.Get().Token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return []Team{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return err
+		return []Team{}, err
 	}
 
 	var response AllTeamResponse
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return []Team{}, err
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return err
+		return []Team{}, err
 	}
 
-	teams := response.Data
-	for _, v := range teams {
-		fmt.Fprintf(io.Out, "%s %s\n", v.Name, v.ID)
+	if !response.IsSuccessful {
+		return []Team{}, errors.New("api error")
 	}
 
-	return nil
+	return response.Data, nil
 }

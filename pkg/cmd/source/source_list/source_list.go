@@ -57,6 +57,7 @@ func NewSourceListCmd(f *cmdutil.Factory) *cobra.Command {
 
 			if opts.TeamId == "" && !opts.Interactive {
 				fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+				return
 			}
 
 			sourceListRun(opts)
@@ -78,7 +79,7 @@ func sourceListRun(opts *SourceListOptions) {
 	if opts.TeamId == "" {
 		fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
 	}
-	sources, err := getAllSources(opts.HttpClient(), cfg.Get().Token, opts.TeamId)
+	sources, err := GetAllSources(opts.HttpClient(), cfg.Get().Token, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
@@ -91,7 +92,7 @@ func sourceListRun(opts *SourceListOptions) {
 	}
 }
 
-func getAllSources(client *http.Client, token, teamId string) ([]models.Source, error) {
+func GetAllSources(client *http.Client, token, teamId string) ([]models.Source, error) {
 	url := fmt.Sprintf("https://api.logfire.sh/api/team/%s/source", teamId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
