@@ -103,6 +103,7 @@ func loginRun(opts *LoginOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+		return
 	}
 
 	if opts.Email == "" {

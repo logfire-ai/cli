@@ -6,10 +6,11 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/pkg/cmd/login"
+	"github.com/logfire-sh/cli/pkg/cmd/logout"
 	"github.com/logfire-sh/cli/pkg/cmd/signup"
-	"github.com/logfire-sh/cli/pkg/cmd/source"
+	"github.com/logfire-sh/cli/pkg/cmd/sources"
 	"github.com/logfire-sh/cli/pkg/cmd/stream"
-	"github.com/logfire-sh/cli/pkg/cmd/team"
+	"github.com/logfire-sh/cli/pkg/cmd/teams"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
@@ -62,8 +63,9 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 
 	cmd.AddCommand(signup.NewSignupCmd(f))
 	cmd.AddCommand(login.NewLoginCmd(f))
-	cmd.AddCommand(source.NewCmdSource(f))
-	cmd.AddCommand(team.NewTeamCmd(f))
-	cmd.AddCommand(stream.NewCmdStrea(f))
+	cmd.AddCommand(logout.NewLogoutCmd(f))
+	cmd.AddCommand(sources.NewCmdSource(f))
+	cmd.AddCommand(teams.NewCmdTeam(f))
+	cmd.AddCommand(stream.NewCmdStream(f))
 	return cmd, nil
 }

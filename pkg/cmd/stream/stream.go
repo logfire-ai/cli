@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdStrea(f *cmdutil.Factory) *cobra.Command {
+func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "stream",
 		Short:   "Logs streaming",
