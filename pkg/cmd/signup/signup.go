@@ -63,6 +63,7 @@ func signupRun(opts *SignupOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+		return
 	}
 
 	email, err := opts.Prompter.Input("Enter your email:", "")

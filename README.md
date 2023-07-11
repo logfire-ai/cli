@@ -10,7 +10,8 @@ You can run the following commands from the command-line interface (CLI) by dire
 
 - login
 - signup
-- teams (list)
+- logout
+- teams (list, create, list-members)
 - sources (list, create, delete)
 - stream (livetail)
 
@@ -18,7 +19,7 @@ You can run the following commands from the command-line interface (CLI) by dire
 
 ### macOS and linux
 
-`logfire` is available on **macOS** and **linux** via [Homebrew][].
+`logfire` is available on **macOS** and **linux** via [Homebrew](https://brew.sh/).
 
 ```bash
 $ brew tap logfire-sh/tap
@@ -27,7 +28,7 @@ $ brew install logfire
 
 ### Windows
 
-`logfire` is available on **windows** available via [scoop][].
+`logfire` is available on **windows** available via [Scoop](https://scoop.sh/).
 
 ```bash
 $ scoop bucket add logfire-sh https://github.com/logfire-sh/cli.git
@@ -45,4 +46,4 @@ $ git tag -a <tag-name> -m <tag-message>
 $ git push origin <tag-name>
 ```
 
-CI/CD will autoamtically handle syncing and publishing the artifacts.
+GitHub actions will automatically handle syncing and publishing.

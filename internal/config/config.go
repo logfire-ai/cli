@@ -17,6 +17,7 @@ type AuthConfig struct {
 
 type Config interface {
 	UpdateConfig(string, string, string) error
+	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
 }
@@ -26,13 +27,10 @@ type cfg struct {
 }
 
 func NewConfig() (Config, error) {
-	// Get user's home directory
-	usr, err := user.Current()
+	configFile, err := getHomeConfigPath()
 	if err != nil {
 		return nil, err
 	}
-
-	configFile := filepath.Join(usr.HomeDir, ".logfire")
 
 	// Set up Viper for YAML configuration
 	viper.SetConfigFile(configFile)
@@ -87,4 +85,35 @@ func (c *cfg) UpdateConfig(username, token, profileID string) error {
 
 func (c *cfg) HasEnvToken() bool {
 	return c.AuthCfg.Token != "" || c.AuthCfg.Username != "" || c.AuthCfg.ProfileID != ""
+}
+
+func (c *cfg) DeleteConfig() error {
+	c.AuthCfg.Username = ""
+	c.AuthCfg.Token = ""
+	c.AuthCfg.ProfileID = ""
+
+	configFile, err := getHomeConfigPath()
+	if err != nil {
+		return err
+	}
+
+	// Delete file from homedir.
+	err = os.Remove(configFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getHomeConfigPath() (string, error) {
+	// Get user's home directory
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+
+	// Add .logfire to file path
+	configFile := filepath.Join(usr.HomeDir, ".logfire")
+	return configFile, nil
 }
