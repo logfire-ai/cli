@@ -18,8 +18,126 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var platformMap = map[string]int{
+type SourceType uint8
+
+// Declare related constants for each SourceType starting with index 0
+const (
+	Kubernetes SourceType = iota + 1 // EnumIndex = 1
+	AWS                              // EnumIndex = 2
+	JavaScript                       // EnumIndex = 3
+	Docker
+	Nginx
+	Dokku
+	FlyDotio
+	Heroku
+	Ubuntu
+	Vercel
+	DotNET
+	Apache2
+	Cloudflare
+	Java
+	Python
+	PHP
+	PostgreSQL
+	Redis
+	Ruby
+	MongoDB
+	MySQL
+	HTTP
+	Vector
+	FluentBit
+	Fluentd
+	Logstash
+	RSyslog
+	Render
+	SyslogNg
+	Demo
+)
+
+var enumMap map[SourceType]string = map[SourceType]string{
+	Kubernetes: "kubernetes",
+	AWS:        "aws",
+	JavaScript: "javascript",
+	Docker:     "docker",
+	Nginx:      "nginx",
+	Dokku:      "dokku",
+	FlyDotio:   "fly.io",
+	Heroku:     "heroku",
+	Ubuntu:     "ubuntu",
+	Vercel:     "vercel",
+	DotNET:     ".net",
+	Apache2:    "apache2",
+	Cloudflare: "cloudflare",
+	Java:       "java",
+	Python:     "python",
+	PHP:        "php",
+	PostgreSQL: "postgresql",
+	Redis:      "redis",
+	Ruby:       "ruby",
+	MongoDB:    "mongodb",
+	MySQL:      "mysql",
+	HTTP:       "http",
+	Vector:     "vector",
+	FluentBit:  "fluentbit",
+	Fluentd:    "fluentd",
+	Logstash:   "logstash",
+	RSyslog:    "rsyslog",
+	Render:     "render",
+	SyslogNg:   "syslog-ng",
+	Demo:       "demo",
+}
+
+var platformMap map[string]int = map[string]int{
 	"kubernetes": 1,
+	"aws":        2,
+	"javascript": 3,
+	"docker":     4,
+	"nginx":      5,
+	"dokku":      6,
+	"fly.io":     7,
+	"heroku":     8,
+	"ubuntu":     9,
+	"vercel":     10,
+	".net":       11,
+	"apache2":    12,
+	"cloudflare": 13,
+	"java":       13,
+	"python":     14,
+	"php":        15,
+	"postgresql": 16,
+	"redis":      17,
+	"ruby":       18,
+	"mongodb":    19,
+	"mysql":      20,
+	"http":       21,
+	"vector":     22,
+	"fluentbit":  23,
+	"fluentd":    24,
+	"logstash":   25,
+	"rsyslog":    26,
+	"render":     27,
+	"syslog-ng":  28,
+	"demo":       29,
+}
+
+func (d SourceType) String() string {
+
+	if d < Kubernetes || d > Demo {
+		return "Unknown"
+	}
+	return enumMap[d]
+}
+
+func (d SourceType) EnumIndex() int {
+	return int(d)
+}
+
+var platformOptions = make([]string, 0, len(platformMap))
+
+func platformMapToArray() {
+	for k := range platformMap {
+		platformOptions = append(platformOptions, k)
+	}
 }
 
 type SourceListOptions struct {
@@ -96,7 +214,28 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	}
 
-	// TODO: Add interactive flow
+	if opts.Interactive {
+		opts.TeamId, err = opts.Prompter.Input("Enter TeamId:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read TeamId\n", cs.FailureIcon())
+			return
+		}
+
+		opts.SourceName, err = opts.Prompter.Input("Enter Source name:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Source name\n", cs.FailureIcon())
+			return
+		}
+
+		platformMapToArray()
+		intPlatform, err := opts.Prompter.Select("Enter Platform name:", "", platformOptions)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Platform name\n", cs.FailureIcon())
+			return
+		}
+
+		opts.Platform = platformOptions[intPlatform]
+	}
 
 	if opts.TeamId == "" || opts.SourceName == "" || opts.Platform == "" {
 		fmt.Fprintf(opts.IO.ErrOut, "%s team-id, name and plaform are required.\n", cs.FailureIcon())
@@ -113,6 +252,7 @@ func sourceListRun(opts *SourceListOptions) {
 }
 
 func createSource(client *http.Client, token, teamId, sourceName, platform string) (models.Source, error) {
+
 	// platform should be mapped to its respective int as sourceType, for kubernetes its 1
 	sourceType, exists := platformMap[strings.ToLower(platform)]
 	if !exists {
