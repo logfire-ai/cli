@@ -30,7 +30,7 @@ type fileReader interface {
 	Fd() uintptr
 }
 
-func New(stdin fileReader, stdout fileWriter, stderr io.Writer) Prompter {
+func Neww(stdin fileReader, stdout fileWriter, stderr io.Writer) Prompter {
 	return &surveyPrompter{
 		stdin:  stdin,
 		stdout: stdout,
@@ -46,8 +46,8 @@ type surveyPrompter struct {
 
 // LatinMatchingFilter returns whether the value matches the input filter.
 // The strings are compared normalized in case.
-// The filter's diactritics are kept as-is, but the value's are normalized,
-// so that a missing diactritic in the filter still returns a result.
+// The filter's diacritics are kept as-is, but the values are normalized,
+// so that a missing diacritic in the filter still returns a result.
 func LatinMatchingFilter(filter, value string, index int) bool {
 	filter = strings.ToLower(filter)
 	value = strings.ToLower(value)

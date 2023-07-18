@@ -10,13 +10,14 @@ import (
 
 // Config represents the configuration structure
 type AuthConfig struct {
-	Username  string `mapstructure:"username"`
-	Token     string `mapstructure:"token"`
-	ProfileID string `mapstructure:"profile_id"`
+	Username     string `mapstructure:"username"`
+	Token        string `mapstructure:"token"`
+	ProfileID    string `mapstructure:"profile_id"`
+	RefreshToken string `mapstructure:"refresh_token"`
 }
 
 type Config interface {
-	UpdateConfig(string, string, string) error
+	UpdateConfig(string, string, string, string) error
 	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
@@ -66,11 +67,12 @@ func (c *cfg) Get() *AuthConfig {
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *cfg) UpdateConfig(username, token, profileID string) error {
+func (c *cfg) UpdateConfig(username, token, profileID string, refreshToken string) error {
 	// Write the updated configuration to the file
 	viper.Set("username", username)
 	viper.Set("token", token)
 	viper.Set("profile_id", profileID)
+	viper.Set("refresh_token", refreshToken)
 
 	// Write the updated configuration to the file
 	if err := viper.WriteConfig(); err != nil {
@@ -80,6 +82,7 @@ func (c *cfg) UpdateConfig(username, token, profileID string) error {
 	c.AuthCfg.Username = username
 	c.AuthCfg.Token = token
 	c.AuthCfg.ProfileID = profileID
+	c.AuthCfg.RefreshToken = refreshToken
 	return nil
 }
 
