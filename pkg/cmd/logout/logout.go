@@ -1,6 +1,8 @@
 package logout
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -75,7 +77,7 @@ func logoutRun(opts *LogoutOptions) {
 
 	user := cfg.Get().Username
 
-	err = logout(opts.HttpClient(), cfg.Get().Token)
+	err = logout(opts.HttpClient(), cfg.Get().Token, cfg.Get().RefreshToken)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s.\n", cs.FailureIcon(), err.Error())
 		return
@@ -90,9 +92,17 @@ func logoutRun(opts *LogoutOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s User %s successfully logged out.\n", cs.SuccessIcon(), user)
 }
 
-func logout(client *http.Client, token string) error {
+func logout(client *http.Client, token string, refreshToken string) error {
 	url := "https://api.logfire.sh/api/auth/signout"
-	req, err := http.NewRequest("POST", url, nil)
+
+	reqBody := map[string]string{
+		"AccessToken":  token,
+		"RefreshToken": refreshToken,
+	}
+
+	jsonValue, _ := json.Marshal(reqBody)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonValue))
 	if err != nil {
 		return err
 	}

@@ -92,7 +92,7 @@ func signupRun(opts *SignupOptions) {
 		return
 	}
 
-	cfg.UpdateConfig(email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID)
+	cfg.UpdateConfig(email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
 
 	err = OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token)
 	if err != nil {

@@ -58,5 +58,5 @@ func httpClientFunc() func() *http.Client {
 
 func newPrompter(f *cmdutil.Factory) prompter.Prompter {
 	io := f.IOStreams
-	return prompter.New(io.In, io.Out, io.ErrOut)
+	return prompter.Neww(io.In, io.Out, io.ErrOut)
 }
