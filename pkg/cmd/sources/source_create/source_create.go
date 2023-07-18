@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -140,7 +140,7 @@ func platformMapToArray() {
 	}
 }
 
-type SourceListOptions struct {
+type SourceCreateOptions struct {
 	IO       *iostreams.IOStreams
 	Prompter prompter.Prompter
 
@@ -155,7 +155,7 @@ type SourceListOptions struct {
 }
 
 func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
-	opts := &SourceListOptions{
+	opts := &SourceCreateOptions{
 		IO:          f.IOStreams,
 		Prompter:    f.Prompter,
 		HttpClient:  f.HttpClient,
@@ -173,6 +173,9 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire sources create
+
+			# start argument setup
+			$ logfire sources create --teamid <team-id> --name <source-name> --platform <platform>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -196,7 +199,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			sourceListRun(opts)
+			sourceCreateRun(opts)
 		},
 	}
 
@@ -206,7 +209,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func sourceListRun(opts *SourceListOptions) {
+func sourceCreateRun(opts *SourceCreateOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
@@ -281,9 +284,14 @@ func createSource(client *http.Client, token, teamId, sourceName, platform strin
 	if err != nil {
 		return models.Source{}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
 
-	body, err := ioutil.ReadAll(resp.Body)
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return models.Source{}, err
 	}

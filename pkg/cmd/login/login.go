@@ -26,9 +26,10 @@ type LoginOptions struct {
 
 	Interactive bool
 
-	Email    string
-	Password string
-	Token    string
+	Email        string
+	Password     string
+	Token        string
+	RefreshToken string
 }
 
 func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
@@ -131,7 +132,7 @@ func loginRun(opts *LoginOptions) {
 		return
 	}
 
-	cfg.UpdateConfig(opts.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID)
+	cfg.UpdateConfig(opts.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
 	fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(opts.Email))
 }
 

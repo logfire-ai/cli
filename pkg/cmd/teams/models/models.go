@@ -49,8 +49,13 @@ type TeamMember struct {
 }
 
 type TeamInviteRes struct {
-	TeamInvite
-	Email string `json:"email"`
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message,omitempty"`
+	//Data         []TeamInvite `json:"data,omitempty"`
+}
+
+type TeamInviteReq struct {
+	Email []string `json:"email" validate:"required"`
 }
 
 type TeamInvite struct {
@@ -58,4 +63,5 @@ type TeamInvite struct {
 	MagicLinkId uuid.UUID `json:"magicLinkId"`
 	TeamId      uuid.UUID `json:"teamId"`
 	Accepted    bool      `json:"accepted"`
+	Email       string    `json:"email"`
 }

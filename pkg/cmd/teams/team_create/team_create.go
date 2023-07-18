@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
@@ -108,9 +108,14 @@ func createTeam(client *http.Client, token, teamName string) (models.Team, error
 	if err != nil {
 		return models.Team{}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
 
-	body, err := ioutil.ReadAll(resp.Body)
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return models.Team{}, err
 	}
@@ -122,7 +127,7 @@ func createTeam(client *http.Client, token, teamName string) (models.Team, error
 	}
 
 	if !teamCreateResp.IsSuccessful {
-		return teamCreateResp.Data, errors.New("failed to create source")
+		return teamCreateResp.Data, errors.New("failed to create team")
 	}
 
 	return teamCreateResp.Data, nil
