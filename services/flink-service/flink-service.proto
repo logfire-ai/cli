@@ -61,7 +61,7 @@ message FieldBasedFilter {
   Operator operator = 3;
 }
 
-message FilterRequest {
+message FilterRequest   {
   repeated SeverityLevel severityLevels = 1;
   DateTimeFilter dateTimeFilter = 2;
   repeated string searchQueries = 3;
@@ -91,6 +91,19 @@ message FilterResponse {
   string jobName = 2;
 }
 
+message SQLRequest {
+  string sql = 1;
+  repeated Source sources = 2;
+  uint32 batchSize = 3;
+  DateTimeFilter dateTimeFilter = 4;
+}
+
+message SQLResponse {
+  string data = 1;
+  Source source = 2;
+}
+
 service FlinkService {
   rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
+  rpc SubmitSQL (SQLRequest) returns (SQLResponse) {}
 }
