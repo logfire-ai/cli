@@ -1,19 +1,19 @@
 {
-    "version": "0.2",
+    "version": "0.2.1",
     "architecture": {
         "32bit": {
-            "url": "https://github.com/logfire-sh/cli/releases/download/v0.2/logfire_windows_386.zip",
+            "url": "https://github.com/logfire-sh/cli/releases/download/v0.2.1/logfire_windows_386.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "887896fc339945e3956b54639c684e1ddff218eb005f57719460aedd03befb1f"
+            "hash": "007bcac5bef7b2cb4644a44bde4f02c953293cdac926cdbee0d0a048a7c8fd58"
         },
         "64bit": {
-            "url": "https://github.com/logfire-sh/cli/releases/download/v0.2/logfire_windows_amd64.zip",
+            "url": "https://github.com/logfire-sh/cli/releases/download/v0.2.1/logfire_windows_amd64.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "8d931453fc8f40b2d2774439dcd399f42ec496333e3b20d367b75da9930aeadf"
+            "hash": "7c08e57c169af75cdb6251bd7cf08d258a58ed682bdb47e24e497a8a1067a521"
         }
     },
     "homepage": "https://logfire.sh/",
