@@ -14,6 +14,7 @@ type AuthConfig struct {
 	Token        string `mapstructure:"token"`
 	ProfileID    string `mapstructure:"profile_id"`
 	RefreshToken string `mapstructure:"refresh_token"`
+	EndPoint     string `mapstructure:"endpoint"`
 }
 
 type Config interface {
@@ -39,6 +40,7 @@ func NewConfig() (Config, error) {
 	viper.SetDefault("username", "")
 	viper.SetDefault("token", "")
 	viper.SetDefault("profile_id", "")
+	viper.SetDefault("endpoint", "https://api.logfire.sh/")
 
 	// Check if the config file exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {

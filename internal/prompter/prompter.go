@@ -30,7 +30,7 @@ type fileReader interface {
 	Fd() uintptr
 }
 
-func Neww(stdin fileReader, stdout fileWriter, stderr io.Writer) Prompter {
+func New(stdin fileReader, stdout fileWriter, stderr io.Writer) Prompter {
 	return &surveyPrompter{
 		stdin:  stdin,
 		stdout: stdout,
