@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"sort"
 	"time"
-
-	"github.com/logfire-sh/cli/models"
 
 	pb "github.com/logfire-sh/cli/services/flink-service"
 
