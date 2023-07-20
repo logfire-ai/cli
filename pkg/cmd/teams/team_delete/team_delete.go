@@ -71,7 +71,7 @@ func teamDeleteRun(opts *TeamDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
 	}
 
-	err = APICalls.DeleteTeam(opts.HttpClient(), cfg.Get().Token, opts.TeamID)
+	err = APICalls.DeleteTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamID)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to delete team\n", cs.FailureIcon())
 	} else {

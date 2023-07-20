@@ -42,6 +42,20 @@ type TeamMemberRes struct {
 	LastName  *string `json:"lastName,omitempty"`
 }
 
+type RemoveMemberReq struct {
+	MemberId string `json:"memberId,omitempty"`
+}
+
+type UpdateMemberReq struct {
+	RemoveMemberReq
+	Role int `json:"role"`
+}
+
+type UpdateMemberRes struct {
+	TeamMemberRes
+	IsSuccessful bool `json:"isSuccessful"`
+}
+
 type TeamMember struct {
 	ProfileId uuid.UUID          `json:"profileId"`
 	TeamId    uuid.UUID          `json:"teamId"`

@@ -10,8 +10,8 @@ import (
 	"net/http"
 )
 
-func DeleteTeam(client *http.Client, token string, teamID string) error {
-	req, err := http.NewRequest("DELETE", "https://api.logfire.sh/api/team/"+teamID, nil)
+func DeleteTeam(client *http.Client, token string, endpoint string, teamID string) error {
+	req, err := http.NewRequest("DELETE", endpoint+"api/team/"+teamID, nil)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func DeleteTeam(client *http.Client, token string, teamID string) error {
 	return nil
 }
 
-func UpdateTeam(client *http.Client, token string, teamID string, teamName string) (models.Team, error) {
+func UpdateTeam(client *http.Client, token string, endpoint string, teamID string, teamName string) (models.Team, error) {
 	data := models.CreateTeamRequest{
 		Name: teamName,
 	}
@@ -56,7 +56,7 @@ func UpdateTeam(client *http.Client, token string, teamID string, teamName strin
 		return models.Team{}, err
 	}
 
-	req, err := http.NewRequest("PUT", "https://api.logfire.sh/api/team/"+teamID, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("PUT", endpoint+"api/team/"+teamID, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return models.Team{}, err
 	}

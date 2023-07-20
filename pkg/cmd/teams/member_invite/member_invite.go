@@ -24,7 +24,7 @@ type MemberInviteOptions struct {
 	Email       []string
 }
 
-func NewListCmd(f *cmdutil.Factory) *cobra.Command {
+func NewMemberInviteCmd(f *cmdutil.Factory) *cobra.Command {
 	opts := &MemberInviteOptions{
 		IO:         f.IOStreams,
 		Prompter:   f.Prompter,
@@ -33,17 +33,17 @@ func NewListCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "invite members",
-		Short: "invite members to a team",
+		Use:   "invite-members",
+		Short: "invite-members to a team",
 		Long: heredoc.Docf(`
-			invite members to a team.
+			invite-members to a team.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
-			$ logfire teams invite members
+			$ logfire teams invite-members
 
 			# start argument setup
-			$ logfire teams invite members --teamid <team-id> --email <email> --email <email> (multiple values supported)
+			$ logfire teams invite-members --teamid <team-id> --email <email> --email <email> (multiple values supported)
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -58,7 +58,7 @@ func NewListCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id for which members are to be fetched.")
+	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id for which members are to be invited.")
 	cmd.Flags().StringSliceVarP(&opts.Email, "email", "e", nil, "Email addresses (multiple values supported).")
 	return cmd
 }
@@ -70,7 +70,7 @@ func InviteMembersRun(opts *MemberInviteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	err = APICalls.InviteMembers(opts.HttpClient(), cfg.Get().Token, opts.TeamId, opts.Email)
+	err = APICalls.InviteMembers(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.Email)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	} else {

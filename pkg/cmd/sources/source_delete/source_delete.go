@@ -90,7 +90,7 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s team-id and source-id both are required.\n", cs.FailureIcon())
 	}
 
-	err = deleteSource(opts.HttpClient(), cfg.Get().Token, opts.TeamId, opts.SourceId)
+	err = deleteSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s.\n", cs.FailureIcon(), err.Error())
 	}
@@ -98,8 +98,8 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s %s deleted successfully.\n", cs.SuccessIcon(), opts.SourceId)
 }
 
-func deleteSource(client *http.Client, token, teamId, sourceId string) error {
-	url := fmt.Sprintf("https://api.logfire.sh/api/team/%s/source/%s", teamId, sourceId)
+func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId string) error {
+	url := fmt.Sprintf(endpoint+"api/team/%s/source/%s", teamId, sourceId)
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return err

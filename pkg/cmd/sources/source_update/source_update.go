@@ -107,7 +107,7 @@ func sourceUpdateRun(opts *SourceUpdateOptions) {
 		return
 	}
 
-	source, err := APICalls.UpdateSource(opts.HttpClient(), cfg.Get().Token, opts.TeamId, opts.SourceId, opts.SourceName)
+	source, err := APICalls.UpdateSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId, opts.SourceName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return

@@ -77,7 +77,7 @@ func teamsCreateRun(opts *TeamCreateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Team name is required.\n", cs.FailureIcon())
 	}
 
-	team, err := createTeam(opts.HttpClient(), cfg.Get().Token, opts.TeamName)
+	team, err := createTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to create team.\n", cs.FailureIcon())
 	}
@@ -85,7 +85,7 @@ func teamsCreateRun(opts *TeamCreateOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s Team created successfully.\n%s %s %s %s\n", cs.SuccessIcon(), cs.IntermediateIcon(), team.Name, team.ID, team.Role)
 }
 
-func createTeam(client *http.Client, token, teamName string) (models.Team, error) {
+func createTeam(client *http.Client, token, endpoint string, teamName string) (models.Team, error) {
 	data := models.CreateTeamRequest{
 		Name: teamName,
 	}
@@ -95,7 +95,7 @@ func createTeam(client *http.Client, token, teamName string) (models.Team, error
 		return models.Team{}, err
 	}
 
-	url := "https://api.logfire.sh/api/team"
+	url := endpoint + "api/team"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {

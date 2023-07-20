@@ -27,7 +27,7 @@ type MemberListOptions struct {
 	TeamId      string
 }
 
-func NewListCmd(f *cmdutil.Factory) *cobra.Command {
+func NewMemberListCmd(f *cmdutil.Factory) *cobra.Command {
 	opts := &MemberListOptions{
 		IO:         f.IOStreams,
 		Prompter:   f.Prompter,
@@ -70,7 +70,7 @@ func listMembersRun(opts *MemberListOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	members, err := MembersList(opts.HttpClient(), cfg.Get().Token, opts.TeamId)
+	members, err := MembersList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	}
@@ -81,8 +81,8 @@ func listMembersRun(opts *MemberListOptions) {
 	}
 }
 
-func MembersList(client *http.Client, token, teamId string) (models.AllTMandTI, error) {
-	url := "https://api.logfire.sh/api/team/" + teamId + "/members"
+func MembersList(client *http.Client, token, endpoint string, teamId string) (models.AllTMandTI, error) {
+	url := endpoint + "api/team/" + teamId + "/members"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

@@ -125,7 +125,7 @@ func loginRun(opts *LoginOptions) {
 
 	opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.sh")
 
-	resp, err := PasswordSignin(opts.Email, opts.Password)
+	resp, err := PasswordSignin(opts.Email, opts.Password, cfg.Get().EndPoint)
 	opts.IO.StopProgressIndicator()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Signin Failed. %s\n", cs.FailureIcon(), err.Error())
@@ -136,7 +136,7 @@ func loginRun(opts *LoginOptions) {
 	fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(opts.Email))
 }
 
-func PasswordSignin(email, password string) (Response, error) {
+func PasswordSignin(email, password string, endpoint string) (Response, error) {
 	var response Response
 	signinReq := SigninRequest{
 		Email:      email,
@@ -149,7 +149,7 @@ func PasswordSignin(email, password string) (Response, error) {
 		return response, err
 	}
 
-	url := "https://api.logfire.sh/api/auth/signin"
+	url := endpoint + "api/auth/signin"
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return response, err
@@ -172,7 +172,7 @@ func PasswordSignin(email, password string) (Response, error) {
 	return response, nil
 }
 
-func TokenSignin(token string) (Response, error) {
+func TokenSignin(token string, endpoint string) (Response, error) {
 	var response Response
 
 	signinReq := SigninRequest{
@@ -186,7 +186,7 @@ func TokenSignin(token string) (Response, error) {
 		return response, err
 	}
 
-	url := "https://api.logfire.sh/api/auth/signin"
+	url := endpoint + "api/auth/signin"
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {

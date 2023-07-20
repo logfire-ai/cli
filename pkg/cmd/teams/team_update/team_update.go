@@ -61,6 +61,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			teamUpdateRun(opts)
 		},
 	}
+
 	cmd.Flags().StringVar(&opts.TeamName, "name", "", "new team name to be updated.")
 	cmd.Flags().StringVar(&opts.TeamID, "teamid", "", "Team id to be updated.")
 	return cmd
@@ -81,7 +82,7 @@ func teamUpdateRun(opts *TeamUpdateOptions) {
 		fmt.Fprint(opts.IO.ErrOut, "new name is required.\n", cs.FailureIcon())
 	}
 
-	resp, err := APICalls.UpdateTeam(opts.HttpClient(), cfg.Get().Token, opts.TeamID, opts.TeamName)
+	resp, err := APICalls.UpdateTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamID, opts.TeamName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to update team\n", cs.FailureIcon())
 	} else {
