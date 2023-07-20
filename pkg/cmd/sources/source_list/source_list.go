@@ -1,16 +1,13 @@
 package source_list
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -81,7 +78,7 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	}
 
-	sources, err := GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
+	sources, err := APICalls.GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
@@ -92,38 +89,4 @@ func sourceListRun(opts *SourceListOptions) {
 	for _, v := range sources {
 		fmt.Fprintf(opts.IO.Out, "%s %s %s %s\n", cs.IntermediateIcon(), v.Name, v.ID, v.Platform)
 	}
-}
-
-func GetAllSources(client *http.Client, token, endpoint string, teamId string) ([]models.Source, error) {
-	url := fmt.Sprintf(endpoint+"api/team/%s/source", teamId)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return []models.Source{}, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return []models.Source{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []models.Source{}, err
-	}
-
-	var sourceResp models.SourceResponse
-
-	err = json.Unmarshal(body, &sourceResp)
-	if err != nil {
-		return []models.Source{}, err
-	}
-
-	if !sourceResp.IsSuccessful {
-		return []models.Source{}, errors.New("Api error!")
-	}
-
-	return sourceResp.Data, nil
 }
