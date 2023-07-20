@@ -6,7 +6,8 @@ import (
 )
 
 type DeleteViewResponse struct {
-	IsSuccessful bool `json:"isSuccessful"`
+	IsSuccessful bool   `json:"isSuccessful"`
+	Message      string `json:"message,omitempty"`
 }
 
 type DateInterval struct {
