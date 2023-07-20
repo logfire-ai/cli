@@ -3,6 +3,10 @@ package root
 import (
 	"errors"
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmd/alerts"
+	"github.com/logfire-sh/cli/pkg/cmd/integrations"
+	"github.com/logfire-sh/cli/pkg/cmd/reset_password"
+	"github.com/logfire-sh/cli/pkg/cmd/views"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/pkg/cmd/login"
@@ -35,7 +39,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) && !cmdutil.CheckAuth(cfg) {
 				fmt.Fprint(io.ErrOut, authHelp())
-				return errors.New("authentication required.")
+				return errors.New("authentication required")
 			}
 			return nil
 		},
@@ -63,9 +67,13 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 
 	cmd.AddCommand(signup.NewSignupCmd(f))
 	cmd.AddCommand(login.NewLoginCmd(f))
+	cmd.AddCommand(reset_password.NewResetPasswordCmd(f))
 	cmd.AddCommand(logout.NewLogoutCmd(f))
 	cmd.AddCommand(sources.NewCmdSource(f))
 	cmd.AddCommand(teams.NewCmdTeam(f))
 	cmd.AddCommand(stream.NewCmdStream(f))
+	cmd.AddCommand(views.NewCmdViews(f))
+	cmd.AddCommand(alerts.NewCmdAlerts(f))
+	cmd.AddCommand(integrations.NewCmdIntegrations(f))
 	return cmd, nil
 }

@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"github.com/logfire-sh/cli/internal/config"
 	"time"
 
 	"github.com/logfire-sh/cli/livetail"
@@ -16,6 +17,8 @@ type UI struct {
 	token   string
 	teamId  string
 	logs    string
+
+	Config func() (config.Config, error)
 }
 
 type LivetailStatus struct {
@@ -56,6 +59,8 @@ func (u *UI) SetDisplayCapture() {
 		LivetailEnabled: false,
 	}
 
+	cfg, _ := u.Config()
+
 	u.display.input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEnter:
@@ -65,7 +70,7 @@ func (u *UI) SetDisplayCapture() {
 			case "start":
 				if !livetailStatus.LivetailEnabled {
 					u.display.view.SetTextAlign(tview.AlignLeft)
-					livetail, err := livetail.NewLivetail(u.token, u.teamId)
+					livetail, err := livetail.NewLivetail(u.token, u.teamId, cfg.Get().EndPoint)
 					if err != nil {
 						u.display.view.SetText(fmt.Sprintf("Errow while initiating livetail:\n%s", err.Error()))
 						return nil

@@ -87,7 +87,7 @@ func livetailRun(opts *LivetailOptions) {
 		return
 	}
 
-	sources, err := source_list.GetAllSources(opts.HttpClient(), cfg.Get().Token, opts.TeamId)
+	sources, err := source_list.GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return

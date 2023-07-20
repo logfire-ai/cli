@@ -74,7 +74,7 @@ func listRun(opts *TeamOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	teams, err := TeamsList(opts.HttpClient(), cfg.Get().Token)
+	teams, err := TeamsList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	}
@@ -84,8 +84,8 @@ func listRun(opts *TeamOptions) {
 	}
 }
 
-func TeamsList(client *http.Client, token string) ([]Team, error) {
-	url := "https://api.logfire.sh/api/team"
+func TeamsList(client *http.Client, token string, endpoint string) ([]Team, error) {
+	url := endpoint + "api/team"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

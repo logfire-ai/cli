@@ -77,7 +77,7 @@ func logoutRun(opts *LogoutOptions) {
 
 	user := cfg.Get().Username
 
-	err = logout(opts.HttpClient(), cfg.Get().Token, cfg.Get().RefreshToken)
+	err = logout(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().RefreshToken)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s.\n", cs.FailureIcon(), err.Error())
 		return
@@ -92,8 +92,8 @@ func logoutRun(opts *LogoutOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s User %s successfully logged out.\n", cs.SuccessIcon(), user)
 }
 
-func logout(client *http.Client, token string, refreshToken string) error {
-	url := "https://api.logfire.sh/api/auth/signout"
+func logout(client *http.Client, token string, endpoint string, refreshToken string) error {
+	url := endpoint + "api/auth/signout"
 
 	reqBody := map[string]string{
 		"AccessToken":  token,

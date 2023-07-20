@@ -81,7 +81,7 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	}
 
-	sources, err := GetAllSources(opts.HttpClient(), cfg.Get().Token, opts.TeamId)
+	sources, err := GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
@@ -94,8 +94,8 @@ func sourceListRun(opts *SourceListOptions) {
 	}
 }
 
-func GetAllSources(client *http.Client, token, teamId string) ([]models.Source, error) {
-	url := fmt.Sprintf("https://api.logfire.sh/api/team/%s/source", teamId)
+func GetAllSources(client *http.Client, token, endpoint string, teamId string) ([]models.Source, error) {
+	url := fmt.Sprintf(endpoint+"api/team/%s/source", teamId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return []models.Source{}, err

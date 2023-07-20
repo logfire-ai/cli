@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func UpdateSource(client *http.Client, token, teamid, sourceid, sourcename string) (models.Source, error) {
+func UpdateSource(client *http.Client, token, endpoint string, teamid, sourceid, sourcename string) (models.Source, error) {
 	data := models.SourceCreate{
 		Name: sourcename,
 	}
@@ -19,7 +19,7 @@ func UpdateSource(client *http.Client, token, teamid, sourceid, sourcename strin
 		return models.Source{}, err
 	}
 
-	req, err := http.NewRequest("PUT", "https://api.logfire.sh/api/team/"+teamid+"/source/"+sourceid, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("PUT", endpoint+"api/team/"+teamid+"/source/"+sourceid, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return models.Source{}, err
 	}

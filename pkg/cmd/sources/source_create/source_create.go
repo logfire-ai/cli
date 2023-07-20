@@ -244,7 +244,7 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s team-id, name and plaform are required.\n", cs.FailureIcon())
 		return
 	}
-	source, err := createSource(opts.HttpClient(), cfg.Get().Token, opts.TeamId, opts.SourceName, opts.Platform)
+	source, err := createSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceName, opts.Platform)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
@@ -254,7 +254,7 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s %s %s %s %s\n", cs.IntermediateIcon(), source.Name, source.ID, source.SourceToken, source.Platform)
 }
 
-func createSource(client *http.Client, token, teamId, sourceName, platform string) (models.Source, error) {
+func createSource(client *http.Client, token, endpoint string, teamId, sourceName, platform string) (models.Source, error) {
 
 	// platform should be mapped to its respective int as sourceType, for kubernetes its 1
 	sourceType, exists := platformMap[strings.ToLower(platform)]
@@ -272,7 +272,7 @@ func createSource(client *http.Client, token, teamId, sourceName, platform strin
 		return models.Source{}, err
 	}
 
-	url := "https://api.logfire.sh/api/team/" + teamId + "/source"
+	url := endpoint + "api/team/" + teamId + "/source"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return models.Source{}, err

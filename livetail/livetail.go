@@ -26,8 +26,8 @@ type Livetail struct {
 	sourcesOffset map[string]uint64
 }
 
-func NewLivetail(token, teamId string) (*Livetail, error) {
-	sources, err := getAllSourcesByTeamId(token, teamId)
+func NewLivetail(token, teamId string, endpoint string) (*Livetail, error) {
+	sources, err := getAllSourcesByTeamId(token, teamId, endpoint)
 	if err != nil {
 		return &Livetail{}, err
 	}
@@ -70,8 +70,8 @@ func showLogsWithColor(records []*pb.FilteredRecord) string {
 	return stream
 }
 
-func getAllSourcesByTeamId(token, teamId string) ([]models.Source, error) {
-	url := "https://api.logfire.sh/api/team/" + teamId + "/source"
+func getAllSourcesByTeamId(token, teamId string, endpoint string) ([]models.Source, error) {
+	url := endpoint + "api/team/" + teamId + "/source"
 
 	// Create a new HTTP client
 	client := &http.Client{}

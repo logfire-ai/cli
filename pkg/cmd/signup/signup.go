@@ -72,13 +72,13 @@ func signupRun(opts *SignupOptions) {
 		return
 	}
 
-	err = SignupFlow(email)
+	err = SignupFlow(email, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up %s\n", cs.FailureIcon(), err.Error())
 		return
 	}
 
-	fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your adress %s\n", cs.SuccessIcon(), cs.Bold(email))
+	fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
 
 	credentialToken, err := opts.Prompter.Input("Please paste the token in the email link here:", "")
 	if err != nil {
@@ -86,15 +86,19 @@ func signupRun(opts *SignupOptions) {
 		return
 	}
 
-	resp, err := login.TokenSignin(credentialToken)
+	resp, err := login.TokenSignin(credentialToken, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up with the token %s", cs.FailureIcon(), err.Error())
 		return
 	}
 
-	cfg.UpdateConfig(email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
+	err = cfg.UpdateConfig(email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
+	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error updating config %s", cs.FailureIcon(), err.Error())
+		return
+	}
 
-	err = OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token)
+	err = OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s %s", cs.FailureIcon(), err.Error())
 		return
@@ -103,7 +107,7 @@ func signupRun(opts *SignupOptions) {
 	fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
 }
 
-func SignupFlow(email string) error {
+func SignupFlow(email string, endpoint string) error {
 	signupReq := SignupRequest{
 		Email: email,
 	}
@@ -113,7 +117,7 @@ func SignupFlow(email string) error {
 		return err
 	}
 
-	url := "https://api.logfire.sh/api/auth/signup"
+	url := endpoint + "api/auth/signup"
 
 	transport := http.Transport{
 		IdleConnTimeout:   30 * time.Second,
@@ -140,7 +144,7 @@ func SignupFlow(email string) error {
 	return nil
 }
 
-func OnboardingFlow(IO *iostreams.IOStreams, prompt prompter.Prompter, profileID, authToken string) error {
+func OnboardingFlow(IO *iostreams.IOStreams, prompt prompter.Prompter, profileID, authToken string, endpoint string) error {
 	cs := IO.ColorScheme()
 
 	firstName, err := prompt.Input("Enter your first name:", "")
@@ -164,7 +168,7 @@ func OnboardingFlow(IO *iostreams.IOStreams, prompt prompter.Prompter, profileID
 		return err
 	}
 
-	url := "https://api.logfire.sh/api/profile/" + profileID + "/onboard"
+	url := endpoint + "api/profile/" + profileID + "/onboard"
 
 	client := &http.Client{}
 
@@ -219,7 +223,7 @@ func OnboardingFlow(IO *iostreams.IOStreams, prompt prompter.Prompter, profileID
 		return err
 	}
 
-	url = "https://api.logfire.sh/api/profile/" + profileID + "/set-password"
+	url = endpoint + "api/profile/" + profileID + "/set-password"
 
 	req, err = http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
