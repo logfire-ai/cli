@@ -1,23 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"os"
-	"strconv"
-	"strings"
-
 	surveyCore "github.com/AlecAivazis/survey/v2/core"
-	"github.com/logfire-sh/cli/gui"
-	"github.com/logfire-sh/cli/models"
 	"github.com/logfire-sh/cli/pkg/cmd/factory"
 	"github.com/logfire-sh/cli/pkg/cmd/root"
-	"github.com/logfire-sh/cli/sources"
 	"github.com/mgutz/ansi"
+	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type SignupRequest struct {
@@ -157,141 +148,4 @@ func main() {
 func isExtensionCommand(rootCmd *cobra.Command, args []string) bool {
 	c, _, err := rootCmd.Find(args)
 	return err == nil && c != nil && c.GroupID == "extension"
-}
-
-func sourceManage(cmd *cobra.Command, args []string) {
-
-	configFile := args[1]
-
-	viper.SetConfigFile(configFile)
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Printf("Failed to read configuration file: %v\n", err)
-		return
-	}
-
-	host := viper.GetString("host")
-	port := viper.GetInt("port")
-
-	switch subCmd := args[0]; subCmd {
-	case "list":
-		fmt.Println("Enter your Token:")
-		reader := bufio.NewReader(os.Stdin)
-		token, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your TeamId:")
-		reader = bufio.NewReader(os.Stdin)
-		teamId, _ := reader.ReadString('\n')
-		teamId = strings.TrimSuffix(teamId, "\n")
-
-		url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
-
-		url += teamId + "/source"
-
-		resp, err := sources.GetAllSources(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"), url)
-		if err == nil {
-			fmt.Printf("Source: %+v\n", resp)
-		}
-
-	case "create":
-		fmt.Println("Enter your Token:")
-		reader := bufio.NewReader(os.Stdin)
-		token, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your TeamId:")
-		reader = bufio.NewReader(os.Stdin)
-		teamId, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your Source Name:")
-		reader = bufio.NewReader(os.Stdin)
-		name, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your Source Type:")
-		reader = bufio.NewReader(os.Stdin)
-		sourceType, _ := reader.ReadString('\n')
-		num, err := strconv.Atoi(sourceType)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-
-		data := models.SourceCreate{
-			Name:       name,
-			SourceType: num,
-		}
-		url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
-		url += teamId + "/source"
-
-		resp, err := sources.CreateSources(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"), url, data)
-		if err == nil {
-			fmt.Printf("Source: %+v\n", resp)
-		}
-	case "delete":
-		fmt.Println("Enter your Token:")
-		reader := bufio.NewReader(os.Stdin)
-		token, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your TeamId:")
-		reader = bufio.NewReader(os.Stdin)
-		teamId, _ := reader.ReadString('\n')
-
-		fmt.Println("Enter your Source Name:")
-		reader = bufio.NewReader(os.Stdin)
-		id, _ := reader.ReadString('\n')
-
-		url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
-		url += teamId + "/source/" + id
-
-		resp, err := sources.DeleteSources(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"), url)
-		if err == nil {
-			fmt.Printf("Source: %+v\n", resp)
-		}
-	}
-
-}
-
-func livetailShow(cmd *cobra.Command, args []string) {
-
-	configFile := args[0]
-
-	viper.SetConfigFile(configFile)
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Printf("Failed to read configuration file: %v\n", err)
-		return
-	}
-
-	// host := viper.GetString("host")
-	// port := viper.GetInt("port")
-
-	fmt.Println("Enter your Token:")
-	reader := bufio.NewReader(os.Stdin)
-	token, _ := reader.ReadString('\n')
-	token = strings.TrimSuffix(token, "\n")
-	token = strings.TrimSuffix(token, "\r")
-
-	fmt.Println("Enter your TeamId:")
-	reader = bufio.NewReader(os.Stdin)
-	teamId, _ := reader.ReadString('\n')
-	teamId = strings.TrimSuffix(teamId, "\n")
-	teamId = strings.TrimSuffix(teamId, "\r")
-
-	ui := gui.NewUI(token, teamId)
-	if err := ui.Run(); err != nil {
-		log.Fatal(err)
-	}
-
-	// url := fmt.Sprintf("http://%s:%d/api/team/", host, port)
-
-	// url += teamId + "/source"
-
-	// err = livetail.ShowLivetail(strings.TrimSuffix(token, "\n"), strings.TrimSuffix(teamId, "\n"))
-	// if err == nil {
-	// 	fmt.Printf("LiveTail displayed\n")
-	// }
-
 }
