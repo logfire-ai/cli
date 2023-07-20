@@ -3,9 +3,8 @@ package gui
 import (
 	"fmt"
 	"github.com/logfire-sh/cli/internal/config"
-	"time"
-
 	"github.com/logfire-sh/cli/livetail"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
