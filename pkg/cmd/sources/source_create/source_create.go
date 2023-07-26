@@ -15,12 +15,6 @@ import (
 
 var platformOptions = make([]string, 0, len(models.PlatformMap))
 
-func platformMapToArray() {
-	for k := range models.PlatformMap {
-		platformOptions = append(platformOptions, k)
-	}
-}
-
 type SourceCreateOptions struct {
 	IO       *iostreams.IOStreams
 	Prompter prompter.Prompter
@@ -111,14 +105,11 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 			return
 		}
 
-		platformMapToArray()
-		intPlatform, err := opts.Prompter.Select("Enter Platform name:", "", platformOptions)
+		opts.Platform, err = opts.Prompter.Select("Enter Platform name:", "", platformOptions)
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Platform name\n", cs.FailureIcon())
 			return
 		}
-
-		opts.Platform = platformOptions[intPlatform]
 	}
 
 	if opts.TeamId == "" || opts.SourceName == "" || opts.Platform == "" {

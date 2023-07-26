@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -67,14 +68,27 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+	if opts.Interactive {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+		opts.AlertId, _ = pre_defined_prompters.AskAlertIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
-	if opts.AlertId == nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Alerts id is required.\n", cs.FailureIcon())
-		os.Exit(0)
+		if len(opts.AlertId) == 0 {
+			fmt.Fprintf(opts.IO.ErrOut, "%s No alerts to pause/unpause\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		opts.AlertPause, err = opts.Prompter.Confirm("Do you want to pause the alerts? (Yes = Pause, No = Un-pause", false)
+
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.AlertId == nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Alerts id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.PauseAlert(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId,

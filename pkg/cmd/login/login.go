@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -26,10 +28,9 @@ type LoginOptions struct {
 
 	Interactive bool
 
-	Email        string
-	Password     string
-	Token        string
-	RefreshToken string
+	Email    string
+	Password string
+	Token    string
 }
 
 func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
@@ -43,11 +44,11 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "login",
 		Args:  cobra.ExactArgs(0),
-		Short: "Login to logfire.sh",
+		Short: "Login to logfire.ai",
 		Long: heredoc.Docf(`
-			Login to logfire.sh using a password or token.
+			Login to logfire.ai using a password or token.
 
-			There are two ways to login to logfire.sh, using a password or by using the token
+			There are two ways to login to logfire.ai, using a password or by using the token
 			provided in the magic link. By default the cli will give a prompt to select from.
 
 			Alternatively, use %[1]s--with-token%[1]s to pass in a token on standard input.
@@ -57,10 +58,10 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 			# start interactive setup
 			$ logfire login
 
-			# authenticate against logfire.sh by reading the password from the prompt
+			# authenticate against logfire.ai by reading the password from the prompt
 			$ logfire login --email name@example.com --password asdf@1234
 
-			# authenticate against logfire.sh by reading the token from the prompt
+			# authenticate against logfire.ai by reading the token from the prompt
 			$ logfire login --email name@example.com --token myToken
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -68,28 +69,14 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			if opts.Password != "" && opts.Token != "" {
-				fmt.Fprint(opts.IO.ErrOut, "Please provide either password or token.\n")
-			}
-
-			if !opts.Interactive {
-				if opts.Email == "" {
-					fmt.Fprint(opts.IO.ErrOut, "Email is required\n")
-				}
-
-				if opts.Token == "" || opts.Password == "" {
-					fmt.Fprint(opts.IO.ErrOut, "Please provide either password or token for sign in.")
-				}
-			}
-
 			loginRun(opts)
 		},
 		GroupID: "core",
 	}
 
-	cmd.Flags().StringVar(&opts.Email, "email", "", "Email ID of the user.")
-	cmd.Flags().StringVar(&opts.Password, "password", "", "Password of the user.")
-	cmd.Flags().StringVar(&opts.Token, "token", "", "Single Sign in token of the user.")
+	cmd.Flags().StringVarP(&opts.Email, "email", "e", "", "Email ID of the user.")
+	cmd.Flags().StringVarP(&opts.Password, "password", "p", "", "Password of the user.")
+	cmd.Flags().StringVarP(&opts.Token, "token", "t", "", "Single Sign in token of the user.")
 	return cmd
 }
 
@@ -107,23 +94,58 @@ func loginRun(opts *LoginOptions) {
 		return
 	}
 
-	if opts.Email == "" {
-		email, err := opts.Prompter.Input("Enter your email:", "")
-		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
-			return
-		}
-		opts.Email = email
+	if opts.Token != "" && opts.Email == "" && opts.Password == "" {
+		opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
 
-		password, err := opts.Prompter.Password("Enter your password:")
+		signIn, err := TokenSignin(opts.IO, opts.Token, cfg.Get().EndPoint)
 		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read password\n", cs.FailureIcon())
-			return
+			os.Exit(0)
 		}
-		opts.Password = password
+
+		cfg.UpdateConfig(signIn.UserBody.Email, signIn.BearerToken.AccessToken, signIn.UserBody.ProfileID, signIn.BearerToken.RefreshToken)
+		fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(signIn.UserBody.Email))
+
+		os.Exit(0)
 	}
 
-	opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.sh")
+	if opts.Password != "" && opts.Token != "" {
+		fmt.Fprint(opts.IO.ErrOut, "Please provide either password or token\n")
+	}
+
+	if !opts.Interactive {
+		if opts.Token == "" && opts.Email == "" && opts.Password == "" {
+			fmt.Fprint(opts.IO.ErrOut, "Please provide either email and password or token\n")
+		}
+
+		if opts.Email == "" {
+			fmt.Fprint(opts.IO.ErrOut, "Email is required\n")
+		}
+
+		if opts.Password == "" {
+			fmt.Fprint(opts.IO.ErrOut, "Please provide either password")
+		}
+
+	}
+
+	if opts.Interactive && opts.Token == "" {
+		if opts.Email == "" {
+			email, err := opts.Prompter.Input("Enter your email:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
+				return
+			}
+			opts.Email = email
+
+			password, err := opts.Prompter.Password("Enter your password:")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read password\n", cs.FailureIcon())
+				return
+			}
+			opts.Password = password
+		}
+	}
+
+	opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
 
 	resp, err := PasswordSignin(opts.Email, opts.Password, cfg.Get().EndPoint)
 	opts.IO.StopProgressIndicator()
@@ -132,7 +154,7 @@ func loginRun(opts *LoginOptions) {
 		return
 	}
 
-	cfg.UpdateConfig(opts.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
+	cfg.UpdateConfig(resp.UserBody.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
 	fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(opts.Email))
 }
 
@@ -172,7 +194,7 @@ func PasswordSignin(email, password string, endpoint string) (Response, error) {
 	return response, nil
 }
 
-func TokenSignin(token string, endpoint string) (Response, error) {
+func TokenSignin(IO *iostreams.IOStreams, token string, endpoint string) (Response, error) {
 	var response Response
 
 	signinReq := SigninRequest{
@@ -193,15 +215,14 @@ func TokenSignin(token string, endpoint string) (Response, error) {
 		fmt.Printf("Failed to send POST request: %v\n", err)
 		return response, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("Sign-in successful!")
-	} else {
-		fmt.Printf("Sign-in failed with status code: %d\n", resp.StatusCode)
-	}
+		}
+	}(resp.Body)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Failed to read response body: %v\n", err)
 		return response, err
@@ -211,6 +232,13 @@ func TokenSignin(token string, endpoint string) (Response, error) {
 	if err != nil {
 		fmt.Printf("Failed to unmarshal JSON: %v\n", err)
 		return response, err
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		fmt.Printf("%s Sign-in successful!", IO.ColorScheme().SuccessIcon())
+	} else {
+		fmt.Printf("\nSign-in failed with status code: %d\n", resp.StatusCode)
+		return response, errors.New("sign-in failed")
 	}
 
 	return response, nil

@@ -1,8 +1,10 @@
 package prompter
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -11,9 +13,10 @@ import (
 
 //go:generate moq -rm -out prompter_mock.go . Prompter
 type Prompter interface {
-	Select(string, string, []string) (int, error)
-	MultiSelect(string, []string, []string) ([]int, error)
+	Select(string, string, []string) (string, error)
+	MultiSelect(string, []string, []string) ([]string, error)
 	Input(string, string) (string, error)
+	InputInt(string, int) (int, error)
 	Password(string) (string, error)
 	AuthToken() (string, error)
 	Confirm(string, bool) (bool, error)
@@ -56,7 +59,7 @@ func LatinMatchingFilter(filter, value string, index int) bool {
 	return strings.Contains(value, filter) || strings.Contains(text.RemoveDiacritics(value), filter)
 }
 
-func (p *surveyPrompter) Select(message, defaultValue string, options []string) (result int, err error) {
+func (p *surveyPrompter) Select(message, defaultValue string, options []string) (result string, err error) {
 	q := &survey.Select{
 		Message:  message,
 		Options:  options,
@@ -76,10 +79,28 @@ func (p *surveyPrompter) Select(message, defaultValue string, options []string) 
 	}
 
 	err = p.ask(q, &result)
-	return
+
+	// return the selected element
+	for i, option := range options {
+		if result == option {
+			return options[i], nil
+		}
+	}
+
+	return "", errors.New("bad input")
 }
 
-func (p *surveyPrompter) MultiSelect(message string, defaultValues, options []string) (result []int, err error) {
+// CheckIfInSlice checks if a string is in a slice
+func CheckIfInSlice(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *surveyPrompter) MultiSelect(message string, defaultValues, options []string) (result []string, err error) {
 	q := &survey.MultiSelect{
 		Message:  message,
 		Options:  options,
@@ -101,7 +122,7 @@ func (p *surveyPrompter) MultiSelect(message string, defaultValues, options []st
 
 	err = p.ask(q, &result)
 
-	return
+	return result, nil
 }
 
 func (p *surveyPrompter) ask(q survey.Prompt, response interface{}, opts ...survey.AskOpt) error {
@@ -117,6 +138,15 @@ func (p *surveyPrompter) Input(prompt, defaultValue string) (result string, err 
 	err = p.ask(&survey.Input{
 		Message: prompt,
 		Default: defaultValue,
+	}, &result)
+
+	return
+}
+
+func (p *surveyPrompter) InputInt(prompt string, defaultValue int) (result int, err error) {
+	err = p.ask(&survey.Input{
+		Message: prompt,
+		Default: strconv.Itoa(defaultValue),
 	}, &result)
 
 	return

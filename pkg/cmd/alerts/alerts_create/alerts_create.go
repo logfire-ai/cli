@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -63,7 +64,7 @@ func NewCreateAlertCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.ViewId, "view-id", "v", "", "View id for which alert is to be created.")
 	cmd.Flags().Uint32VarP(&opts.NumberOfRecords, "number-of-records", "r", 0, "number of records at when alerts should be triggered.")
 	cmd.Flags().Uint32VarP(&opts.WithinSeconds, "within-seconds", "w", 0, "Time range where number of records should occur for alerts to be triggered.")
-	cmd.Flags().StringSliceVarP(&opts.IntegrationsId, "integrations-id", "i", nil, "integration to be alerted. (multiple integrations are allowed")
+	cmd.Flags().StringSliceVarP(&opts.IntegrationsId, "integrations-id", "i", nil, "integration to be alerted. (multiple integrations are allowed)")
 	return cmd
 }
 
@@ -74,34 +75,65 @@ func CreateAlertRun(opts *CreateAlertOption) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+	if opts.Interactive {
+		if opts.TeamId == "" && opts.Name == "" && opts.ViewId == "" && opts.NumberOfRecords == 0 && opts.WithinSeconds == 0 && opts.IntegrationsId == nil {
+			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-	if opts.Name == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Name is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+			opts.Name, err = opts.Prompter.Input("Enter a name for the alert:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+				return
+			}
 
-	if opts.ViewId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s View id is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+			opts.ViewId, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
-	if opts.NumberOfRecords == 0 {
-		fmt.Fprintf(opts.IO.ErrOut, "%s NumberOfRecords is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+			nor, err := opts.Prompter.InputInt("Enter a Number at when alerts should be triggered.", 0)
+			opts.NumberOfRecords = uint32(nor)
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Number Of Records\n", cs.FailureIcon())
+				return
+			}
 
-	if opts.WithinSeconds == 0 {
-		fmt.Fprintf(opts.IO.ErrOut, "%s WithinSeconds is required.\n", cs.FailureIcon())
-		os.Exit(0)
-	}
+			ws, err := opts.Prompter.InputInt("Time range where number of records should occur for alerts to be triggered.", 0)
+			opts.WithinSeconds = uint32(ws)
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Within Seconds\n", cs.FailureIcon())
+				return
+			}
 
-	if opts.IntegrationsId == nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Integrations id is required.\n", cs.FailureIcon())
-		os.Exit(0)
+			opts.IntegrationsId, _ = pre_defined_prompters.AskAlertIntegrationIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		}
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.Name == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Name is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.ViewId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s View id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.NumberOfRecords == 0 {
+			fmt.Fprintf(opts.IO.ErrOut, "%s NumberOfRecords is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.WithinSeconds == 0 {
+			fmt.Fprintf(opts.IO.ErrOut, "%s WithinSeconds is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.IntegrationsId == nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Integrations id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.CreateAlert(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId,

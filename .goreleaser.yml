@@ -122,7 +122,7 @@ scoops:
     commit_author:
       name: logfire-sh
     commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
-    homepage: "https://logfire.sh/"
+    homepage: "https://logfire.ai/"
     description: "Logfire command line interface."
     skip_upload: false
     depends: ["git"]

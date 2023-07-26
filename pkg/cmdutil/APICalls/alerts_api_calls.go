@@ -14,7 +14,7 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 
 	integrationsList, err := GetAlertIntegrations(client, token, endpoint, teamId)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	var integrationParsed []models.AlertIntegrationBody
@@ -149,6 +149,8 @@ func DeleteAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 
+	println(DeleteAlertResp.IsSuccessful)
+
 	if !DeleteAlertResp.IsSuccessful {
 		return errors.New("failed to delete alerts")
 	}
@@ -258,11 +260,13 @@ func UpdateAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 
-	var CreateAlertResp models.CreateAlertResponse
+	var CreateAlertResp models.UpdateAlertResponse
 	err = json.Unmarshal(body, &CreateAlertResp)
 	if err != nil {
 		return err
 	}
+
+	println(req.URL.Path)
 
 	if !CreateAlertResp.IsSuccessful {
 		return errors.New("failed to update alert")

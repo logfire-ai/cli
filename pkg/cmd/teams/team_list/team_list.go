@@ -1,10 +1,8 @@
 package team_list
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
@@ -55,18 +53,6 @@ func NewListCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-type Team struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Role string `json:"role"`
-}
-
-type AllTeamResponse struct {
-	IsSuccessful bool     `json:"isSuccessful"`
-	Message      []string `json:"message,omitempty"`
-	Data         []Team   `json:"data,omitempty"`
-}
-
 func listRun(opts *TeamOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
@@ -74,7 +60,7 @@ func listRun(opts *TeamOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	teams, err := TeamsList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint)
+	teams, err := APICalls.ListTeams(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	}
@@ -82,42 +68,4 @@ func listRun(opts *TeamOptions) {
 	for _, v := range teams {
 		fmt.Fprintf(opts.IO.Out, "%s %s\n", v.Name, v.ID)
 	}
-}
-
-func TeamsList(client *http.Client, token string, endpoint string) ([]Team, error) {
-	url := endpoint + "api/team"
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return []Team{}, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return []Team{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return []Team{}, err
-	}
-
-	var response AllTeamResponse
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []Team{}, err
-	}
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return []Team{}, err
-	}
-
-	if !response.IsSuccessful {
-		return []Team{}, errors.New("api error")
-	}
-
-	return response.Data, nil
 }

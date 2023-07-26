@@ -18,6 +18,7 @@ type AuthConfig struct {
 }
 
 type Config interface {
+	UpdateEndpoint(string) error
 	UpdateConfig(string, string, string, string) error
 	DeleteConfig() error
 	HasEnvToken() bool
@@ -40,7 +41,7 @@ func NewConfig() (Config, error) {
 	viper.SetDefault("username", "")
 	viper.SetDefault("token", "")
 	viper.SetDefault("profile_id", "")
-	viper.SetDefault("endpoint", "https://api.logfire.sh/")
+	viper.SetDefault("endpoint", "https://api.logfire.ai/")
 
 	// Check if the config file exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
@@ -76,7 +77,6 @@ func (c *cfg) UpdateConfig(username, token, profileID string, refreshToken strin
 	viper.Set("profile_id", profileID)
 	viper.Set("refresh_token", refreshToken)
 
-	// Write the updated configuration to the file
 	if err := viper.WriteConfig(); err != nil {
 		return err
 	}
@@ -85,6 +85,17 @@ func (c *cfg) UpdateConfig(username, token, profileID string, refreshToken strin
 	c.AuthCfg.Token = token
 	c.AuthCfg.ProfileID = profileID
 	c.AuthCfg.RefreshToken = refreshToken
+	return nil
+}
+
+func (c *cfg) UpdateEndpoint(endpoint string) error {
+	viper.Set("endpoint", endpoint)
+
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+
+	c.AuthCfg.EndPoint = endpoint
 	return nil
 }
 

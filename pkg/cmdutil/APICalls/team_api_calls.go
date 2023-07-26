@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"io"
 	"net/http"
@@ -39,8 +38,7 @@ func DeleteTeam(client *http.Client, token string, endpoint string, teamID strin
 	}
 
 	if !teamDeleteResp.IsSuccessful {
-		fmt.Print(teamDeleteResp)
-		return errors.New("failed to delete team")
+		return errors.New(teamDeleteResp.Message[0])
 	}
 
 	return nil
@@ -86,8 +84,46 @@ func UpdateTeam(client *http.Client, token string, endpoint string, teamID strin
 	}
 
 	if !teamUpdateResp.IsSuccessful {
-		return teamUpdateResp.Data, errors.New("failed to update team")
+		return teamUpdateResp.Data, errors.New(teamUpdateResp.Message[0])
 	}
 
 	return teamUpdateResp.Data, nil
+}
+
+func ListTeams(client *http.Client, token string, endpoint string) ([]models.Team, error) {
+	url := endpoint + "api/team"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return []models.Team{}, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return []models.Team{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return []models.Team{}, err
+	}
+
+	var response models.AllTeamResponse
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return []models.Team{}, err
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return []models.Team{}, err
+	}
+
+	if !response.IsSuccessful {
+		return []models.Team{}, errors.New(response.Message[0])
+	}
+
+	return response.Data, nil
 }
