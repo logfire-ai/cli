@@ -16,6 +16,12 @@ type Team struct {
 	Role string `json:"role"`
 }
 
+type AllTeamResponse struct {
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message,omitempty"`
+	Data         []Team   `json:"data,omitempty"`
+}
+
 type CreateTeamResponse struct {
 	IsSuccessful bool     `json:"isSuccessful"`
 	Data         Team     `json:"data,omitempty"`

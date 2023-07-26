@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -75,14 +76,47 @@ func UpdateMemberRun(opts *AlertUpdateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamId == "" {
-		fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
-		os.Exit(0)
-	}
+	if opts.Interactive {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-	if opts.AlertId == "" {
-		fmt.Fprint(opts.IO.ErrOut, "Alert-id is required.")
-		os.Exit(0)
+		opts.AlertId, _ = pre_defined_prompters.AskAlertId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		updateName, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the alert name?"), false)
+		if updateName {
+			opts.Name, _ = opts.Prompter.Input("Enter a new name for the alert:", "")
+		}
+
+		updateView, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the view?"), false)
+		if updateView {
+			opts.ViewId, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+		}
+
+		updateNOR, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the number of records?"), false)
+		if updateNOR {
+			nor, _ := opts.Prompter.InputInt("number of records at when alerts should be triggered.", 0)
+			opts.NumberOfRecords = uint32(nor)
+		}
+
+		updateWS, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the Within-Seconds?"), false)
+		if updateWS {
+			ws, _ := opts.Prompter.InputInt("Time range where number of records should occur for alerts to be triggered.", 0)
+			opts.WithinSeconds = uint32(ws)
+		}
+
+		updateIntegrations, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the integrations?"), false)
+		if updateIntegrations {
+			opts.IntegrationsId, _ = pre_defined_prompters.AskAlertIntegrationIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+		}
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
+			os.Exit(0)
+		}
+
+		if opts.AlertId == "" {
+			fmt.Fprint(opts.IO.ErrOut, "Alert-id is required.")
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.UpdateAlert(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId,

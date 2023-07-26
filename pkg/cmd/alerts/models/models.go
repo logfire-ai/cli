@@ -5,7 +5,8 @@ type DeleteAlertRequest struct {
 }
 
 type DeleteAlertResponse struct {
-	IsSuccessful bool `json:"isSuccessful"`
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message,omitempty"`
 }
 
 type AlertIntegrationBody struct {
@@ -18,6 +19,7 @@ type AlertIntegrationBody struct {
 
 type ListAlertIntegrationsResponse struct {
 	IsSuccessful bool                   `json:"isSuccessful"`
+	Message      []string               `json:"message,omitempty"`
 	Data         []AlertIntegrationBody `json:"data,omitempty"`
 }
 
@@ -53,6 +55,11 @@ type CreateAlertBody struct {
 type CreateAlertResponse struct {
 	IsSuccessful bool            `json:"isSuccessful"`
 	Data         CreateAlertBody `json:"data,omitempty"`
+}
+
+type UpdateAlertResponse struct {
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message,omitempty"`
 }
 
 type ListAlertsResponse struct {

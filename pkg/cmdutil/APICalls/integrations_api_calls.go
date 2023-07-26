@@ -40,8 +40,10 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 		return []AlertModels.AlertIntegrationBody{}, err
 	}
 
+	println(ListAlertIntegrationsResp.Message[0])
+
 	if !ListAlertIntegrationsResp.IsSuccessful {
-		return []AlertModels.AlertIntegrationBody{}, errors.New("failed to get alert integrations")
+		return []AlertModels.AlertIntegrationBody{}, errors.New(ListAlertIntegrationsResp.Message[0])
 	}
 
 	return ListAlertIntegrationsResp.Data, err
@@ -84,8 +86,6 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 
-	println(string(body))
-
 	var CreateIntegrationResp IntegrationModels.CreateIntegrationResponse
 	err = json.Unmarshal(body, &CreateIntegrationResp)
 	if err != nil {
@@ -93,7 +93,7 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 	}
 
 	if !CreateIntegrationResp.IsSuccessful {
-		return errors.New("failed to create integration")
+		return errors.New(CreateIntegrationResp.Message[0])
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func GetIntegrationsList(client *http.Client, token string, endpoint string, tea
 	}
 
 	if !ListAlertIntegrationsResp.IsSuccessful {
-		return []IntegrationModels.IntegrationBody{}, errors.New("failed to get integrations")
+		return []IntegrationModels.IntegrationBody{}, errors.New(ListAlertIntegrationsResp.Message[0])
 	}
 
 	return ListAlertIntegrationsResp.Data, err
@@ -174,12 +174,11 @@ func DeleteIntegration(client *http.Client, token string, endpoint string, teamI
 	return nil
 }
 
-func UpdateIntegration(client *http.Client, token string, endpoint string, teamId string, integrationId, name, description, Id string) error {
+func UpdateIntegration(client *http.Client, token string, endpoint string, teamId string, integrationId, name, description string) error {
 
 	data := IntegrationModels.UpdateIntegrationRequest{
 		Name:        name,
 		Description: description,
-		Id:          Id,
 	}
 
 	reqBody, err := json.Marshal(data)
@@ -209,8 +208,6 @@ func UpdateIntegration(client *http.Client, token string, endpoint string, teamI
 	if err != nil {
 		return err
 	}
-
-	println(string(body))
 
 	var CreateIntegrationResp IntegrationModels.UpdateIntegrationResponse
 	err = json.Unmarshal(body, &CreateIntegrationResp)

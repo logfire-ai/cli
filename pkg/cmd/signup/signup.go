@@ -1,20 +1,17 @@
 package signup
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/login"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
+	"net/http"
+	"os"
 )
 
 type SignupOptions struct {
@@ -25,6 +22,11 @@ type SignupOptions struct {
 	Config     func() (config.Config, error)
 
 	Interactive bool
+
+	Email           string
+	credentialToken string
+	FirstName       string
+	LastName        string
 }
 
 func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
@@ -38,13 +40,18 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "signup",
 		Args:  cobra.ExactArgs(0),
-		Short: "Signup to logfire.sh",
+		Short: "Signup to logfire",
 		Long: heredoc.Docf(`
-			Signup to logfire.sh to create a new account.
+			Signup to logfire to create a new account.
 		`, "`"),
 		Example: heredoc.Doc(`
+			# start normal setup
+			$ logfire signup --email <email>
+			$ logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>
+
+
 			# start interactive setup
-			$ logfire auth signup
+			$ logfire signup
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -54,6 +61,11 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 		GroupID: "core",
 	}
+
+	cmd.Flags().StringVarP(&opts.Email, "email", "e", "", "Email address")
+	cmd.Flags().StringVarP(&opts.credentialToken, "token", "t", "", "Token received on email")
+	cmd.Flags().StringVarP(&opts.FirstName, "first-name", "f", "", "First name")
+	cmd.Flags().StringVarP(&opts.LastName, "last-name", "l", "", "Last name")
 
 	return cmd
 }
@@ -66,180 +78,107 @@ func signupRun(opts *SignupOptions) {
 		return
 	}
 
-	email, err := opts.Prompter.Input("Enter your email:", "")
-	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
+	var email string
+	var interactive bool
+
+	if opts.Email == "" && opts.credentialToken != "" && !interactive {
+		err = OnboardingRun(opts)
+		if err != nil {
+			return
+		}
+
+		fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
+		fmt.Fprintf(opts.IO.Out, "%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+
+		os.Exit(0)
+	}
+
+	if opts.Interactive && opts.Email == "" {
+		interactive = true
+		opts.Email, err = opts.Prompter.Input("Enter your email:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
+			return
+		}
+	}
+
+	if !opts.Interactive && opts.Email == "" {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Email address is required\n", cs.FailureIcon())
 		return
 	}
 
-	err = SignupFlow(email, cfg.Get().EndPoint)
+	err = APICalls.SignupFlow(opts.Email, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up %s\n", cs.FailureIcon(), err.Error())
 		return
 	}
 
-	fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
-
-	credentialToken, err := opts.Prompter.Input("Please paste the token in the email link here:", "")
-	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Unable to read token %s\n", cs.SuccessIcon(), cs.Bold(credentialToken))
-		return
+	if interactive {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
+		fmt.Fprintf(opts.IO.ErrOut, "Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>\""))
 	}
 
-	resp, err := login.TokenSignin(credentialToken, cfg.Get().EndPoint)
+	if interactive {
+		err = OnboardingRun(opts)
+		if err != nil {
+			return
+		}
+
+		fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
+		fmt.Fprintf(opts.IO.Out, "%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+	}
+}
+
+func OnboardingRun(opts *SignupOptions) error {
+	cs := opts.IO.ColorScheme()
+	cfg, err := opts.Config()
+
+	if opts.credentialToken == "" {
+		opts.credentialToken, err = opts.Prompter.Input("Please paste the token in the email link here:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Unable to read token %s\n", cs.SuccessIcon(), cs.Bold(opts.credentialToken))
+			return err
+		}
+	}
+
+	resp, err := login.TokenSignin(opts.IO, opts.credentialToken, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up with the token %s", cs.FailureIcon(), err.Error())
-		return
+		return err
 	}
 
-	err = cfg.UpdateConfig(email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
+	err = cfg.UpdateConfig(resp.UserBody.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error updating config %s", cs.FailureIcon(), err.Error())
-		return
+		return err
 	}
 
-	err = OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token, cfg.Get().EndPoint)
+	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+		return err
+	}
+
+	if opts.FirstName == "" {
+		opts.FirstName, err = opts.Prompter.Input("Enter your first name:", "")
+		if err != nil {
+			return err
+		}
+
+		if opts.LastName == "" {
+			opts.LastName, err = opts.Prompter.Input("Enter your last name:", "")
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err = APICalls.OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s %s", cs.FailureIcon(), err.Error())
-		return
-	}
-
-	fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
-}
-
-func SignupFlow(email string, endpoint string) error {
-	signupReq := SignupRequest{
-		Email: email,
-	}
-
-	reqBody, err := json.Marshal(signupReq)
-	if err != nil {
 		return err
 	}
 
-	url := endpoint + "api/auth/signup"
-
-	transport := http.Transport{
-		IdleConnTimeout:   30 * time.Second,
-		MaxIdleConns:      100,
-		MaxConnsPerHost:   0,
-		DisableKeepAlives: false,
-	}
-
-	client := http.Client{
-		Transport: &transport,
-		Timeout:   10 * time.Second,
-	}
-
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return err
-	}
-
-	return nil
-}
-
-func OnboardingFlow(IO *iostreams.IOStreams, prompt prompter.Prompter, profileID, authToken string, endpoint string) error {
-	cs := IO.ColorScheme()
-
-	firstName, err := prompt.Input("Enter your first name:", "")
-	if err != nil {
-		return err
-	}
-
-	lastName, err := prompt.Input("Enter your last name:", "")
-	if err != nil {
-		return err
-	}
-
-	onboardReq := OnboardRequest{
-		FirstName: firstName,
-		LastName:  lastName,
-	}
-
-	reqBody, err := json.Marshal(onboardReq)
-	if err != nil {
-		fmt.Printf("Failed to marshal request body: %v\n", err)
-		return err
-	}
-
-	url := endpoint + "api/profile/" + profileID + "/onboard"
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+authToken)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusAccepted {
-		return errors.New("unable to process the request")
-	}
-
-	var password string
-	var isConfirmed bool
-
-	for i := 0; i < 3; i++ {
-		password, err = prompt.Password("Enter the password you want to set:")
-		if err != nil {
-			return err
-		}
-
-		confirmPassword, err := prompt.Password("Confirm password:")
-		if err != nil {
-			return err
-		}
-
-		if password == confirmPassword {
-			isConfirmed = true
-			break
-		}
-
-		fmt.Fprintf(IO.ErrOut, "%s passwords do not match. please try again\n", cs.FailureIcon())
-	}
-
-	if !isConfirmed {
-		return errors.New("maximum number of attempts exceeded")
-	}
-
-	pwdReq := SetPassword{
-		Password: password,
-	}
-
-	reqBody, err = json.Marshal(pwdReq)
-	if err != nil {
-		return err
-	}
-
-	url = endpoint + "api/profile/" + profileID + "/set-password"
-
-	req, err = http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+authToken)
-	resp, err = client.Do(req)
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusAccepted {
-		return errors.New("unable to set password, please try again later")
-	}
 	return nil
 }

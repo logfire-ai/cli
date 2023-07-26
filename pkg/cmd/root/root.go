@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/logfire-sh/cli/pkg/cmd/alerts"
+	"github.com/logfire-sh/cli/pkg/cmd/check_endpoint"
 	"github.com/logfire-sh/cli/pkg/cmd/integrations"
 	"github.com/logfire-sh/cli/pkg/cmd/reset_password"
 	"github.com/logfire-sh/cli/pkg/cmd/sql"
@@ -30,7 +31,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "logfire <command> <subcommand> [flags]",
 		Short: "Logfire CLI",
-		Long:  `Work seamlessly with logfire.sh log management system from the command line.`,
+		Long:  `Work seamlessly with logfire log management system from the command line.`,
 		Example: heredoc.Doc(`
 			$ logfire login
 			$ logfire stream livetail
@@ -77,5 +78,6 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(alerts.NewCmdAlerts(f))
 	cmd.AddCommand(integrations.NewCmdIntegrations(f))
 	cmd.AddCommand(sql.NewCmdSql(f))
+	cmd.AddCommand(check_endpoint.NewCheckEndpointCmd(f))
 	return cmd, nil
 }

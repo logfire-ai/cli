@@ -15,8 +15,8 @@ type CreateIntegrationRequest struct {
 }
 
 type CreateIntegrationResponse struct {
-	IsSuccessful bool   `json:"is_successful" validate:"required"`
-	Message      string `json:"message,omitempty"`
+	IsSuccessful bool     `json:"is_successful" validate:"required"`
+	Message      []string `json:"message,omitempty"`
 }
 
 type IntegrationBody struct {
@@ -30,6 +30,7 @@ type IntegrationBody struct {
 type ListIntegrationResponse struct {
 	IsSuccessful bool              `json:"isSuccessful" validate:"required"`
 	Data         []IntegrationBody `json:"data"`
+	Message      []string          `json:"message,omitempty"`
 }
 
 type DeleteIntegrationResponse struct {
@@ -40,10 +41,10 @@ type DeleteIntegrationResponse struct {
 type UpdateIntegrationRequest struct {
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
-	Id          string `json:"emailAddress,omitempty"`
 }
 
 type UpdateIntegrationResponse struct {
 	IsSuccessful bool            `json:"isSuccessful" validate:"required"`
 	Data         IntegrationBody `json:"data"`
+	Message      []string        `json:"message,omitempty"`
 }

@@ -38,9 +38,9 @@ func NewLogoutCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "logout",
 		Args:  cobra.ExactArgs(0),
-		Short: "Logout from logfire.sh.",
+		Short: "Logout from logfire.ai.",
 		Long: heredoc.Docf(`
-			Logout from your current account of logfire.sh.
+			Logout from your current account of logfire.ai.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
