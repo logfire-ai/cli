@@ -7,9 +7,11 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
+	"os"
 )
 
 type ViewsDeleteOptions struct {
@@ -20,8 +22,8 @@ type ViewsDeleteOptions struct {
 	Config     func() (config.Config, error)
 
 	Interactive bool
-	TeamID      string
-	ViewID      string
+	TeamId      string
+	ViewId      string
 }
 
 func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
@@ -53,8 +55,8 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			viewDeleteRun(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.TeamID, "team-id", "", "Team id to be deleted.")
-	cmd.Flags().StringVar(&opts.ViewID, "view-id", "", "View id to be deleted.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team id to be deleted.")
+	cmd.Flags().StringVar(&opts.ViewId, "view-id", "", "View id to be deleted.")
 	return cmd
 }
 
@@ -65,15 +67,22 @@ func viewDeleteRun(opts *ViewsDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamID == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+	if opts.Interactive {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		opts.ViewId, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.ViewId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s View id is required.\n", cs.FailureIcon())
+		}
 	}
 
-	if opts.ViewID == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s View id is required.\n", cs.FailureIcon())
-	}
-
-	err = APICalls.DeleteView(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamID, opts.ViewID)
+	err = APICalls.DeleteView(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.ViewId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to delete view\n", cs.FailureIcon())
 	} else {

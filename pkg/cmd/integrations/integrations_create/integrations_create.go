@@ -79,26 +79,24 @@ func CreateIntegrationRun(opts *CreateIntegrationOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.Interactive {
-		if opts.TeamId == "" && opts.Name == "" && opts.Description == "" && opts.IntegrationType == "" && opts.Id == "" {
-			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+	if opts.Interactive && opts.TeamId == "" && opts.Name == "" && opts.Description == "" && opts.IntegrationType == "" && opts.Id == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-			opts.Name, err = opts.Prompter.Input("Enter a name for the alert:", "")
-			if err != nil {
-				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
-				return
-			}
-
-			opts.Description, err = opts.Prompter.Input("Enter a Description for the alert:", "")
-			if err != nil {
-				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
-				return
-			}
-
-			opts.IntegrationType, err = opts.Prompter.Select("Select a type of the Integration:", "", IntegrationOptions)
-
-			opts.Id, err = opts.Prompter.Input("Enter ID of the Integration", "")
+		opts.Name, err = opts.Prompter.Input("Enter a name for the alert:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+			return
 		}
+
+		opts.Description, err = opts.Prompter.Input("Enter a Description for the alert:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+			return
+		}
+
+		opts.IntegrationType, err = opts.Prompter.Select("Select a type of the Integration:", "", IntegrationOptions)
+
+		opts.Id, err = opts.Prompter.Input("Enter ID of the Integration", "")
 	} else {
 		if opts.TeamId == "" {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())

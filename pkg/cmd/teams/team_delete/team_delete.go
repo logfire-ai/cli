@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -20,7 +21,7 @@ type TeamDeleteOptions struct {
 	Config     func() (config.Config, error)
 
 	Interactive bool
-	TeamID      string
+	TeamId      string
 }
 
 func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
@@ -49,14 +50,14 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			if !opts.Interactive && opts.TeamID == "" {
+			if !opts.Interactive && opts.TeamId == "" {
 				fmt.Fprint(opts.IO.ErrOut, "team id is required.\n")
 			}
 
 			teamDeleteRun(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.TeamID, "teamid", "", "Team id to be deleted.")
+	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id to be deleted.")
 	return cmd
 }
 
@@ -67,11 +68,15 @@ func teamDeleteRun(opts *TeamDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamID == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+		}
 	}
 
-	err = APICalls.DeleteTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamID)
+	err = APICalls.DeleteTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to delete team\n", cs.FailureIcon())
 	} else {

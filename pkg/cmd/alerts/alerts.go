@@ -27,7 +27,7 @@ type PromptAlertOptions struct {
 	Choice      string
 }
 
-var choices = []string{"create", "list", "delete", "pause", "update"}
+var choices = []string{"Create", "List", "Delete", "Pause", "Update"}
 
 func NewCmdAlerts(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptAlertOptions{

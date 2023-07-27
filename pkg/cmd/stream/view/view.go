@@ -212,7 +212,7 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source, opts *V
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source, opts *ViewStreamOptions) (*pb.FilteredRecords, error) {
-	grpc_url := "api.logfire.ai:443"
+	grpc_url := "api-stg.logfire.ai:443"
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)

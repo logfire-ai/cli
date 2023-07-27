@@ -44,8 +44,8 @@ type AllTMandTI struct {
 type TeamMemberRes struct {
 	TeamMember
 	// Name string `json:"name"`
-	FirstName *string `json:"firstName,omitempty"`
-	LastName  *string `json:"lastName,omitempty"`
+	FirstName string `json:"firstName,omitempty"`
+	LastName  string `json:"lastName,omitempty"`
 }
 
 type RemoveMemberReq struct {
@@ -63,8 +63,8 @@ type UpdateMemberRes struct {
 }
 
 type TeamMember struct {
-	ProfileId uuid.UUID          `json:"profileId"`
-	TeamId    uuid.UUID          `json:"teamId"`
+	ProfileId string             `json:"profileId"`
+	TeamId    string             `json:"teamId"`
 	Role      constants.RoleType `json:"role"`
 }
 

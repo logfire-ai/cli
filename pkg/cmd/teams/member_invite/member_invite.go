@@ -7,9 +7,12 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
+	"os"
+	"strings"
 )
 
 type MemberInviteOptions struct {
@@ -50,10 +53,6 @@ func NewMemberInviteCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			if !opts.Interactive && opts.TeamId == "" {
-				fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
-			}
-
 			InviteMembersRun(opts)
 		},
 	}
@@ -68,6 +67,26 @@ func InviteMembersRun(opts *MemberInviteOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+	}
+	if opts.Interactive && opts.TeamId == "" && opts.Email == nil {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		emails, err := opts.Prompter.Input("Enter email addresses to invite (Multiple email can be entered separated by a comma).", "")
+		if err != nil {
+			return
+		}
+
+		opts.Email = strings.Split(emails, ",")
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.Email == nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Atleast one email address is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.InviteMembers(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.Email)

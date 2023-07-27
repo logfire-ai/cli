@@ -38,75 +38,6 @@ type SourceCreate struct {
 	SourceType int    `json:"sourceType"`
 }
 
-type SourceType uint8
-
-// Declare related constants for each SourceType starting with index 0
-const (
-	Kubernetes SourceType = iota + 1 // EnumIndex = 1
-	AWS                              // EnumIndex = 2
-	JavaScript                       // EnumIndex = 3
-	Docker
-	Nginx
-	Dokku
-	FlyDotio
-	Heroku
-	Ubuntu
-	Vercel
-	DotNET
-	Apache2
-	Cloudflare
-	Java
-	Python
-	PHP
-	PostgreSQL
-	Redis
-	Ruby
-	MongoDB
-	MySQL
-	HTTP
-	Vector
-	FluentBit
-	Fluentd
-	Logstash
-	RSyslog
-	Render
-	SyslogNg
-	Demo
-)
-
-var EnumMap map[SourceType]string = map[SourceType]string{
-	Kubernetes: "kubernetes",
-	AWS:        "aws",
-	JavaScript: "javascript",
-	Docker:     "docker",
-	Nginx:      "nginx",
-	Dokku:      "dokku",
-	FlyDotio:   "fly.io",
-	Heroku:     "heroku",
-	Ubuntu:     "ubuntu",
-	Vercel:     "vercel",
-	DotNET:     ".net",
-	Apache2:    "apache2",
-	Cloudflare: "cloudflare",
-	Java:       "java",
-	Python:     "python",
-	PHP:        "php",
-	PostgreSQL: "postgresql",
-	Redis:      "redis",
-	Ruby:       "ruby",
-	MongoDB:    "mongodb",
-	MySQL:      "mysql",
-	HTTP:       "http",
-	Vector:     "vector",
-	FluentBit:  "fluentbit",
-	Fluentd:    "fluentd",
-	Logstash:   "logstash",
-	RSyslog:    "rsyslog",
-	Render:     "render",
-	SyslogNg:   "syslog-ng",
-	Demo:       "demo",
-}
-
 var PlatformMap map[string]int = map[string]int{
 	"kubernetes": 1,
 	"aws":        2,
@@ -138,16 +69,4 @@ var PlatformMap map[string]int = map[string]int{
 	"render":     27,
 	"syslog-ng":  28,
 	"demo":       29,
-}
-
-func (d SourceType) String() string {
-
-	if d < Kubernetes || d > Demo {
-		return "Unknown"
-	}
-	return EnumMap[d]
-}
-
-func (d SourceType) EnumIndex() int {
-	return int(d)
 }

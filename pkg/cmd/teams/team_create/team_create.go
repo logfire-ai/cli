@@ -55,10 +55,6 @@ func NewCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			if !opts.Interactive && opts.TeamName == "" {
-				fmt.Fprint(opts.IO.ErrOut, "team name is required.\n")
-			}
-
 			teamsCreateRun(opts)
 		},
 	}
@@ -73,8 +69,16 @@ func teamsCreateRun(opts *TeamCreateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamName == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team name is required.\n", cs.FailureIcon())
+	if opts.Interactive && opts.TeamName == "" {
+		opts.TeamName, err = opts.Prompter.Input("Enter a name for the team:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+			return
+		}
+	} else {
+		if opts.TeamName == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team name is required.\n", cs.FailureIcon())
+		}
 	}
 
 	team, err := createTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamName)

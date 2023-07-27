@@ -81,19 +81,16 @@ func signupRun(opts *SignupOptions) {
 	var email string
 	var interactive bool
 
-	if opts.Email == "" && opts.credentialToken != "" && !interactive {
-		err = OnboardingRun(opts)
-		if err != nil {
-			return
-		}
-
-		fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
-		fmt.Fprintf(opts.IO.Out, "%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
-
-		os.Exit(0)
+	isEmpty := func(s string) bool {
+		return s == ""
 	}
 
-	if opts.Interactive && opts.Email == "" {
+	if !opts.Interactive && isEmpty(opts.Email) {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Email address is required\n", cs.FailureIcon())
+		return
+	}
+
+	if opts.Interactive && isEmpty(opts.Email) {
 		interactive = true
 		opts.Email, err = opts.Prompter.Input("Enter your email:", "")
 		if err != nil {
@@ -102,9 +99,18 @@ func signupRun(opts *SignupOptions) {
 		}
 	}
 
-	if !opts.Interactive && opts.Email == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Email address is required\n", cs.FailureIcon())
-		return
+	if isEmpty(opts.Email) && !isEmpty(opts.credentialToken) && !interactive {
+		err = OnboardingRun(opts)
+		if err != nil {
+			return
+		}
+
+		successMessage := fmt.Sprintf("%s User onboarded successfully.\n", cs.SuccessIcon())
+		fmt.Fprint(opts.IO.Out, successMessage)
+		passwordMessage := fmt.Sprintf("%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+		fmt.Fprint(opts.IO.Out, passwordMessage)
+
+		os.Exit(0)
 	}
 
 	err = APICalls.SignupFlow(opts.Email, cfg.Get().EndPoint)
@@ -113,11 +119,12 @@ func signupRun(opts *SignupOptions) {
 		return
 	}
 
-	if interactive {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
-	} else {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
-		fmt.Fprintf(opts.IO.ErrOut, "Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>\""))
+	registerMessage := fmt.Sprintf("%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
+	fmt.Fprint(opts.IO.ErrOut, registerMessage)
+
+	if !interactive {
+		onboardingMessage := fmt.Sprintf("Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>\""))
+		fmt.Fprint(opts.IO.ErrOut, onboardingMessage)
 	}
 
 	if interactive {
@@ -126,8 +133,10 @@ func signupRun(opts *SignupOptions) {
 			return
 		}
 
-		fmt.Fprintf(opts.IO.Out, "%s User onboarded successfully.\n", cs.SuccessIcon())
-		fmt.Fprintf(opts.IO.Out, "%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+		successMessage := fmt.Sprintf("%s User onboarded successfully.\n", cs.SuccessIcon())
+		fmt.Fprint(opts.IO.Out, successMessage)
+		passwordMessage := fmt.Sprintf("%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+		fmt.Fprint(opts.IO.Out, passwordMessage)
 	}
 }
 
@@ -143,20 +152,9 @@ func OnboardingRun(opts *SignupOptions) error {
 		}
 	}
 
-	resp, err := login.TokenSignin(opts.IO, opts.credentialToken, cfg.Get().EndPoint)
+	err = login.TokenSignin(opts.IO, cfg, cs, opts.credentialToken, cfg.Get().EndPoint)
 	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up with the token %s", cs.FailureIcon(), err.Error())
-		return err
-	}
-
-	err = cfg.UpdateConfig(resp.UserBody.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
-	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error updating config %s", cs.FailureIcon(), err.Error())
-		return err
-	}
-
-	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+		fmt.Fprintf(opts.IO.ErrOut, "%s Unable to sign in with token \n", cs.FailureIcon())
 		return err
 	}
 
@@ -174,7 +172,7 @@ func OnboardingRun(opts *SignupOptions) error {
 		}
 	}
 
-	err = APICalls.OnboardingFlow(opts.IO, opts.Prompter, resp.UserBody.ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
+	err = APICalls.OnboardingFlow(opts.IO, opts.Prompter, cfg.Get().ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s %s", cs.FailureIcon(), err.Error())
 		return err
