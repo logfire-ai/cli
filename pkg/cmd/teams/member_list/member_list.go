@@ -1,19 +1,18 @@
 package member_list
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"net/http"
+	"os"
 )
 
 type MemberListOptions struct {
@@ -70,51 +69,26 @@ func listMembersRun(opts *MemberListOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	members, err := MembersList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+	}
+
+	members, err := APICalls.MembersList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"First name", "Last name", "Profile-Id", "Role"})
+
+		for _, i2 := range members {
+			table.Append([]string{i2.FirstName, i2.LastName, i2.ProfileId, i2.Role.String()})
+		}
+
+		table.Render()
 	}
-
-	fmt.Fprintf(opts.IO.Out, "%s Team members retrieved successfully!\n", cs.SuccessIcon())
-	for _, v := range members.TeamMembers {
-		fmt.Fprintf(opts.IO.Out, "%s %s %s %s %s\n", cs.IntermediateIcon(), *v.FirstName, *v.LastName, v.ProfileId, v.Role)
-	}
-}
-
-func MembersList(client *http.Client, token, endpoint string, teamId string) (models.AllTMandTI, error) {
-	url := endpoint + "api/team/" + teamId + "/members"
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return models.AllTMandTI{}, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return models.AllTMandTI{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return models.AllTMandTI{}, err
-	}
-
-	var response models.AllTeamMemberResponse
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return models.AllTMandTI{}, err
-	}
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return models.AllTMandTI{}, err
-	}
-
-	if !response.IsSuccessful {
-		return models.AllTMandTI{}, errors.New("api error")
-	}
-
-	return response.Data, nil
 }

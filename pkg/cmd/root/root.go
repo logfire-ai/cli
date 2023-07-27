@@ -8,6 +8,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmd/integrations"
 	"github.com/logfire-sh/cli/pkg/cmd/reset_password"
 	"github.com/logfire-sh/cli/pkg/cmd/sql"
+	"github.com/logfire-sh/cli/pkg/cmd/update_profile"
 	"github.com/logfire-sh/cli/pkg/cmd/views"
 
 	"github.com/MakeNowJust/heredoc"
@@ -79,5 +80,6 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(integrations.NewCmdIntegrations(f))
 	cmd.AddCommand(sql.NewCmdSql(f))
 	cmd.AddCommand(check_endpoint.NewCheckEndpointCmd(f))
+	cmd.AddCommand(update_profile.UpdateProfileCmd(f))
 	return cmd, nil
 }

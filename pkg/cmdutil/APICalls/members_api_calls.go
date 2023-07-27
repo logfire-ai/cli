@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -146,4 +147,42 @@ func UpdateMember(client *http.Client, token string, endpoint string, teamId str
 	}
 
 	return nil
+}
+
+func MembersList(client *http.Client, token, endpoint string, teamId string) ([]models.TeamMemberRes, error) {
+	url := endpoint + "api/team/" + teamId + "/members"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return []models.TeamMemberRes{}, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return []models.TeamMemberRes{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return []models.TeamMemberRes{}, err
+	}
+
+	var response models.AllTeamMemberResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []models.TeamMemberRes{}, err
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return []models.TeamMemberRes{}, err
+	}
+
+	if !response.IsSuccessful {
+		return []models.TeamMemberRes{}, errors.New("api error")
+	}
+
+	return response.Data.TeamMembers, nil
 }

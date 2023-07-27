@@ -5,15 +5,45 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
 )
 
-var platformOptions = make([]string, 0, len(models.PlatformMap))
+var platformOptions = []string{
+	"Kubernetes",
+	"AWS",
+	"JavaScript",
+	"Docker",
+	"Nginx",
+	"Dokku",
+	"Fly.io",
+	"Heroku",
+	"Ubuntu",
+	"Vercel",
+	".Net",
+	"Apache2",
+	"Cloudflare",
+	"Java",
+	"Python",
+	"PHP",
+	"PostgreSQL",
+	"Redis",
+	"Ruby",
+	"Mongodb",
+	"MySQL",
+	"HTTP",
+	"Vector",
+	"fluentbit",
+	"Fluentd",
+	"Logstash",
+	"Rsyslog",
+	"Render",
+	"syslog-ng",
+}
 
 type SourceCreateOptions struct {
 	IO       *iostreams.IOStreams
@@ -57,30 +87,13 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			if !opts.Interactive {
-				if opts.TeamId == "" {
-					fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
-					return
-				}
-
-				if opts.SourceName == "" {
-					fmt.Fprint(opts.IO.ErrOut, "name is required.\n")
-					return
-				}
-
-				if opts.Platform == "" {
-					fmt.Fprint(opts.IO.ErrOut, "platform is required.\n")
-					return
-				}
-			}
-
 			sourceCreateRun(opts)
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team ID for which the source will be created.")
-	cmd.Flags().StringVar(&opts.SourceName, "name", "", "Name of the source to be created.")
-	cmd.Flags().StringVar(&opts.Platform, "platform", "", "Platform name for which you want to create source.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the source will be created.")
+	cmd.Flags().StringVarP(&opts.SourceName, "name", "n", "", "Name of the source to be created.")
+	cmd.Flags().StringVarP(&opts.Platform, "platform", "p", "", "Platform name for which you want to create source.")
 	return cmd
 }
 
@@ -92,12 +105,8 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 		return
 	}
 
-	if opts.Interactive {
-		opts.TeamId, err = opts.Prompter.Input("Enter TeamId:", "")
-		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read TeamId\n", cs.FailureIcon())
-			return
-		}
+	if opts.Interactive && opts.TeamId == "" && opts.SourceName == "" && opts.Platform == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		opts.SourceName, err = opts.Prompter.Input("Enter Source name:", "")
 		if err != nil {
@@ -105,17 +114,28 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 			return
 		}
 
-		opts.Platform, err = opts.Prompter.Select("Enter Platform name:", "", platformOptions)
+		opts.Platform, err = opts.Prompter.Select("Select a Platform:", "", platformOptions)
 		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Platform name\n", cs.FailureIcon())
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Platform\n", cs.FailureIcon())
+			return
+		}
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+			return
+		}
+
+		if opts.SourceName == "" {
+			fmt.Fprint(opts.IO.ErrOut, "name is required.\n")
+			return
+		}
+
+		if opts.Platform == "" {
+			fmt.Fprint(opts.IO.ErrOut, "platform is required.\n")
 			return
 		}
 	}
 
-	if opts.TeamId == "" || opts.SourceName == "" || opts.Platform == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s team-id, name and plaform are required.\n", cs.FailureIcon())
-		return
-	}
 	source, err := APICalls.CreateSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceName, opts.Platform)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())

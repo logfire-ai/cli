@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -89,22 +90,31 @@ func sourceUpdateRun(opts *SourceUpdateOptions) {
 		return
 	}
 
-	if opts.Interactive {
-	}
+	if opts.Interactive && opts.TeamId == "" && opts.SourceId == "" && opts.SourceName == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-		return
-	}
+		opts.SourceId, _ = pre_defined_prompters.AskSourceId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
-	if opts.SourceName == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s New name is required.\n", cs.FailureIcon())
-		return
-	}
+		opts.SourceName, err = opts.Prompter.Input("Enter new name for the source:", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+			return
+		}
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			return
+		}
 
-	if opts.SourceId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Source id is required.\n", cs.FailureIcon())
-		return
+		if opts.SourceName == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s New name is required.\n", cs.FailureIcon())
+			return
+		}
+
+		if opts.SourceId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Source id is required.\n", cs.FailureIcon())
+			return
+		}
 	}
 
 	source, err := APICalls.UpdateSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId, opts.SourceName)

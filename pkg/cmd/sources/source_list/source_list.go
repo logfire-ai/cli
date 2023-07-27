@@ -3,7 +3,10 @@ package source_list
 import (
 	"fmt"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
+	"github.com/olekukonko/tablewriter"
 	"net/http"
+	"os"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -73,20 +76,28 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	}
 
-	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
-		return
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
+			return
+		}
 	}
 
 	sources, err := APICalls.GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Name", "Source-Id", "Platform"})
+
+		for _, i2 := range sources {
+			table.Append([]string{i2.Name, i2.ID, i2.Platform})
+		}
+
+		table.Render()
 	}
 
-	fmt.Fprintf(opts.IO.Out, "%s Successfully fetched sources for team-id %s\n", cs.SuccessIcon(), opts.TeamId)
-
-	for _, v := range sources {
-		fmt.Fprintf(opts.IO.Out, "%s %s %s %s\n", cs.IntermediateIcon(), v.Name, v.ID, v.Platform)
-	}
 }

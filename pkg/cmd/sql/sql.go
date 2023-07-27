@@ -11,6 +11,7 @@ import (
 	SQLModels "github.com/logfire-sh/cli/pkg/cmd/sql/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"github.com/olekukonko/tablewriter"
@@ -76,12 +77,18 @@ func SqlQueryRun(opts *SqlQueryOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-	}
+	if opts.Interactive && opts.TeamId == "" && opts.SQLQuery == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-	if opts.SQLQuery == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s SQL Query is required.\n", cs.FailureIcon())
+		opts.SQLQuery, err = opts.Prompter.Input("Write your SQL query:", "")
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+		}
+
+		if opts.SQLQuery == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s SQL Query is required.\n", cs.FailureIcon())
+		}
 	}
 
 	var sources []models.Source
@@ -173,7 +180,7 @@ func getSQL(client pb.FlinkServiceClient, sources []*pb.Source, opts *SqlQueryOp
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source, opts *SqlQueryOptions) (*pb.SQLResponse, error) {
-	grpc_url := "api.logfire.ai:443"
+	grpc_url := "api-stg.logfire.ai:443"
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)

@@ -7,9 +7,11 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
+	"os"
 )
 
 type MemberRemoveOptions struct {
@@ -68,6 +70,23 @@ func RemoveMemberRun(opts *MemberRemoveOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+	}
+
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		opts.MemberId, _ = pre_defined_prompters.AskMemberId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.MemberId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Member id is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.RemoveMember(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.MemberId)

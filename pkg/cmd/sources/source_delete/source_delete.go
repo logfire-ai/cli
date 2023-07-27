@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
+	"io"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
@@ -86,8 +87,15 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 		return
 	}
 
-	if opts.TeamId == "" || opts.SourceId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s team-id and source-id both are required.\n", cs.FailureIcon())
+	if opts.Interactive && opts.TeamId == "" && opts.SourceId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		opts.SourceId, _ = pre_defined_prompters.AskSourceId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+	} else {
+		if opts.TeamId == "" || opts.SourceId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s team-id and source-id both are required.\n", cs.FailureIcon())
+		}
 	}
 
 	err = deleteSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
@@ -95,7 +103,7 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s.\n", cs.FailureIcon(), err.Error())
 	}
 
-	fmt.Fprintf(opts.IO.Out, "%s %s deleted successfully.\n", cs.SuccessIcon(), opts.SourceId)
+	fmt.Fprintf(opts.IO.Out, "%s Source deleted successfully.\n", cs.SuccessIcon())
 }
 
 func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId string) error {
@@ -113,7 +121,7 @@ func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId 
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func NewListCmd(f *cmdutil.Factory) *cobra.Command {
 			List teams.
 		`, "`"),
 		Example: heredoc.Doc(`
-			# start interactive setup
+			# List all the teams
 			$ logfire teams list
 		`),
 		Run: func(cmd *cobra.Command, args []string) {

@@ -46,7 +46,7 @@ func UpdateProfileCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire update-profile
 
 			# update profile by reading the details from the prompt
-			$ logfire reset-password --first-name <first-name> --last-name <last-name>
+			$ logfire update-profile --first-name <first-name> --last-name <last-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -69,9 +69,32 @@ func UpdateProfileRun(opts *UpdateProfileOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.FirstName == "" {
-		fmt.Fprint(opts.IO.ErrOut, "First name is required.")
-		os.Exit(0)
+	if opts.Interactive && opts.FirstName == "" && opts.LastName == "" {
+		updateFirstName, err := opts.Prompter.Confirm("Do you want to update your First name?", false)
+
+		if updateFirstName {
+			opts.FirstName, err = opts.Prompter.Input("Enter First name:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+				return
+			}
+		}
+
+		updateLastName, err := opts.Prompter.Confirm("Do you want to update your Last name?", false)
+
+		if updateLastName {
+			opts.LastName, err = opts.Prompter.Input("Enter Last name:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+				return
+			}
+		}
+
+	} else {
+		if opts.FirstName == "" {
+			fmt.Fprint(opts.IO.ErrOut, "First name is required.")
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.UpdateProfile(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.FirstName, opts.LastName)

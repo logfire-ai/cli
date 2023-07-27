@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmd/login/models"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -46,23 +47,24 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Login to logfire.ai",
 		Long: heredoc.Docf(`
-			Login to logfire.ai using a password or token.
+			Login to logfire.ai using a email and password or token.
 
 			There are two ways to login to logfire.ai, using a password or by using the token
 			provided in the magic link. By default the cli will give a prompt to select from.
-
-			Alternatively, use %[1]s--with-token%[1]s to pass in a token on standard input.
-			or %[1]s--with-password%[1]s to pass in a password on standard input.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire login
 
-			# authenticate against logfire.ai by reading the password from the prompt
-			$ logfire login --email name@example.com --password asdf@1234
+			# authenticate against logfire.ai by email and password
+			$ logfire login --email <name@example.com> --password <password>
 
-			# authenticate against logfire.ai by reading the token from the prompt
-			$ logfire login --email name@example.com --token myToken
+			# authenticate against logfire.ai by magic link token
+				# First request a Magic link to your email address
+				$ logfire login --email <name@example.com>
+	
+				# Second authenticate using the token received on your email address
+				$ logfire login --token <token>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -94,41 +96,38 @@ func loginRun(opts *LoginOptions) {
 		return
 	}
 
-	if opts.Token != "" && opts.Email == "" && opts.Password == "" {
-		opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
+	var choiceList = []string{"Magic link", "Password"}
 
-		signIn, err := TokenSignin(opts.IO, opts.Token, cfg.Get().EndPoint)
+	if opts.Interactive && opts.Token == "" && opts.Email == "" && opts.Password == "" {
+
+		choice, err := opts.Prompter.Select("Select login method (Default: Magic link)", "Magic link", choiceList)
 		if err != nil {
-			os.Exit(0)
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())
+			return
 		}
 
-		cfg.UpdateConfig(signIn.UserBody.Email, signIn.BearerToken.AccessToken, signIn.UserBody.ProfileID, signIn.BearerToken.RefreshToken)
-		fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(signIn.UserBody.Email))
+		switch choice {
+		case "Magic link":
+			opts.Email, err = opts.Prompter.Input("Enter your email:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
+				return
+			}
 
-		os.Exit(0)
-	}
+			err = APICalls.SendMagicLink(cfg.Get().EndPoint, opts.Email)
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to send magic link\n", cs.FailureIcon())
+				return
+			}
 
-	if opts.Password != "" && opts.Token != "" {
-		fmt.Fprint(opts.IO.ErrOut, "Please provide either password or token\n")
-	}
+			fmt.Fprintf(opts.IO.Out, "%s Magic link sent to %s\n", cs.SuccessIcon(), opts.Email)
 
-	if !opts.Interactive {
-		if opts.Token == "" && opts.Email == "" && opts.Password == "" {
-			fmt.Fprint(opts.IO.ErrOut, "Please provide either email and password or token\n")
-		}
+			opts.Token, err = opts.Prompter.Input("Enter the token received on your email:", "")
 
-		if opts.Email == "" {
-			fmt.Fprint(opts.IO.ErrOut, "Email is required\n")
-		}
+			opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
+			TokenSignin(opts.IO, cfg, cs, opts.Token, cfg.Get().EndPoint)
 
-		if opts.Password == "" {
-			fmt.Fprint(opts.IO.ErrOut, "Please provide either password")
-		}
-
-	}
-
-	if opts.Interactive && opts.Token == "" {
-		if opts.Email == "" {
+		case "Password":
 			email, err := opts.Prompter.Input("Enter your email:", "")
 			if err != nil {
 				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read email\n", cs.FailureIcon())
@@ -142,24 +141,51 @@ func loginRun(opts *LoginOptions) {
 				return
 			}
 			opts.Password = password
+
+			opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
+			PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
+		}
+
+	} else {
+		isEmpty := func(s string) bool {
+			return s == ""
+		}
+
+		switch {
+		case !isEmpty(opts.Token) && isEmpty(opts.Email) && isEmpty(opts.Password):
+			opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
+			TokenSignin(opts.IO, cfg, cs, opts.Token, cfg.Get().EndPoint)
+
+		case !isEmpty(opts.Email) && isEmpty(opts.Token):
+			if isEmpty(opts.Password) {
+				err = APICalls.SendMagicLink(cfg.Get().EndPoint, opts.Email)
+				if err != nil {
+					fmt.Fprintf(opts.IO.ErrOut, "%s Failed to send magic link\n", cs.FailureIcon())
+					return
+				}
+				fmt.Fprintf(opts.IO.Out, "%s Magic link sent to %s \n%s Use \"logfire login --token <token>\" to sign-in using received token\n", cs.SuccessIcon(), opts.Email, cs.IntermediateIcon())
+			} else {
+				opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
+				PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
+			}
+
+		case !isEmpty(opts.Email) && !isEmpty(opts.Password) && !isEmpty(opts.Token):
+			fmt.Fprint(opts.IO.ErrOut, "Please provide only one method of authentication: either email and password or token\n")
+
+		case isEmpty(opts.Token) && isEmpty(opts.Email) && isEmpty(opts.Password):
+			fmt.Fprint(opts.IO.ErrOut, "Please provide either email and password or token\n")
+
+		case !isEmpty(opts.Email) && !isEmpty(opts.Token) && isEmpty(opts.Password):
+			fmt.Fprint(opts.IO.ErrOut, "Please provide either email and password or token, not both\n")
+
+		case !isEmpty(opts.Password) && !isEmpty(opts.Token) && isEmpty(opts.Email):
+			fmt.Fprint(opts.IO.ErrOut, "Please provide either email and password or token, not both\n")
 		}
 	}
-
-	opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
-
-	resp, err := PasswordSignin(opts.Email, opts.Password, cfg.Get().EndPoint)
-	opts.IO.StopProgressIndicator()
-	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "\n%s Signin Failed. %s\n", cs.FailureIcon(), err.Error())
-		return
-	}
-
-	cfg.UpdateConfig(resp.UserBody.Email, resp.BearerToken.AccessToken, resp.UserBody.ProfileID, resp.BearerToken.RefreshToken)
-	fmt.Fprintf(opts.IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(opts.Email))
 }
 
-func PasswordSignin(email, password string, endpoint string) (Response, error) {
-	var response Response
+func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, email, password string, endpoint string) {
+	var response models.Response
 	signinReq := SigninRequest{
 		Email:      email,
 		AuthType:   2,
@@ -168,34 +194,40 @@ func PasswordSignin(email, password string, endpoint string) (Response, error) {
 
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
-		return response, err
+		return
 	}
 
 	url := endpoint + "api/auth/signin"
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
-		return response, err
+		return
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return response, errors.New("wrong password")
-	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return response, err
+		return
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return response, err
+		return
 	}
 
-	return response, nil
+	if !response.IsSuccessful {
+		fmt.Fprintf(io.ErrOut, "\n%s %s %s\n", cs.FailureIcon(), response.Message[0], err.Error())
+	}
+
+	io.StopProgressIndicator()
+
+	cfg.UpdateConfig(response.UserBody.Email, response.BearerToken.AccessToken, response.UserBody.ProfileID, response.BearerToken.RefreshToken)
+	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
+
+	return
 }
 
-func TokenSignin(IO *iostreams.IOStreams, token string, endpoint string) (Response, error) {
-	var response Response
+func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, token, endpoint string) error {
+	var response models.Response
 
 	signinReq := SigninRequest{
 		AuthType:   1,
@@ -205,7 +237,7 @@ func TokenSignin(IO *iostreams.IOStreams, token string, endpoint string) (Respon
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
 		fmt.Printf("Failed to marshal request body: %v\n", err)
-		return response, err
+		return err
 	}
 
 	url := endpoint + "api/auth/signin"
@@ -213,7 +245,7 @@ func TokenSignin(IO *iostreams.IOStreams, token string, endpoint string) (Respon
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Printf("Failed to send POST request: %v\n", err)
-		return response, err
+		return err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -222,24 +254,31 @@ func TokenSignin(IO *iostreams.IOStreams, token string, endpoint string) (Respon
 		}
 	}(resp.Body)
 
+	IO.StopProgressIndicator()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Failed to read response body: %v\n", err)
-		return response, err
+		return err
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Printf("Failed to unmarshal JSON: %v\n", err)
-		return response, err
+		return err
 	}
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Printf("%s Sign-in successful!", IO.ColorScheme().SuccessIcon())
-	} else {
-		fmt.Printf("\nSign-in failed with status code: %d\n", resp.StatusCode)
-		return response, errors.New("sign-in failed")
+	if !response.IsSuccessful {
+		fmt.Fprintf(IO.ErrOut, "\n%s %s\n", cs.FailureIcon(), response.Message[0])
+		return errors.New(response.Message[0])
 	}
 
-	return response, nil
+	err = cfg.UpdateConfig(response.UserBody.Email, response.BearerToken.AccessToken, response.UserBody.ProfileID, response.BearerToken.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.Email))
+
+	return nil
 }

@@ -67,9 +67,17 @@ func ResetPasswordRun(opts *ResetPasswordOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.Password == "" {
-		fmt.Fprint(opts.IO.ErrOut, "password is required.")
-		os.Exit(0)
+	if opts.Interactive && opts.Password == "" {
+		opts.Password, err = opts.Prompter.Password("Enter a new password:")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read password\n", cs.FailureIcon())
+			return
+		}
+	} else {
+		if opts.Password == "" {
+			fmt.Fprint(opts.IO.ErrOut, "password is required.")
+			os.Exit(0)
+		}
 	}
 
 	err = APICalls.ResetPassword(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.Password)

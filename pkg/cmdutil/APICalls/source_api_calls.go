@@ -120,7 +120,7 @@ func GetSource(client *http.Client, token, endpoint string, teamId, sourceId str
 	}
 
 	if !sourceResp.IsSuccessful {
-		return models.Source{}, errors.New("failed to get source")
+		return models.Source{}, errors.New(sourceResp.Message[0])
 	}
 
 	return sourceResp.Data, nil

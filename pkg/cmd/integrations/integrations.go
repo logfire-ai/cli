@@ -26,7 +26,7 @@ type PromptIntegrationsOptions struct {
 	Choice      string
 }
 
-var choices = []string{"create", "list", "delete", "update"}
+var choices = []string{"Create", "List", "Delete", "Update"}
 
 func NewCmdIntegrations(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptIntegrationsOptions{
