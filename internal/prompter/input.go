@@ -19,100 +19,100 @@ type Input interface {
 // We need to have a wrapper for our bubbles as they don't currently implement the tea.Model interface
 // textinput, textarea
 
-type shortAnswerField struct {
+type ShortAnswerField struct {
 	textinput textinput.Model
 }
 
-func NewShortAnswerField() *shortAnswerField {
-	a := shortAnswerField{}
+func NewShortAnswerField(placeholder string) *ShortAnswerField {
+	a := ShortAnswerField{}
 
 	model := textinput.New()
-	model.Placeholder = "Your answer here"
+	model.Placeholder = placeholder
 	model.Focus()
 
 	a.textinput = model
 	return &a
 }
 
-func (a *shortAnswerField) Blink() tea.Msg {
+func (a *ShortAnswerField) Blink() tea.Msg {
 	return textinput.Blink()
 }
 
-func (a *shortAnswerField) Init() tea.Cmd {
+func (a *ShortAnswerField) Init() tea.Cmd {
 	return nil
 }
 
-func (a *shortAnswerField) Update(msg tea.Msg) (Input, tea.Cmd) {
+func (a *ShortAnswerField) Update(msg tea.Msg) (Input, tea.Cmd) {
 	var cmd tea.Cmd
 	a.textinput, cmd = a.textinput.Update(msg)
 	return a, cmd
 }
 
-func (a *shortAnswerField) View() string {
+func (a *ShortAnswerField) View() string {
 	return a.textinput.View()
 }
 
-func (a *shortAnswerField) Focus() tea.Cmd {
+func (a *ShortAnswerField) Focus() tea.Cmd {
 	return a.textinput.Focus()
 }
 
-func (a *shortAnswerField) SetValue(s string) {
+func (a *ShortAnswerField) SetValue(s string) {
 	a.textinput.SetValue(s)
 }
 
-func (a *shortAnswerField) Blur() tea.Msg {
+func (a *ShortAnswerField) Blur() tea.Msg {
 	return a.textinput.Blur
 }
 
-func (a *shortAnswerField) Value() string {
+func (a *ShortAnswerField) Value() string {
 	return a.textinput.Value()
 }
 
-type longAnswerField struct {
+type LongAnswerField struct {
 	textarea textarea.Model
 }
 
-func NewLongAnswerField() *longAnswerField {
-	a := longAnswerField{}
+func NewLongAnswerField(placeholder string) *LongAnswerField {
+	a := LongAnswerField{}
 
 	model := textarea.New()
-	model.Placeholder = "Your answer here"
+	model.Placeholder = placeholder
 	model.Focus()
 
 	a.textarea = model
 	return &a
 }
 
-func (a *longAnswerField) Blink() tea.Msg {
+func (a *LongAnswerField) Blink() tea.Msg {
 	return textarea.Blink()
 }
 
-func (a *longAnswerField) Init() tea.Cmd {
+func (a *LongAnswerField) Init() tea.Cmd {
 	return nil
 }
 
-func (a *longAnswerField) Update(msg tea.Msg) (Input, tea.Cmd) {
+func (a *LongAnswerField) Update(msg tea.Msg) (Input, tea.Cmd) {
 	var cmd tea.Cmd
 	a.textarea, cmd = a.textarea.Update(msg)
 	return a, cmd
 }
 
-func (a *longAnswerField) View() string {
+func (a *LongAnswerField) View() string {
 	return a.textarea.View()
 }
 
-func (a *longAnswerField) Focus() tea.Cmd {
+func (a *LongAnswerField) Focus() tea.Cmd {
 	return a.textarea.Focus()
 }
 
-func (a *longAnswerField) SetValue(s string) {
+func (a *LongAnswerField) SetValue(s string) {
 	a.textarea.SetValue(s)
 }
 
-func (a *longAnswerField) Blur() tea.Msg {
+func (a *LongAnswerField) Blur() tea.Msg {
 	return a.textarea.Blur
 }
 
-func (a *longAnswerField) Value() string {
+func (a *LongAnswerField) Value() string {
 	return a.textarea.Value()
 }
