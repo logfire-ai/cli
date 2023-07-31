@@ -2,10 +2,12 @@ package livetail
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
-	"io/ioutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"net/http"
 	"sort"
@@ -16,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Livetail struct {
@@ -25,35 +26,94 @@ type Livetail struct {
 	sourcesOffset map[string]uint64
 }
 
-func NewLivetail(token, teamId string, endpoint string) (*Livetail, error) {
-	sources, err := getAllSourcesByTeamId(token, teamId, endpoint)
-	if err != nil {
-		return &Livetail{}, err
-	}
+var request = &pb.FilterRequest{
+	DateTimeFilter:    &pb.DateTimeFilter{},
+	FieldBasedFilters: []*pb.FieldBasedFilter{},
+	SearchQueries:     []string{},
+	Sources:           []*pb.Source{},
+	BatchSize:         5,
+	IsScrollDown:      true,
+}
 
+func NewLivetail() (*Livetail, error) {
 	livetail := &Livetail{
 		Logs:          "",
-		pbSources:     createGrpcSource(sources),
 		sourcesOffset: make(map[string]uint64),
 	}
+
 	return livetail, nil
 }
 
-func (l *Livetail) GenerateLogs() {
-	for {
-		response, err := makeGrpcCall(l.pbSources)
-		if err != nil {
-			continue
-		}
+func (livetail *Livetail) ApplyFilter(
+	cfg config.Config,
+	sourceFilter []string,
+	//SearchFilter []string,
+	StartDateTimeFilter string,
+	EndDateTimeFilter string,
+	// FieldBasedFilterName string,
+	// FieldBasedFilterValue string,
+	// FieldBasedFilterCondition string,
+) {
 
-		if len(response.Records) > 0 {
-			sort.Sort(ByOffset(response.Records))
-			l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
-			l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
-			new_logs := showLogsWithColor(response.Records)
-			l.Logs += new_logs
+	client := &http.Client{}
+
+	var sources []models.Source
+
+	if sourceFilter != nil {
+		for _, sourceId := range sourceFilter {
+			source, _ := APICalls.GetSource(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().TeamId, sourceId)
+			sources = append(sources, source)
 		}
-		time.Sleep(500 * time.Millisecond)
+	} else {
+		sources, _ = APICalls.GetAllSources(client, cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().TeamId)
+	}
+
+	livetail.pbSources = createGrpcSource(sources)
+
+	if StartDateTimeFilter == "" {
+		request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
+	}
+
+	if StartDateTimeFilter != "" {
+		request.DateTimeFilter.StartTimeStamp = timestamppb.New(filters.ShortDateTimeToGoDate(StartDateTimeFilter))
+
+		if EndDateTimeFilter != "" {
+			request.DateTimeFilter.EndTimeStamp = timestamppb.New(filters.ShortDateTimeToGoDate(EndDateTimeFilter))
+		}
+	}
+
+	return
+}
+
+func (l *Livetail) GenerateLogs(place string, stop chan error) {
+	for {
+		select {
+		case <-stop:
+			return
+		default:
+			response, err := makeGrpcCall(l.pbSources)
+			if err != nil {
+				stop <- err
+				return
+			}
+
+			if place == "onboarding" {
+				if len(response.Records) > 0 {
+					stop <- nil
+					return
+				}
+			} else {
+				if len(response.Records) > 0 {
+					sort.Sort(ByOffset(response.Records))
+					l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
+					l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
+					newLogs := showLogsWithColor(response.Records)
+					l.Logs += newLogs
+				}
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		}
 	}
 }
 
@@ -67,52 +127,6 @@ func showLogsWithColor(records []*pb.FilteredRecord) string {
 			record.Message + "\n")
 	}
 	return stream
-}
-
-func getAllSourcesByTeamId(token, teamId string, endpoint string) ([]models.Source, error) {
-	url := endpoint + "api/team/" + teamId + "/source"
-
-	// Create a new HTTP client
-	client := &http.Client{}
-
-	// Create a new GET request
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return []models.Source{}, err
-	}
-
-	// Set the Authorization header with the Bearer token
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	// Send the request
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return []models.Source{}, err
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		return []models.Source{}, err
-	}
-
-	var sourceResp models.SourcesResponse
-	err = json.Unmarshal(body, &sourceResp)
-	if err != nil {
-		fmt.Println("Error decoding response:", err)
-		return []models.Source{}, err
-	}
-
-	// Check if it is a successful response
-	if !sourceResp.IsSuccessful {
-		fmt.Println(sourceResp.Message)
-		return []models.Source{}, errors.New("Api error!")
-	}
-	return sourceResp.Data, nil
 }
 
 // createGrpcSource creates a proper sources to be used in grpc request
@@ -129,7 +143,7 @@ func createGrpcSource(sources []models.Source) []*pb.Source {
 	return grpcSources
 }
 
-// for sorting the records based on Offset
+// ByOffset for sorting the records based on Offset
 type ByOffset []*pb.FilteredRecord
 
 func (a ByOffset) Len() int           { return len(a) }
@@ -147,20 +161,9 @@ func addOffset(sources []*pb.Source, offset map[string]uint64) []*pb.Source {
 
 // getFilteredData makes the actual grpc call to connect with flink-service.
 func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.FilteredRecords, error) {
-	// Prepare the request payload
-	request := &pb.FilterRequest{
-		DateTimeFilter: &pb.DateTimeFilter{
-			StartTimeStamp: timestamppb.New(time.Now().Add(-5 * time.Second)),
-		},
-		// FieldBasedFilters: []*pb.FieldBasedFilter{
-		// 	{}, // Adjust or populate the field-based filters if needed
-		// },
-		Sources:      sources,
-		BatchSize:    100,
-		IsScrollDown: true,
-	}
-
 	// Invoke the gRPC method
+	request.Sources = sources
+
 	response, err := client.GetFilteredData(context.Background(), request)
 	if err != nil {
 		return nil, err
@@ -171,7 +174,7 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
-	grpc_url := "api-stg.logfire.ai:443"
+	grpc_url := "api.logfire.ai:443"
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
@@ -183,7 +186,7 @@ func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
 
 	response, err := getFilteredData(client, pbSources)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return response, errors.Wrap(err, "[MakeGrpcCall][getFilteredData]")
 	}
 
