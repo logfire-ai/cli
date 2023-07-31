@@ -17,6 +17,7 @@ func DeleteView(client *http.Client, token string, endpoint string, teamId strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -54,6 +55,7 @@ func ListView(client *http.Client, token string, endpoint string, teamId string)
 		return []models.ViewResponseBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -91,6 +93,7 @@ func GetView(client *http.Client, token string, endpoint string, teamId string, 
 		return models.ViewResponseBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -151,6 +154,7 @@ func CreateView(client *http.Client, token string, endpoint string, teamId strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)

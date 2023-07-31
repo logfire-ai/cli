@@ -80,7 +80,7 @@ func ResetPasswordRun(opts *ResetPasswordOptions) {
 		}
 	}
 
-	err = APICalls.ResetPassword(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.Password)
+	err = APICalls.ResetPassword(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.Password)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	} else {

@@ -15,11 +15,12 @@ type AuthConfig struct {
 	ProfileID    string `mapstructure:"profile_id"`
 	RefreshToken string `mapstructure:"refresh_token"`
 	EndPoint     string `mapstructure:"endpoint"`
+	TeamId       string `mapstructure:"team_id"`
 }
 
 type Config interface {
 	UpdateEndpoint(string) error
-	UpdateConfig(string, string, string, string) error
+	UpdateConfig(*string, *string, *string, *string, *string) error
 	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
@@ -41,7 +42,8 @@ func NewConfig() (Config, error) {
 	viper.SetDefault("username", "")
 	viper.SetDefault("token", "")
 	viper.SetDefault("profile_id", "")
-	viper.SetDefault("endpoint", "https://api.logfire.ai/")
+	viper.Set("endpoint", "https://api.logfire.ai/")
+	viper.SetDefault("team_id", "")
 
 	// Check if the config file exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
@@ -70,21 +72,43 @@ func (c *cfg) Get() *AuthConfig {
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *cfg) UpdateConfig(username, token, profileID string, refreshToken string) error {
+func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid *string) error {
 	// Write the updated configuration to the file
-	viper.Set("username", username)
-	viper.Set("token", token)
-	viper.Set("profile_id", profileID)
-	viper.Set("refresh_token", refreshToken)
+
+	if username != nil {
+		viper.Set("username", username)
+		c.AuthCfg.Username = *username
+
+	}
+
+	if token != nil {
+		viper.Set("token", token)
+		c.AuthCfg.Token = *token
+
+	}
+
+	if profileID != nil {
+		viper.Set("profile_id", profileID)
+		c.AuthCfg.ProfileID = *profileID
+
+	}
+
+	if refreshToken != nil {
+		viper.Set("refresh_token", refreshToken)
+		c.AuthCfg.RefreshToken = *refreshToken
+
+	}
+
+	if teamid != nil {
+		viper.Set("team_id", teamid)
+		c.AuthCfg.TeamId = *teamid
+
+	}
 
 	if err := viper.WriteConfig(); err != nil {
 		return err
 	}
 
-	c.AuthCfg.Username = username
-	c.AuthCfg.Token = token
-	c.AuthCfg.ProfileID = profileID
-	c.AuthCfg.RefreshToken = refreshToken
 	return nil
 }
 

@@ -57,7 +57,7 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 			if opts.IO.CanPrompt() {
 				opts.Interactive = true
 			}
-			signupRun(opts)
+			SignupRun(opts)
 		},
 		GroupID: "core",
 	}
@@ -70,7 +70,7 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func signupRun(opts *SignupOptions) {
+func SignupRun(opts *SignupOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
@@ -135,8 +135,8 @@ func signupRun(opts *SignupOptions) {
 
 		successMessage := fmt.Sprintf("%s User onboarded successfully.\n", cs.SuccessIcon())
 		fmt.Fprint(opts.IO.Out, successMessage)
-		passwordMessage := fmt.Sprintf("%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
-		fmt.Fprint(opts.IO.Out, passwordMessage)
+		//passwordMessage := fmt.Sprintf("%s You can set your password using %s anytime later.\n", cs.SuccessIcon(), cs.Blue("\"logfire set-password --password <password>\""))
+		//fmt.Fprint(opts.IO.Out, passwordMessage)
 	}
 }
 
@@ -145,7 +145,7 @@ func OnboardingRun(opts *SignupOptions) error {
 	cfg, err := opts.Config()
 
 	if opts.credentialToken == "" {
-		opts.credentialToken, err = opts.Prompter.Input("Please paste the token in the email link here:", "")
+		opts.credentialToken, err = opts.Prompter.Input("Please paste the token received in the email here:", "")
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Unable to read token %s\n", cs.SuccessIcon(), cs.Bold(opts.credentialToken))
 			return err
@@ -172,7 +172,7 @@ func OnboardingRun(opts *SignupOptions) error {
 		}
 	}
 
-	err = APICalls.OnboardingFlow(opts.IO, opts.Prompter, cfg.Get().ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
+	err = APICalls.OnboardingFlow(cfg.Get().ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s %s", cs.FailureIcon(), err.Error())
 		return err

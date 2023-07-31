@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
-	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"log"
 	"net/http"
 	"sort"
@@ -45,6 +44,7 @@ type LivetailOptions struct {
 	FieldBasedFilterCondition string
 	SaveView                  bool
 	ViewName                  string
+	GUI                       bool
 }
 
 func NewLivetailCmd(f *cmdutil.Factory) *cobra.Command {
@@ -90,6 +90,7 @@ func NewLivetailCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.EndDateTimeFilter, "end-date", "e", "", "Filter logs by End date (Start date should be specified).")
 	cmd.Flags().BoolVarP(&opts.SaveView, "save-view", "", false, "Do you want to save the filters as a View. (Default: false)")
 	cmd.Flags().StringVarP(&opts.ViewName, "view-name", "", "", "Enter a name for the view.")
+	cmd.Flags().BoolVarP(&opts.GUI, "gui", "", false, "Enable GUI.")
 
 	return cmd
 }
@@ -102,62 +103,66 @@ func livetailRun(opts *LivetailOptions) {
 		return
 	}
 
-	if opts.Interactive && opts.TeamId == "" && opts.SourceFilter == nil && opts.SearchFilter == nil && opts.FieldBasedFilterName == "" &&
+	if opts.GUI {
+
+	}
+
+	if opts.Interactive && opts.TeamId != "" && opts.SourceFilter == nil && opts.SearchFilter == nil && opts.FieldBasedFilterName == "" &&
 		opts.FieldBasedFilterValue == "" && opts.FieldBasedFilterCondition == "" && opts.StartDateTimeFilter == "" && opts.EndDateTimeFilter == "" {
 
-		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+		//opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+		//
+		//filterChoice, _ := opts.Prompter.Confirm("Do you want apply any filter?", false)
+		//
+		//if filterChoice {
+		//	filterBySource, _ := opts.Prompter.Confirm("Do you want to filter by source?", false)
+		//
+		//	if filterBySource {
+		//		opts.SourceFilter, _ = pre_defined_prompters.AskSourceIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+		//	}
+		//
+		//	filterBySearch, _ := opts.Prompter.Confirm("Do you want to filter by Text search? (You can enter multiple separate words separated by a comma)", false)
+		//
+		//	if filterBySearch {
+		//		search, _ := opts.Prompter.Input("Enter the words to filter: (You can enter multiple separate words separated by a comma)", "")
+		//
+		//		opts.SearchFilter = append(opts.SearchFilter, search)
+		//	}
+		//
+		//	filterByField, _ := opts.Prompter.Confirm("Do you want to filter by Field? (eg: level = info, message [contains] word)", false)
+		//
+		//	if filterByField {
+		//		var conditionOptions = []string{
+		//			"CONTAINS",
+		//			"DOES_NOT_CONTAIN",
+		//			"EQUALS",
+		//			"NOT_EQUALS",
+		//			"GREATER_THAN",
+		//			"GREATER_THAN_EQUALS",
+		//			"LESS_THAN",
+		//			"LESS_THAN_EQUALS",
+		//		}
+		//
+		//		opts.FieldBasedFilterName, _ = opts.Prompter.Input("Enter the field name:", "")
+		//
+		//		opts.FieldBasedFilterCondition, _ = opts.Prompter.Select("Select a condition to match field against value:", "", conditionOptions)
+		//
+		//		opts.FieldBasedFilterValue, _ = opts.Prompter.Input("Enter the field value:", "")
+		//	}
+		//
+		//	filterByDate, _ := opts.Prompter.Confirm("Do you want to filter by Date?", false)
+		//
+		//	if filterByDate {
+		//		opts.StartDateTimeFilter, _ = opts.Prompter.Input("Enter start date: (eg: now-2d = two days ago from now)", "")
+		//
+		//		opts.EndDateTimeFilter, _ = opts.Prompter.Input("Enter end date: (Can be left empty) (eg: now-2d = two days ago from now)", "")
+		//	}
+		//}
 
-		filterChoice, _ := opts.Prompter.Confirm("Do you want apply any filter?", false)
-
-		if filterChoice {
-			filterBySource, _ := opts.Prompter.Confirm("Do you want to filter by source?", false)
-
-			if filterBySource {
-				opts.SourceFilter, _ = pre_defined_prompters.AskSourceIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
-			}
-
-			filterBySearch, _ := opts.Prompter.Confirm("Do you want to filter by Text search? (You can enter multiple separate words separated by a comma)", false)
-
-			if filterBySearch {
-				search, _ := opts.Prompter.Input("Enter the words to filter: (You can enter multiple separate words separated by a comma)", "")
-
-				opts.SearchFilter = append(opts.SearchFilter, search)
-			}
-
-			filterByField, _ := opts.Prompter.Confirm("Do you want to filter by Field? (eg: level = info, message [contains] word)", false)
-
-			if filterByField {
-				var conditionOptions = []string{
-					"CONTAINS",
-					"DOES_NOT_CONTAIN",
-					"EQUALS",
-					"NOT_EQUALS",
-					"GREATER_THAN",
-					"GREATER_THAN_EQUALS",
-					"LESS_THAN",
-					"LESS_THAN_EQUALS",
-				}
-
-				opts.FieldBasedFilterName, _ = opts.Prompter.Input("Enter the field name:", "")
-
-				opts.FieldBasedFilterCondition, _ = opts.Prompter.Select("Select a condition to match field against value:", "", conditionOptions)
-
-				opts.FieldBasedFilterValue, _ = opts.Prompter.Input("Enter the field value:", "")
-			}
-
-			filterByDate, _ := opts.Prompter.Confirm("Do you want to filter by Date?", false)
-
-			if filterByDate {
-				opts.StartDateTimeFilter, _ = opts.Prompter.Input("Enter start date: (eg: now-2d = two days ago from now)", "")
-
-				opts.EndDateTimeFilter, _ = opts.Prompter.Input("Enter end date: (Can be left empty) (eg: now-2d = two days ago from now)", "")
-			}
-		}
-
-		opts.SaveView, _ = opts.Prompter.Confirm("Do you want to save the filters as a view?", false)
-		if opts.SaveView {
-			opts.ViewName, _ = opts.Prompter.Input("Enter a name for the view:", "")
-		}
+		//opts.SaveView, _ = opts.Prompter.Confirm("Do you want to save the filters as a view?", false)
+		//if opts.SaveView {
+		//	opts.ViewName, _ = opts.Prompter.Input("Enter a name for the view:", "")
+		//}
 
 	} else {
 		if opts.TeamId == "" {
@@ -176,7 +181,7 @@ func livetailRun(opts *LivetailOptions) {
 		}
 	} else {
 		for _, sourceId := range opts.SourceFilter {
-			source, err := APICalls.GetSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, sourceId)
+			source, err := APICalls.GetSource(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, sourceId)
 			if err != nil {
 				fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 				return
@@ -219,7 +224,7 @@ func showLogs(io *iostreams.IOStreams, records []*pb.FilteredRecord) {
 	for _, record := range records {
 
 		fmt.Fprintf(io.Out, "%s %s [%s] %s\n",
-			cs.Yellow(record.Dt), cs.Green(record.SourceName), (cs.Cyan(strings.ToUpper(record.Level))), record.Message)
+			cs.Yellow(record.Dt), cs.Green(record.SourceName), cs.Cyan(strings.ToUpper(record.Level)), record.Message)
 	}
 }
 
@@ -300,7 +305,7 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source, opts *L
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source, opts *LivetailOptions) (*pb.FilteredRecords, error) {
-	grpc_url := "api-stg.logfire.ai:443"
+	grpc_url := "api.logfire.ai:443"
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)

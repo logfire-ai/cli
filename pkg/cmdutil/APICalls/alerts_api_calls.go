@@ -45,6 +45,7 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -82,6 +83,7 @@ func ListAlert(client *http.Client, token string, endpoint string, teamId string
 		return []models.CreateAlertBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -125,6 +127,7 @@ func DeleteAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -171,6 +174,7 @@ func PauseAlert(client *http.Client, token string, endpoint string, teamId strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -242,6 +246,7 @@ func UpdateAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)

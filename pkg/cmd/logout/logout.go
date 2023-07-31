@@ -106,6 +106,7 @@ func logout(client *http.Client, token string, endpoint string, refreshToken str
 	if err != nil {
 		return err
 	}
+	req.Header.Add("User-Agent", "Logfire-cli")
 
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := client.Do(req)

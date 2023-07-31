@@ -112,6 +112,7 @@ func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId 
 	if err != nil {
 		return err
 	}
+	req.Header.Add("User-Agent", "Logfire-cli")
 
 	req.Header.Set("Authorization", "Bearer "+token)
 

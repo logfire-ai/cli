@@ -5,6 +5,6 @@ type ResetPasswordRequest struct {
 }
 
 type ResetPasswordResponse struct {
-	IsSuccessful bool   `json:"isSuccessful"`
-	Message      string `json:"message,omitempty"`
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message,omitempty"`
 }

@@ -1,17 +1,13 @@
 package team_create
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -55,14 +51,14 @@ func NewCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			teamsCreateRun(opts)
+			TeamsCreateRun(opts)
 		},
 	}
 	cmd.Flags().StringVar(&opts.TeamName, "name", "", "Name of the team to be created.")
 	return cmd
 }
 
-func teamsCreateRun(opts *TeamCreateOptions) {
+func TeamsCreateRun(opts *TeamCreateOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
@@ -81,58 +77,10 @@ func teamsCreateRun(opts *TeamCreateOptions) {
 		}
 	}
 
-	team, err := createTeam(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamName)
+	team, err := APICalls.CreateTeam(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamName)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to create team.\n", cs.FailureIcon())
 	}
 
 	fmt.Fprintf(opts.IO.Out, "%s Team created successfully.\n%s %s %s %s\n", cs.SuccessIcon(), cs.IntermediateIcon(), team.Name, team.ID, team.Role)
-}
-
-func createTeam(client *http.Client, token, endpoint string, teamName string) (models.Team, error) {
-	data := models.CreateTeamRequest{
-		Name: teamName,
-	}
-
-	reqBody, err := json.Marshal(data)
-	if err != nil {
-		return models.Team{}, err
-	}
-
-	url := endpoint + "api/team"
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return models.Team{}, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return models.Team{}, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return models.Team{}, err
-	}
-
-	var teamCreateResp models.CreateTeamResponse
-	err = json.Unmarshal(body, &teamCreateResp)
-	if err != nil {
-		return models.Team{}, err
-	}
-
-	if !teamCreateResp.IsSuccessful {
-		return teamCreateResp.Data, errors.New("failed to create team")
-	}
-
-	return teamCreateResp.Data, nil
 }
