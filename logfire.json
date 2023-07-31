@@ -6,14 +6,14 @@
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "5892ff1543391f6194e9cbdc5928433da2022dec3ae1a99dd5bab54ceab700fa"
+            "hash": "439bd0c8aad4ffe1bc69cffa611387389e1b83d6559f1ddf8d9d6097e0db5d1c"
         },
         "64bit": {
             "url": "https://github.com/logfire-sh/cli/releases/download/v1.3/logfire_windows_amd64.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "add6da6946375c78627983d9704e9e486b42ee4caffc513bdbede62e1ca2024f"
+            "hash": "91ac0178a331d7fbda592c6128a369b3f8c6f104381bb8ed6a7201373e5a04c6"
         }
     },
     "homepage": "https://logfire.ai/",
