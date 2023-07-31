@@ -87,7 +87,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			sourceCreateRun(opts)
+			SourceCreateRun(opts)
 		},
 	}
 
@@ -97,7 +97,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func sourceCreateRun(opts *SourceCreateOptions) {
+func SourceCreateRun(opts *SourceCreateOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
@@ -136,7 +136,7 @@ func sourceCreateRun(opts *SourceCreateOptions) {
 		}
 	}
 
-	source, err := APICalls.CreateSource(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceName, opts.Platform)
+	source, err := APICalls.CreateSource(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceName, opts.Platform)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return

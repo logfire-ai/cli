@@ -22,3 +22,9 @@ type Response struct {
 	BearerToken  BearerToken `json:"bearerToken"`
 	Message      []string    `json:"message"`
 }
+
+type SigninRequest struct {
+	Email      string `json:"email,omitempty"`
+	AuthType   int    `json:"authType"`
+	Credential string `json:"credential"`
+}

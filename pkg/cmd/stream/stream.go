@@ -1,8 +1,7 @@
 package stream
 
 import (
-	"errors"
-	"fmt"
+	"github.com/logfire-sh/cli/gui"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/stream/livetail"
@@ -10,6 +9,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
+	"log"
 	"net/http"
 )
 
@@ -23,8 +23,6 @@ type PromptStreamOptions struct {
 	Interactive bool
 	Choice      string
 }
-
-var choices = []string{"Stream livetail", "Stream a saved view"}
 
 func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptStreamOptions{
@@ -45,13 +43,6 @@ func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			PromptStreamRun(opts)
-
-			switch opts.Choice {
-			case choices[0]:
-				livetail.NewLivetailCmd(f).Run(cmd, []string{})
-			case choices[1]:
-				view.NewViewStreamOptionsCmd(f).Run(cmd, []string{})
-			}
 		},
 	}
 
@@ -61,17 +52,14 @@ func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 }
 
 func PromptStreamRun(opts *PromptStreamOptions) {
-	cs := opts.IO.ColorScheme()
 	if !opts.Interactive {
 		return
 	}
 
 	if opts.Interactive {
-		err := errors.New("")
-		opts.Choice, err = opts.Prompter.Select("What do you want to do?", "", choices)
-		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())
-			return
+		ui := gui.NewUI()
+		if err := ui.Run(); err != nil {
+			log.Fatal(err)
 		}
 	}
 }

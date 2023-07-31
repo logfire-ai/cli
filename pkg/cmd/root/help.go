@@ -2,6 +2,7 @@ package root
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -230,7 +231,7 @@ func rpad(s string, padding int) string {
 }
 
 func rootFlagErrorFunc(cmd *cobra.Command, err error) error {
-	if err == pflag.ErrHelp {
+	if errors.Is(err, pflag.ErrHelp) {
 		return err
 	}
 	return cmdutil.FlagErrorWrap(err)

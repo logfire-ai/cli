@@ -16,6 +16,7 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 		return []AlertModels.AlertIntegrationBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -68,6 +69,7 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -105,6 +107,7 @@ func GetIntegrationsList(client *http.Client, token string, endpoint string, tea
 		return []IntegrationModels.IntegrationBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -143,6 +146,7 @@ func DeleteIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -191,6 +195,7 @@ func UpdateIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)

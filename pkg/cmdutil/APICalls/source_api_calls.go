@@ -27,6 +27,7 @@ func UpdateSource(client *http.Client, token, endpoint string, teamid, sourceid,
 		return models.Source{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -64,7 +65,7 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 	if err != nil {
 		return []models.Source{}, err
 	}
-
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -92,13 +93,15 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 	return sourceResp.Data, nil
 }
 
-func GetSource(client *http.Client, token, endpoint string, teamId, sourceId string) (models.Source, error) {
+func GetSource(token, endpoint string, teamId, sourceId string) (models.Source, error) {
+	client := http.Client{}
+
 	url := fmt.Sprintf(endpoint+"api/team/%s/source/%s", teamId, sourceId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return models.Source{}, err
 	}
-
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -127,7 +130,8 @@ func GetSource(client *http.Client, token, endpoint string, teamId, sourceId str
 
 }
 
-func CreateSource(client *http.Client, token, endpoint string, teamId, sourceName, platform string) (models.Source, error) {
+func CreateSource(token, endpoint string, teamId, sourceName, platform string) (models.Source, error) {
+	client := http.Client{}
 
 	// platform should be mapped to its respective int as sourceType, for kubernetes its 1
 	sourceType, exists := models.PlatformMap[strings.ToLower(platform)]
@@ -150,7 +154,7 @@ func CreateSource(client *http.Client, token, endpoint string, teamId, sourceNam
 	if err != nil {
 		return models.Source{}, err
 	}
-
+	req.Header.Add("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)

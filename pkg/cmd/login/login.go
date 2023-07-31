@@ -82,12 +82,6 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-type SigninRequest struct {
-	Email      string `json:"email,omitempty"`
-	AuthType   int    `json:"authType"`
-	Credential string `json:"credential"`
-}
-
 func loginRun(opts *LoginOptions) {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
@@ -186,7 +180,7 @@ func loginRun(opts *LoginOptions) {
 
 func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, email, password string, endpoint string) {
 	var response models.Response
-	signinReq := SigninRequest{
+	signinReq := models.SigninRequest{
 		Email:      email,
 		AuthType:   2,
 		Credential: password,
@@ -220,7 +214,8 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 
 	io.StopProgressIndicator()
 
-	cfg.UpdateConfig(response.UserBody.Email, response.BearerToken.AccessToken, response.UserBody.ProfileID, response.BearerToken.RefreshToken)
+	cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+		&response.BearerToken.RefreshToken, nil)
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
 
 	return
@@ -229,7 +224,7 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, token, endpoint string) error {
 	var response models.Response
 
-	signinReq := SigninRequest{
+	signinReq := models.SigninRequest{
 		AuthType:   1,
 		Credential: strings.TrimSpace(token),
 	}
@@ -273,7 +268,8 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 		return errors.New(response.Message[0])
 	}
 
-	err = cfg.UpdateConfig(response.UserBody.Email, response.BearerToken.AccessToken, response.UserBody.ProfileID, response.BearerToken.RefreshToken)
+	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+		&response.BearerToken.RefreshToken, nil)
 	if err != nil {
 		return err
 	}
