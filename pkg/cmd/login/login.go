@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmd/login/models"
-	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"regexp"
 	"strings"
+
+	"github.com/logfire-sh/cli/pkg/cmd/login/models"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -209,13 +212,14 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	}
 
 	if !response.IsSuccessful {
-		fmt.Fprintf(io.ErrOut, "\n%s %s %s\n", cs.FailureIcon(), response.Message[0], err.Error())
+		fmt.Fprintf(io.ErrOut, "\n%s %s\n", cs.FailureIcon(), response.Message[0])
+		os.Exit(0)
 	}
 
 	io.StopProgressIndicator()
 
 	cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, nil)
+		&response.BearerToken.RefreshToken, nil, nil)
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
 
 	return
@@ -264,12 +268,16 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	if !response.IsSuccessful {
-		fmt.Fprintf(IO.ErrOut, "\n%s %s\n", cs.FailureIcon(), response.Message[0])
+		if ok, _ := regexp.MatchString("invalid UUID", response.Message[0]); ok {
+			fmt.Fprintf(IO.ErrOut, "\n%s %s\n", cs.FailureIcon(), "invalid token")
+		} else {
+			fmt.Fprintf(IO.ErrOut, "\n%s %s\n", cs.FailureIcon(), response.Message[0])
+		}
 		return errors.New(response.Message[0])
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil)
 	if err != nil {
 		return err
 	}

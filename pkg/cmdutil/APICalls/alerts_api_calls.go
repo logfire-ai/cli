@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/logfire-sh/cli/pkg/cmd/alerts/models"
 	"io"
 	"net/http"
+
+	"github.com/logfire-sh/cli/pkg/cmd/alerts/models"
 )
 
 func CreateAlert(client *http.Client, token string, endpoint string, teamId string, name string, viewId string, numberOfRecords uint32,
@@ -45,7 +46,7 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -83,7 +84,7 @@ func ListAlert(client *http.Client, token string, endpoint string, teamId string
 		return []models.CreateAlertBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -127,7 +128,7 @@ func DeleteAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -152,8 +153,6 @@ func DeleteAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 
-	println(DeleteAlertResp.IsSuccessful)
-
 	if !DeleteAlertResp.IsSuccessful {
 		return errors.New("failed to delete alerts")
 	}
@@ -174,7 +173,7 @@ func PauseAlert(client *http.Client, token string, endpoint string, teamId strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -246,7 +245,7 @@ func UpdateAlert(client *http.Client, token string, endpoint string, teamId stri
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -270,8 +269,6 @@ func UpdateAlert(client *http.Client, token string, endpoint string, teamId stri
 	if err != nil {
 		return err
 	}
-
-	println(req.URL.Path)
 
 	if !CreateAlertResp.IsSuccessful {
 		return errors.New("failed to update alert")

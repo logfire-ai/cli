@@ -3,14 +3,15 @@ package check_endpoint
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"io"
-	"net/http"
 )
 
 type CheckEndpointOptions struct {
@@ -187,7 +188,7 @@ func CheckEndpointRun(opts *CheckEndpointOptions) {
 
 func CheckAuth(client *http.Client, endpoint string) (response string) {
 	req, err := http.NewRequest("GET", endpoint+"api/auth", nil)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -207,7 +208,7 @@ func CheckAuth(client *http.Client, endpoint string) (response string) {
 
 func CheckProfile(client *http.Client, endpoint string) (response CheckResponse) {
 	req, err := http.NewRequest("GET", endpoint+"api/profile", nil)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	if err != nil {
 		return
@@ -243,7 +244,7 @@ func CheckSource(client *http.Client, endpoint string) (response CheckResponse) 
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -274,7 +275,7 @@ func CheckSourceById(client *http.Client, endpoint string) (response CheckRespon
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -306,7 +307,7 @@ func CheckTeamInvite(client *http.Client, endpoint string) (response CheckRespon
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -338,7 +339,7 @@ func CheckTeamMember(client *http.Client, endpoint string) (response CheckRespon
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -370,7 +371,7 @@ func CheckTeam(client *http.Client, endpoint string) (response CheckResponse) {
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -402,7 +403,7 @@ func CheckSchema(client *http.Client, endpoint string) (response CheckResponse) 
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -434,7 +435,7 @@ func CheckTeamById(client *http.Client, endpoint string) (response CheckResponse
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -466,7 +467,7 @@ func CheckView(client *http.Client, endpoint string) (response CheckResponse) {
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -498,7 +499,7 @@ func CheckViewById(client *http.Client, endpoint string) (response CheckResponse
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -530,7 +531,7 @@ func CheckAlert(client *http.Client, endpoint string) (response CheckResponse) {
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -562,7 +563,7 @@ func CheckAlertById(client *http.Client, endpoint string) (response CheckRespons
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -594,7 +595,7 @@ func CheckIntegration(client *http.Client, endpoint string) (response CheckRespo
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -626,7 +627,7 @@ func CheckIntegrationById(client *http.Client, endpoint string) (response CheckR
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -658,7 +659,7 @@ func CheckAlertIntegration(client *http.Client, endpoint string) (response Check
 	if err != nil {
 		return
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
