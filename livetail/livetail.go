@@ -3,15 +3,16 @@ package livetail
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"sort"
+	"time"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
-	"net/http"
-	"sort"
-	"time"
 
 	pb "github.com/logfire-sh/cli/services/flink-service"
 
@@ -174,7 +175,8 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 
 // MakeGrpcCall makes creates a connection and makes a call to the server
 func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
-	grpc_url := "api.logfire.ai:443"
+	cfg, _ := config.NewConfig()
+	grpc_url := cfg.Get().GrpcEndpoint
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
