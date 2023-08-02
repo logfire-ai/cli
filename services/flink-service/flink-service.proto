@@ -28,6 +28,10 @@ message RecordDetails {
   string record = 1;
 }
 
+message Empty {
+
+}
+
 message Source {
   string sourceID = 1;
   string sourceName = 2;
@@ -106,4 +110,5 @@ message SQLResponse {
 service FlinkService {
   rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
   rpc SubmitSQL (SQLRequest) returns (SQLResponse) {}
+  rpc CreateSource(Source) returns (Empty) {}
 }
