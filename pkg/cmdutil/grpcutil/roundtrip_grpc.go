@@ -48,7 +48,6 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 					}
 				}
 			}
-			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
