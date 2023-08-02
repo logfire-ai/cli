@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"io"
 	"net/http"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -112,7 +113,7 @@ func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId 
 	if err != nil {
 		return err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 
 	req.Header.Set("Authorization", "Bearer "+token)
 

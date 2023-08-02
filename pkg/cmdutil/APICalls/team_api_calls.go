@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"io"
 	"net/http"
+
+	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 )
 
 func DeleteTeam(client *http.Client, token string, endpoint string, teamID string) error {
@@ -15,7 +16,7 @@ func DeleteTeam(client *http.Client, token string, endpoint string, teamID strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -60,7 +61,7 @@ func UpdateTeam(client *http.Client, token string, endpoint string, teamID strin
 		return models.Team{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -99,7 +100,7 @@ func ListTeams(client *http.Client, token string, endpoint string) ([]models.Tea
 	if err != nil {
 		return []models.Team{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -148,7 +149,7 @@ func CreateTeam(token, endpoint string, teamName string) (models.Team, error) {
 	if err != nil {
 		return models.Team{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)

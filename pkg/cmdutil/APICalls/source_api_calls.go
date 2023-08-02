@@ -2,14 +2,21 @@ package APICalls
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	"github.com/logfire-sh/cli/internal/config"
+	pb "github.com/logfire-sh/cli/services/flink-service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
+
+	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 )
 
 func UpdateSource(client *http.Client, token, endpoint string, teamid, sourceid, sourcename string) (models.Source, error) {
@@ -27,7 +34,7 @@ func UpdateSource(client *http.Client, token, endpoint string, teamid, sourceid,
 		return models.Source{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -65,7 +72,7 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 	if err != nil {
 		return []models.Source{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -87,7 +94,7 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 	}
 
 	if !sourceResp.IsSuccessful {
-		return []models.Source{}, errors.New("failed to get sources")
+		return []models.Source{}, errors.New(sourceResp.Message[0])
 	}
 
 	return sourceResp.Data, nil
@@ -101,7 +108,7 @@ func GetSource(token, endpoint string, teamId, sourceId string) (models.Source, 
 	if err != nil {
 		return models.Source{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -154,7 +161,7 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 	if err != nil {
 		return models.Source{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)
@@ -182,6 +189,30 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 	if !sourceResp.IsSuccessful {
 		fmt.Print(sourceResp)
 		return models.Source{}, errors.New("failed to create source")
+	}
+
+	pbSource := &pb.Source{
+		SourceID: "source_topic_" + sourceResp.Data.ID,
+		TeamID:   teamId,
+	}
+
+	cfg, _ := config.NewConfig()
+	grpc_url := cfg.Get().GrpcEndpoint
+	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+	if err != nil {
+		log.Fatalf("Failed to dial server: %v", err)
+	}
+	defer conn.Close()
+
+	// Create a gRPC client
+	grpcClient := pb.NewFlinkServiceClient(conn)
+
+	_, err = grpcClient.CreateSource(context.Background(), pbSource)
+	if err != nil {
+		return models.Source{}, err
+	}
+	if err != nil {
+		return models.Source{}, err
 	}
 
 	return sourceResp.Data, nil

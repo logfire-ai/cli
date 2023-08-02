@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 )
 
 func InviteMembers(client *http.Client, token string, endpoint string, teamId string, email []string) error {
@@ -25,7 +26,7 @@ func InviteMembers(client *http.Client, token string, endpoint string, teamId st
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -72,7 +73,7 @@ func RemoveMember(client *http.Client, token string, endpoint string, teamId str
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -120,7 +121,7 @@ func UpdateMember(client *http.Client, token string, endpoint string, teamId str
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -159,7 +160,7 @@ func MembersList(client *http.Client, token, endpoint string, teamId string) ([]
 	if err != nil {
 		return []models.TeamMemberRes{}, err
 	}
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := client.Do(req)

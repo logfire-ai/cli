@@ -9,6 +9,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmd/check_endpoint"
 	"github.com/logfire-sh/cli/pkg/cmd/integrations"
 	"github.com/logfire-sh/cli/pkg/cmd/reset_password"
+	"github.com/logfire-sh/cli/pkg/cmd/roundtrip"
 	"github.com/logfire-sh/cli/pkg/cmd/sql"
 	"github.com/logfire-sh/cli/pkg/cmd/update_profile"
 	"github.com/logfire-sh/cli/pkg/cmd/views"
@@ -36,7 +37,7 @@ type PromptRootOptions struct {
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
-	"Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile"}
+	"Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Round trip"}
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
@@ -120,6 +121,8 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 					sql.NewCmdSql(f).Run(cmd, []string{})
 				case choices[9]:
 					update_profile.UpdateProfileCmd(f).Run(cmd, []string{})
+				case choices[10]:
+					roundtrip.NewCmdRoundTrip(f).Run(cmd, []string{})
 				default:
 					break
 				}
@@ -161,6 +164,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(check_endpoint.NewCheckEndpointCmd(f))
 	cmd.AddCommand(update_profile.UpdateProfileCmd(f))
 	cmd.AddCommand(bootstrap.NewCmdBootstrap(f))
+	cmd.AddCommand(roundtrip.NewCmdRoundTrip(f))
 	return cmd, nil
 }
 

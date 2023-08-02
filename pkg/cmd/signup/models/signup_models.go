@@ -12,3 +12,8 @@ type OnboardRequest struct {
 type SetPassword struct {
 	Password string `json:"password"`
 }
+
+type SignupResponse struct {
+	IsSuccessful bool     `json:"isSuccessful"`
+	Message      []string `json:"message"`
+}

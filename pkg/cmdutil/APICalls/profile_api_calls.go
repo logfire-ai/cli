@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/logfire-sh/cli/internal/config"
 	LoginModels "github.com/logfire-sh/cli/pkg/cmd/login/models"
 	ResetPasswordModels "github.com/logfire-sh/cli/pkg/cmd/reset_password/models"
 	SignupModels "github.com/logfire-sh/cli/pkg/cmd/signup/models"
 	UpdateProfileModels "github.com/logfire-sh/cli/pkg/cmd/update_profile/models"
-	"strings"
 
 	"io"
 	"net/http"
@@ -41,12 +42,24 @@ func SendMagicLink(endpoint, email string) error {
 		Timeout:   10 * time.Second,
 	}
 
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(reqBody))
-	resp.Header.Add("User-Agent", "Logfire-cli")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -79,7 +92,7 @@ func ResetPassword(token string, endpoint string, profileId string, password str
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -128,7 +141,7 @@ func SetPassword(token string, endpoint string, profileId string, password strin
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -175,7 +188,7 @@ func UpdateProfile(client *http.Client, token string, endpoint string, profileId
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -207,14 +220,14 @@ func UpdateProfile(client *http.Client, token string, endpoint string, profileId
 	return nil
 }
 
-func SignupFlow(email string, endpoint string) error {
+func SignupFlow(email string, endpoint string) (string, error) {
 	signupReq := SignupModels.SignupRequest{
 		Email: email,
 	}
 
 	reqBody, err := json.Marshal(signupReq)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	url := endpoint + "api/auth/signup"
@@ -231,18 +244,43 @@ func SignupFlow(email string, endpoint string) error {
 		Timeout:   10 * time.Second,
 	}
 
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(reqBody))
-	resp.Header.Add("User-Agent", "Logfire-cli")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer resp.Body.Close()
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
 
-	if resp.StatusCode != http.StatusCreated {
-		return err
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	var response SignupModels.SignupResponse
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Failed to read response body: %v\n", err)
+		return "", err
 	}
 
-	return nil
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		fmt.Printf("Failed to unmarshal JSON: %v\n", err)
+		return "", err
+	}
+
+	if !response.IsSuccessful {
+		return "", errors.New(response.Message[0])
+	} else {
+		return response.Message[0], nil
+	}
 }
 
 func OnboardingFlow(profileID, authToken string, endpoint, firstName, lastName string) error {
@@ -269,7 +307,7 @@ func OnboardingFlow(profileID, authToken string, endpoint, firstName, lastName s
 	}
 
 	req.Header.Set("Authorization", "Bearer "+authToken)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -340,7 +378,7 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, nil)
+		&response.BearerToken.RefreshToken, nil, nil)
 	if err != nil {
 		fmt.Printf("Failed to update config: %v\n", err)
 		return err

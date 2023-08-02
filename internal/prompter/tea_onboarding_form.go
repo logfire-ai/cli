@@ -9,8 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/logfire-sh/cli/internal/config"
-	"github.com/logfire-sh/cli/livetail"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"io"
 	"log"
 	"strings"
@@ -248,13 +248,7 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-var onboarded bool
-
-var teamCreated bool
-
 var sourceCreated bool
-
-var curlCopied bool
 
 var stop = make(chan error)
 
@@ -263,9 +257,7 @@ var step = "signup"
 var subStep = "email"
 
 func waitForLog(m *model) {
-	newLivetail, _ := livetail.NewLivetail()
-	newLivetail.ApplyFilter(m.config, []string{m.sourceId}, "", "")
-	go newLivetail.GenerateLogs("onboarding", stop)
+	go grpcutil.GetLog(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId, stop)
 	err := <-stop
 	if err != nil {
 		m.err = errors.New("We apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance.")
@@ -281,9 +273,13 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 		switch subStep {
 		case "email":
 			if m.inputs[email].Value() != "" {
-				err := APICalls.SignupFlow(m.inputs[email].Value(), m.config.Get().EndPoint)
+				msg, err := APICalls.SignupFlow(m.inputs[email].Value(), m.config.Get().EndPoint)
 				if err != nil {
+
 					m.err = err
+					return m, nil
+				} else if msg == "already registered user. Sent link to login" {
+					m.err = errors.New("you are already a user, please use logfire commands")
 					return m, nil
 				}
 				subStep = "token"
@@ -343,7 +339,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID)
+				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID, nil)
 				if err != nil {
 					m.err = err
 					return m, nil

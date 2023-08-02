@@ -1,15 +1,15 @@
 package livetail
 
 import (
-	"context"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
-	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
-	"log"
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -18,10 +18,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	pb "github.com/logfire-sh/cli/services/flink-service"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -96,15 +93,20 @@ func NewLivetailCmd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func livetailRun(opts *LivetailOptions) {
+	var request = &pb.FilterRequest{
+		DateTimeFilter:    &pb.DateTimeFilter{},
+		FieldBasedFilters: []*pb.FieldBasedFilter{},
+		SearchQueries:     []string{},
+		Sources:           []*pb.Source{},
+		BatchSize:         100,
+		IsScrollDown:      true,
+	}
+
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
-	}
-
-	if opts.GUI {
-
 	}
 
 	if opts.Interactive && opts.TeamId != "" && opts.SourceFilter == nil && opts.SearchFilter == nil && opts.FieldBasedFilterName == "" &&
@@ -199,77 +201,6 @@ func livetailRun(opts *LivetailOptions) {
 		}
 	}
 
-	pbSources := createGrpcSource(sources)
-	var sourcesOffset = make(map[string]uint64)
-
-	for {
-		response, err := makeGrpcCall(pbSources, opts)
-		if err != nil {
-			continue
-		}
-
-		if len(response.Records) > 0 {
-			sort.Sort(ByOffset(response.Records))
-			sourcesOffset = getOffsets(sourcesOffset, response.Records)
-			pbSources = addOffset(pbSources, sourcesOffset)
-			showLogs(opts.IO, response.Records)
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-}
-
-// Convert logs with colors
-func showLogs(io *iostreams.IOStreams, records []*pb.FilteredRecord) {
-	cs := io.ColorScheme()
-	for _, record := range records {
-
-		fmt.Fprintf(io.Out, "%s %s [%s] %s\n",
-			cs.Yellow(record.Dt), cs.Green(record.SourceName), cs.Cyan(strings.ToUpper(record.Level)), record.Message)
-	}
-}
-
-// createGrpcSource creates a proper sources to be used in grpc request
-func createGrpcSource(sources []models.Source) []*pb.Source {
-	var grpcSources []*pb.Source
-	for _, source := range sources {
-		pbSource := pb.Source{
-			SourceID:   "source_topic_" + source.ID,
-			SourceName: source.Name,
-			TeamID:     source.TeamID,
-		}
-		grpcSources = append(grpcSources, &pbSource)
-	}
-	return grpcSources
-}
-
-// ByOffset for sorting the records based on Offset
-type ByOffset []*pb.FilteredRecord
-
-func (a ByOffset) Len() int           { return len(a) }
-func (a ByOffset) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByOffset) Less(i, j int) bool { return a[i].Offset < a[j].Offset }
-
-// addOffset adds offset to sources based on the last response received.
-func addOffset(sources []*pb.Source, offset map[string]uint64) []*pb.Source {
-	for _, source := range sources {
-		source.StartingOffset = offset[source.SourceName]
-	}
-
-	return sources
-}
-
-// getFilteredData makes the actual grpc call to connect with flink-service.
-func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source, opts *LivetailOptions) (*pb.FilteredRecords, error) {
-	// Prepare the request payload
-	request := &pb.FilterRequest{
-		DateTimeFilter:    &pb.DateTimeFilter{},
-		FieldBasedFilters: []*pb.FieldBasedFilter{},
-		SearchQueries:     []string{},
-		Sources:           sources,
-		BatchSize:         100,
-		IsScrollDown:      true,
-	}
-
 	if opts.StartDateTimeFilter == "" {
 		request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
 	}
@@ -294,41 +225,33 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source, opts *L
 		})
 	}
 
-	// Invoke the gRPC method
-	response, err := client.GetFilteredData(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
+	pbSources := grpcutil.CreateGrpcSource(sources)
+	var sourcesOffset = make(map[string]uint64)
 
-	return response, nil
-}
+	request.Sources = pbSources
 
-// MakeGrpcCall makes creates a connection and makes a call to the server
-func makeGrpcCall(pbSources []*pb.Source, opts *LivetailOptions) (*pb.FilteredRecords, error) {
-	grpc_url := "api.logfire.ai:443"
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	// Create a gRPC client
-	client := pb.NewFlinkServiceClient(conn)
-
-	response, err := getFilteredData(client, pbSources, opts)
-	if err != nil {
-		fmt.Println(err)
-		return response, errors.Wrap(err, "[MakeGrpcCall][getFilteredData]")
-	}
-
-	return response, nil
-}
-
-func getOffsets(offsets map[string]uint64, records []*pb.FilteredRecord) map[string]uint64 {
-	for _, record := range records {
-		if offsets[record.SourceName] == 0 || record.Offset >= offsets[record.SourceName] {
-			offsets[record.SourceName] = record.Offset + 1
+	for {
+		response, err := grpcutil.MakeGrpcCall(request)
+		if err != nil {
+			continue
 		}
+
+		if len(response.Records) > 0 {
+			sort.Sort(grpcutil.ByOffset(response.Records))
+			sourcesOffset = grpcutil.GetOffsets(sourcesOffset, response.Records)
+			pbSources = grpcutil.AddOffset(pbSources, sourcesOffset)
+			showLogs(opts.IO, response.Records)
+		}
+		time.Sleep(500 * time.Millisecond)
 	}
-	return offsets
+}
+
+// Convert logs with colors
+func showLogs(io *iostreams.IOStreams, records []*pb.FilteredRecord) {
+	cs := io.ColorScheme()
+	for _, record := range records {
+
+		fmt.Fprintf(io.Out, "%s %s [%s] %s\n",
+			cs.Yellow(record.Dt), cs.Green(record.SourceName), cs.Cyan(strings.ToUpper(record.Level)), record.Message)
+	}
 }

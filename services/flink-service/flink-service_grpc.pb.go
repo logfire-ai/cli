@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	FlinkService_GetFilteredData_FullMethodName = "/sh.logfire.FlinkService/GetFilteredData"
 	FlinkService_SubmitSQL_FullMethodName       = "/sh.logfire.FlinkService/SubmitSQL"
+	FlinkService_CreateSource_FullMethodName    = "/sh.logfire.FlinkService/CreateSource"
 )
 
 // FlinkServiceClient is the client API for FlinkService service.
@@ -29,6 +30,7 @@ const (
 type FlinkServiceClient interface {
 	GetFilteredData(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilteredRecords, error)
 	SubmitSQL(ctx context.Context, in *SQLRequest, opts ...grpc.CallOption) (*SQLResponse, error)
+	CreateSource(ctx context.Context, in *Source, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type flinkServiceClient struct {
@@ -57,12 +59,22 @@ func (c *flinkServiceClient) SubmitSQL(ctx context.Context, in *SQLRequest, opts
 	return out, nil
 }
 
+func (c *flinkServiceClient) CreateSource(ctx context.Context, in *Source, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, FlinkService_CreateSource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FlinkServiceServer is the server API for FlinkService service.
 // All implementations must embed UnimplementedFlinkServiceServer
 // for forward compatibility
 type FlinkServiceServer interface {
 	GetFilteredData(context.Context, *FilterRequest) (*FilteredRecords, error)
 	SubmitSQL(context.Context, *SQLRequest) (*SQLResponse, error)
+	CreateSource(context.Context, *Source) (*Empty, error)
 	mustEmbedUnimplementedFlinkServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedFlinkServiceServer) GetFilteredData(context.Context, *FilterR
 }
 func (UnimplementedFlinkServiceServer) SubmitSQL(context.Context, *SQLRequest) (*SQLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitSQL not implemented")
+}
+func (UnimplementedFlinkServiceServer) CreateSource(context.Context, *Source) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSource not implemented")
 }
 func (UnimplementedFlinkServiceServer) mustEmbedUnimplementedFlinkServiceServer() {}
 
@@ -125,6 +140,24 @@ func _FlinkService_SubmitSQL_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FlinkService_CreateSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Source)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlinkServiceServer).CreateSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlinkService_CreateSource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlinkServiceServer).CreateSource(ctx, req.(*Source))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FlinkService_ServiceDesc is the grpc.ServiceDesc for FlinkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var FlinkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitSQL",
 			Handler:    _FlinkService_SubmitSQL_Handler,
+		},
+		{
+			MethodName: "CreateSource",
+			Handler:    _FlinkService_CreateSource_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

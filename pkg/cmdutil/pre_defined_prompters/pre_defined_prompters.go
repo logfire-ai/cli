@@ -195,7 +195,6 @@ func AskSourceId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 	}
 
 	return strings.TrimSpace(strings.Split(sourceSelected, " - ")[1]), nil
-
 }
 
 func AskSourceIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) ([]string, error) {

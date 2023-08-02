@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	AlertModels "github.com/logfire-sh/cli/pkg/cmd/alerts/models"
-	IntegrationModels "github.com/logfire-sh/cli/pkg/cmd/integrations/models"
 	"io"
 	"net/http"
+
+	AlertModels "github.com/logfire-sh/cli/pkg/cmd/alerts/models"
+	IntegrationModels "github.com/logfire-sh/cli/pkg/cmd/integrations/models"
 )
 
 func GetAlertIntegrations(client *http.Client, token string, endpoint string, teamId string) ([]AlertModels.AlertIntegrationBody, error) {
@@ -16,7 +17,7 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 		return []AlertModels.AlertIntegrationBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -40,8 +41,6 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 	if err != nil {
 		return []AlertModels.AlertIntegrationBody{}, err
 	}
-
-	println(ListAlertIntegrationsResp.Message[0])
 
 	if !ListAlertIntegrationsResp.IsSuccessful {
 		return []AlertModels.AlertIntegrationBody{}, errors.New(ListAlertIntegrationsResp.Message[0])
@@ -69,7 +68,7 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -107,7 +106,7 @@ func GetIntegrationsList(client *http.Client, token string, endpoint string, tea
 		return []IntegrationModels.IntegrationBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -146,7 +145,7 @@ func DeleteIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -195,7 +194,7 @@ func UpdateIntegration(client *http.Client, token string, endpoint string, teamI
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("User-Agent", "Logfire-cli")
+	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
