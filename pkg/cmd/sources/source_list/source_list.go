@@ -91,10 +91,10 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	} else {
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Name", "Source-Id", "Platform"})
+		table.SetHeader([]string{"Name", "Source-Id", "Platform", "Token"})
 
 		for _, i2 := range sources {
-			table.Append([]string{i2.Name, i2.ID, i2.Platform})
+			table.Append([]string{i2.Name, i2.ID, i2.Platform, i2.SourceToken})
 		}
 
 		table.Render()
