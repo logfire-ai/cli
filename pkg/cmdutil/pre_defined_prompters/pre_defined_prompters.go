@@ -12,7 +12,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"net/http"
 	"os"
-	"strings"
 )
 
 func AskTeamId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter) (string, error) {
@@ -23,9 +22,18 @@ func AskTeamId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, 
 	}
 
 	var teamsListIdNames []string
+	var idMap map[string]string = make(map[string]string)
 
 	for _, team := range teamsList {
-		teamsListIdNames = append(teamsListIdNames, team.Name+" - "+team.ID)
+		lastFour := ""
+		if len(team.ID) > 4 {
+			lastFour = team.ID[len(team.ID)-4:]
+		} else {
+			lastFour = team.ID
+		}
+		displayName := team.Name + " - " + lastFour
+		teamsListIdNames = append(teamsListIdNames, displayName)
+		idMap[displayName] = team.ID
 	}
 
 	selectedTeam, err := prompter.Select("Select your Team:", "", teamsListIdNames)
@@ -34,12 +42,19 @@ func AskTeamId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, 
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(selectedTeam, " - ")[1]), nil
+	fullTeamId, ok := idMap[selectedTeam]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
+
+	return fullTeamId, nil
 }
 
 func AskAlertIntegrationIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) ([]string, error) {
 	var integrationsIdNames []string
 	var integrationsList []models.AlertIntegrationBody
+	var idMap map[string]string = make(map[string]string)
 
 	integrationsList, err := APICalls.GetAlertIntegrations(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -48,7 +63,15 @@ func AskAlertIntegrationIds(client *http.Client, cfg config.Config, io *iostream
 	}
 
 	for _, integration := range integrationsList {
-		integrationsIdNames = append(integrationsIdNames, integration.Name+" - "+integration.ModelId)
+		lastFour := ""
+		if len(integration.ModelId) > 4 {
+			lastFour = integration.ModelId[len(integration.ModelId)-4:]
+		} else {
+			lastFour = integration.ModelId
+		}
+		displayName := integration.Name + " - " + lastFour
+		integrationsIdNames = append(integrationsIdNames, displayName)
+		idMap[displayName] = integration.ModelId
 	}
 
 	integrationsSelected, err := prompter.MultiSelect("Select integrations to be alerted. (multiple selections are allowed)", []string{}, integrationsIdNames)
@@ -57,18 +80,17 @@ func AskAlertIntegrationIds(client *http.Client, cfg config.Config, io *iostream
 		return []string{}, err
 	}
 
-	var integrationsSelectedList []string
-
+	var fullIntegrationIds []string
 	for _, integrationSelected := range integrationsSelected {
-		parts := strings.Split(integrationSelected, " - ")
-		if len(parts) > 1 {
-			// Trim any leading or trailing spaces from the right part before adding to the result slice.
-			integrationsSelectedList = append(integrationsSelectedList, strings.TrimSpace(parts[1]))
+		fullId, ok := idMap[integrationSelected]
+		if !ok {
+			fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+			return []string{}, fmt.Errorf("Failed to map to original ID")
 		}
+		fullIntegrationIds = append(fullIntegrationIds, fullId)
 	}
 
-	return integrationsSelectedList, nil
-
+	return fullIntegrationIds, nil
 }
 
 func AskViewId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
@@ -79,9 +101,18 @@ func AskViewId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, 
 	}
 
 	var viewsIdNames []string
+	var idMap map[string]string = make(map[string]string)
 
 	for _, view := range ViewsList {
-		viewsIdNames = append(viewsIdNames, view.Name+" - "+view.Id)
+		lastFour := ""
+		if len(view.Id) > 4 {
+			lastFour = view.Id[len(view.Id)-4:]
+		} else {
+			lastFour = view.Id
+		}
+		displayName := view.Name + " - " + lastFour
+		viewsIdNames = append(viewsIdNames, displayName)
+		idMap[displayName] = view.Id
 	}
 
 	viewSelected, err := prompter.Select("Select a View for which alert is to be created:", "", viewsIdNames)
@@ -90,12 +121,19 @@ func AskViewId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, 
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(viewSelected, " - ")[1]), nil
+	fullViewId, ok := idMap[viewSelected]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
+
+	return fullViewId, nil
 }
 
 func AskAlertIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) ([]string, error) {
 	var alertIdNames []string
 	var alertsList []models.CreateAlertBody
+	var idMap map[string]string = make(map[string]string)
 
 	alertsList, err := APICalls.ListAlert(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -103,8 +141,16 @@ func AskAlertIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 		return []string{}, err
 	}
 
-	for _, integration := range alertsList {
-		alertIdNames = append(alertIdNames, integration.Name+" - "+integration.Id)
+	for _, alert := range alertsList {
+		lastFour := ""
+		if len(alert.Id) > 4 {
+			lastFour = alert.Id[len(alert.Id)-4:]
+		} else {
+			lastFour = alert.Id
+		}
+		displayName := alert.Name + " - " + lastFour
+		alertIdNames = append(alertIdNames, displayName)
+		idMap[displayName] = alert.Id
 	}
 
 	alertsSelected, err := prompter.MultiSelect("Select alerts. (multiple selections are allowed)", []string{}, alertIdNames)
@@ -113,23 +159,23 @@ func AskAlertIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 		return []string{}, err
 	}
 
-	var alertsSelectedList []string
-
+	var fullAlertIds []string
 	for _, alertSelected := range alertsSelected {
-		parts := strings.Split(alertSelected, " - ")
-		if len(parts) > 1 {
-			// Trim any leading or trailing spaces from the right part before adding to the result slice.
-			alertsSelectedList = append(alertsSelectedList, strings.TrimSpace(parts[1]))
+		fullId, ok := idMap[alertSelected]
+		if !ok {
+			fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+			return []string{}, fmt.Errorf("Failed to map to original ID")
 		}
+		fullAlertIds = append(fullAlertIds, fullId)
 	}
 
-	return alertsSelectedList, nil
-
+	return fullAlertIds, nil
 }
 
 func AskAlertId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
 	var alertIdNames []string
 	var alertsList []models.CreateAlertBody
+	var idMap map[string]string = make(map[string]string)
 
 	alertsList, err := APICalls.ListAlert(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -137,8 +183,16 @@ func AskAlertId(client *http.Client, cfg config.Config, io *iostreams.IOStreams,
 		return "", err
 	}
 
-	for _, integration := range alertsList {
-		alertIdNames = append(alertIdNames, integration.Name+" - "+integration.Id)
+	for _, alert := range alertsList {
+		lastFour := ""
+		if len(alert.Id) > 4 {
+			lastFour = alert.Id[len(alert.Id)-4:]
+		} else {
+			lastFour = alert.Id
+		}
+		displayName := alert.Name + " - " + lastFour
+		alertIdNames = append(alertIdNames, displayName)
+		idMap[displayName] = alert.Id
 	}
 
 	alertsSelected, err := prompter.Select("Select an alert:", "", alertIdNames)
@@ -147,13 +201,19 @@ func AskAlertId(client *http.Client, cfg config.Config, io *iostreams.IOStreams,
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(alertsSelected, " - ")[1]), nil
+	fullAlertId, ok := idMap[alertsSelected]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
 
+	return fullAlertId, nil
 }
 
-func AskIntegrationIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
+func AskIntegrationId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
 	var integrationsIdNames []string
 	var integrationsList []IntegrationModels.IntegrationBody
+	var idMap map[string]string = make(map[string]string)
 
 	integrationsList, err := APICalls.GetIntegrationsList(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -162,7 +222,15 @@ func AskIntegrationIds(client *http.Client, cfg config.Config, io *iostreams.IOS
 	}
 
 	for _, integration := range integrationsList {
-		integrationsIdNames = append(integrationsIdNames, integration.Name+" - "+integration.Id)
+		lastFour := ""
+		if len(integration.Id) > 4 {
+			lastFour = integration.Id[len(integration.Id)-4:]
+		} else {
+			lastFour = integration.Id
+		}
+		displayName := integration.Name + " - " + lastFour
+		integrationsIdNames = append(integrationsIdNames, displayName)
+		idMap[displayName] = integration.Id
 	}
 
 	integrationsSelected, err := prompter.Select("Select integrations to be alerted. (multiple selections are allowed)", "", integrationsIdNames)
@@ -171,10 +239,19 @@ func AskIntegrationIds(client *http.Client, cfg config.Config, io *iostreams.IOS
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(integrationsSelected, " - ")[1]), nil
+	fullIntegrationId, ok := idMap[integrationsSelected]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
+
+	return fullIntegrationId, nil
+
 }
 
 func AskSourceId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
+	idMap := make(map[string]string)
+
 	var sourceIdNames []string
 	var sourceList []SourceModels.Source
 
@@ -185,7 +262,14 @@ func AskSourceId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 	}
 
 	for _, source := range sourceList {
-		sourceIdNames = append(sourceIdNames, source.Name+" - "+source.ID)
+		lastFour := ""
+		if len(source.ID) > 4 {
+			lastFour = source.ID[len(source.ID)-4:]
+		} else {
+			lastFour = source.ID
+		}
+		sourceIdNames = append(sourceIdNames, source.Name+" - "+lastFour)
+		idMap[source.Name+" - "+lastFour] = source.ID
 	}
 
 	sourceSelected, err := prompter.Select("Select a source:", "", sourceIdNames)
@@ -194,12 +278,19 @@ func AskSourceId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(sourceSelected, " - ")[1]), nil
+	fullID, ok := idMap[sourceSelected]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
+
+	return fullID, nil
 }
 
 func AskSourceIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) ([]string, error) {
 	var sourceIdNames []string
 	var sourceList []SourceModels.Source
+	var idMap map[string]string = make(map[string]string)
 
 	sourceList, err := APICalls.GetAllSources(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -208,7 +299,15 @@ func AskSourceIds(client *http.Client, cfg config.Config, io *iostreams.IOStream
 	}
 
 	for _, source := range sourceList {
-		sourceIdNames = append(sourceIdNames, source.Name+" - "+source.ID)
+		lastFour := ""
+		if len(source.ID) > 4 {
+			lastFour = source.ID[len(source.ID)-4:]
+		} else {
+			lastFour = source.ID
+		}
+		displayName := source.Name + " - " + lastFour
+		sourceIdNames = append(sourceIdNames, displayName)
+		idMap[displayName] = source.ID
 	}
 
 	sourcesSelected, err := prompter.MultiSelect("Select sources. (multiple selections are allowed)", []string{}, sourceIdNames)
@@ -217,23 +316,23 @@ func AskSourceIds(client *http.Client, cfg config.Config, io *iostreams.IOStream
 		return []string{}, err
 	}
 
-	var sourceSelectedList []string
-
+	var fullSourceIds []string
 	for _, sourceSelected := range sourcesSelected {
-		parts := strings.Split(sourceSelected, " - ")
-		if len(parts) > 1 {
-			// Trim any leading or trailing spaces from the right part before adding to the result slice.
-			sourceSelectedList = append(sourceSelectedList, strings.TrimSpace(parts[1]))
+		fullId, ok := idMap[sourceSelected]
+		if !ok {
+			fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+			return []string{}, fmt.Errorf("Failed to map to original ID")
 		}
+		fullSourceIds = append(fullSourceIds, fullId)
 	}
 
-	return sourceSelectedList, nil
-
+	return fullSourceIds, nil
 }
 
 func AskMemberId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
 	var MemberIdNames []string
 	var membersList []MemberModels.TeamMemberRes
+	var idMap map[string]string = make(map[string]string)
 
 	membersList, err := APICalls.MembersList(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
@@ -242,7 +341,15 @@ func AskMemberId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 	}
 
 	for _, member := range membersList {
-		MemberIdNames = append(MemberIdNames, member.FirstName+" "+member.LastName+" - "+member.ProfileId)
+		lastFour := ""
+		if len(member.ProfileId) > 4 {
+			lastFour = member.ProfileId[len(member.ProfileId)-4:]
+		} else {
+			lastFour = member.ProfileId
+		}
+		displayName := member.FirstName + " " + member.LastName + " - " + lastFour
+		MemberIdNames = append(MemberIdNames, displayName)
+		idMap[displayName] = member.ProfileId
 	}
 
 	memberSelected, err := prompter.Select("Select a member:", "", MemberIdNames)
@@ -251,6 +358,12 @@ func AskMemberId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 		return "", err
 	}
 
-	return strings.TrimSpace(strings.Split(memberSelected, " - ")[1]), nil
+	fullProfileId, ok := idMap[memberSelected]
+	if !ok {
+		fmt.Fprintf(io.ErrOut, "%s Failed to map to original ID\n", cs.FailureIcon())
+		return "", fmt.Errorf("Failed to map to original ID")
+	}
+
+	return fullProfileId, nil
 
 }

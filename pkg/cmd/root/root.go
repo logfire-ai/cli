@@ -34,6 +34,7 @@ type PromptRootOptions struct {
 	Choice            string
 	NotLoggedInChoice string
 	LoggedIn          bool
+	//Staging           bool
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
@@ -53,7 +54,8 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "logfire <command> <subcommand> [flags]",
+		Use: "logfire <command> <subcommand> [flags]",
+		//Args:  cobra.ExactArgs(1),
 		Short: "Logfire CLI",
 		Long:  `Work seamlessly with logfire log management system from the command line.`,
 		Example: heredoc.Doc(`
@@ -131,6 +133,16 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	}
 
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
+	//cmd.PersistentFlags().BoolVarP(&opts.Staging, "staging", "s", false, "Change server to staging")
+	//
+	//if opts.Staging == true {
+	//	endpoint := "https://api-stg.logfire.ai/"
+	//	grpcEndpoint := "api-stg.logfire.ai:443"
+	//	err = cfg.UpdateConfig(nil, nil, nil, nil, nil, &endpoint, &grpcEndpoint)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true

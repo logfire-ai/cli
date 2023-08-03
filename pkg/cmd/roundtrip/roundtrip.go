@@ -14,7 +14,6 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -110,25 +109,45 @@ func PromptRoundTripRun(f *cmdutil.Factory, cmd *cobra.Command, opts *PromptRoun
 			return
 		}
 
-		var sourceIdNames []string
-
-		for _, source := range sourceList {
-			sourceIdNames = append(sourceIdNames, source.Name+" - "+source.ID+" - "+source.SourceToken)
-		}
-
 		var selectedSource string
 		var sourceId string
 		var sourceToken string
 
 		if len(sourceList) != 0 {
+			idMap := make(map[string]string)
+
+			var sourceIdNames []string
+
+			for _, source := range sourceList {
+				lastFour := ""
+				if len(source.ID) > 4 {
+					lastFour = source.ID[len(source.ID)-4:]
+				} else {
+					lastFour = source.ID
+				}
+				sourceIdNames = append(sourceIdNames, source.Name+" - "+lastFour)
+				idMap[source.Name+" - "+lastFour] = source.ID
+			}
+
 			selectedSource, err = opts.Prompter.Select("Select Source to round trip:", "", sourceIdNames)
 			if err != nil {
 				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to get sources\n", cs.FailureIcon())
 				return
 			}
 
-			sourceId = strings.TrimSpace(strings.Split(selectedSource, " - ")[1])
-			sourceToken = strings.TrimSpace(strings.Split(selectedSource, " - ")[2])
+			var ok bool
+
+			sourceId, ok = idMap[selectedSource]
+			if !ok {
+				log.Fatalf("%s Failed to map to original ID\n\n", cs.FailureIcon())
+				return
+			}
+
+			for _, source := range sourceList {
+				if sourceId == source.ID {
+					sourceToken = source.SourceToken
+				}
+			}
 		} else {
 			fmt.Fprintf(opts.IO.ErrOut, "%s\n", "Seems that you have no sources in this team, please create a new one")
 
@@ -158,7 +177,7 @@ func PromptRoundTripRun(f *cmdutil.Factory, cmd *cobra.Command, opts *PromptRoun
 
 		cmd := exec.Command("curl",
 			"--location",
-			"https://in.logfire.ai",
+			"https://in-stg.logfire.ai",
 			"--header",
 			"Content-Type: application/json",
 			"--header",

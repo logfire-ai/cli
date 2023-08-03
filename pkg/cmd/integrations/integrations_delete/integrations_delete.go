@@ -70,7 +70,7 @@ func DeleteIntegrationRun(opts *DeleteIntegrationOptions) {
 		if opts.TeamId == "" && opts.IntegrationId == "" {
 			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-			opts.IntegrationId, _ = pre_defined_prompters.AskIntegrationIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+			opts.IntegrationId, _ = pre_defined_prompters.AskIntegrationId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 		}
 	} else {
 		if opts.TeamId == "" {
