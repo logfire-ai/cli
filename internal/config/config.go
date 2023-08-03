@@ -21,7 +21,7 @@ type AuthConfig struct {
 
 type Config interface {
 	UpdateEndpoint(string) error
-	UpdateConfig(*string, *string, *string, *string, *string, *string) error
+	UpdateConfig(*string, *string, *string, *string, *string, *string, *string) error
 	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
@@ -74,7 +74,7 @@ func (c *cfg) Get() *AuthConfig {
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, grpcEndpoint *string) error {
+func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, endpoint, grpcEndpoint *string) error {
 	// Write the updated configuration to the file
 
 	if username != nil {
@@ -104,6 +104,11 @@ func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, grp
 	if teamid != nil {
 		viper.Set("team_id", teamid)
 		c.AuthCfg.TeamId = *teamid
+	}
+
+	if endpoint != nil {
+		viper.Set("endpoint", endpoint)
+		c.AuthCfg.EndPoint = *endpoint
 	}
 
 	if grpcEndpoint != nil {
