@@ -76,7 +76,7 @@ func UpdateIntegrationRun(opts *UpdateIntegrationOptions) {
 		if opts.TeamId == "" && opts.IntegrationId == "" && opts.Name == "" && opts.Description == "" {
 			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
-			opts.IntegrationId, _ = pre_defined_prompters.AskIntegrationIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+			opts.IntegrationId, _ = pre_defined_prompters.AskIntegrationId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
 			updateName, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the alert name?"), false)
 			if updateName {

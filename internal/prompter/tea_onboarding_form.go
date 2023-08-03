@@ -339,7 +339,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID, nil)
+				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID, nil, nil)
 				if err != nil {
 					m.err = err
 					return m, nil
