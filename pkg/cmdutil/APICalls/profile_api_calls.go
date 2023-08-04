@@ -278,8 +278,10 @@ func SignupFlow(email string, endpoint string) (string, error) {
 
 	if !response.IsSuccessful {
 		return "", errors.New(response.Message[0])
-	} else {
+	} else if len(response.Message) > 0 {
 		return response.Message[0], nil
+	} else {
+		return "", nil
 	}
 }
 
