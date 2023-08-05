@@ -84,7 +84,7 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			PromptRoundTripRun(f, cmd, opts)
+			PromptRoundTripRun(opts)
 		},
 	}
 
@@ -93,7 +93,7 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 
 var stop = make(chan bool)
 
-func PromptRoundTripRun(f *cmdutil.Factory, cmd *cobra.Command, opts *PromptRoundTripOptions) {
+func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 	cfg, _ := opts.Config()
 	cs := opts.IO.ColorScheme()
 	if !opts.Interactive {
@@ -190,8 +190,6 @@ func PromptRoundTripRun(f *cmdutil.Factory, cmd *cobra.Command, opts *PromptRoun
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		log.Fatal(cmd.Args)
 
 		go grpcutil.WaitForLog(cfg, id, opts.TeamId, sourceId, stop)
 
