@@ -177,17 +177,21 @@ func PromptRoundTripRun(f *cmdutil.Factory, cmd *cobra.Command, opts *PromptRoun
 
 		cmd := exec.Command("curl",
 			"--location",
-			"https://in-stg.logfire.ai",
+			"https://in.logfire.ai",
 			"--header",
 			"Content-Type: application/json",
 			"--header",
 			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
+			"--header",
+			fmt.Sprintf("Diagnostic: True"),
 			"--data",
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Fatal(cmd.Args)
 
 		go grpcutil.WaitForLog(cfg, id, opts.TeamId, sourceId, stop)
 

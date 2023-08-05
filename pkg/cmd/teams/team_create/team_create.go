@@ -2,8 +2,9 @@ package team_create
 
 import (
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"net/http"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
