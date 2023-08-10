@@ -195,9 +195,9 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		start := time.Now()
 
-		err = cmd.Run()
+		_ = cmd.Run()
 
-		_ = <-stop
+		<-stop
 
 		elapsed := time.Since(start)
 

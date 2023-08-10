@@ -2,6 +2,9 @@ package member_list
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -11,8 +14,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type MemberListOptions struct {
@@ -43,7 +44,10 @@ func NewMemberListCmd(f *cmdutil.Factory) *cobra.Command {
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
-			$ logfire teams list members
+			$ logfire teams list-members
+
+			# start argument setup
+			$ logfire teams invite-members --teamid <team-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {

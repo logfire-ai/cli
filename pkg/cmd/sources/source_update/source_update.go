@@ -2,6 +2,8 @@ package source_update
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -10,7 +12,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type SourceUpdateOptions struct {

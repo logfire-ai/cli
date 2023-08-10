@@ -193,7 +193,7 @@ func livetailRun(opts *LivetailOptions) {
 	}
 
 	if opts.SaveView == true {
-		err := APICalls.CreateView(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, sources, opts.SearchFilter,
+		err := APICalls.CreateView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, sources, opts.SearchFilter,
 			opts.FieldBasedFilterName, opts.FieldBasedFilterValue, opts.FieldBasedFilterCondition,
 			opts.StartDateTimeFilter, opts.EndDateTimeFilter, opts.ViewName)
 		if err != nil {

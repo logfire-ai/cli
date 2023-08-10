@@ -2,6 +2,9 @@ package alerts_pause
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -10,8 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type PauseAlertOptions struct {
@@ -45,7 +46,7 @@ func NewPauseAlertCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire alerts pause
 
 			# start argument setup
-			$ logfire alerts pause --team-id <team-id> --alert-pause <true|false> --alert-id <alert-id>
+			$ logfire alerts pause --team-id <team-id> --alert-pause <true|false> --alert-id <alert-id> (multiple alerts are allowed)
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {

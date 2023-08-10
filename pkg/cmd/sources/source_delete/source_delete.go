@@ -52,6 +52,9 @@ func NewSourceDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire sources delete
+
+			# start argument setup
+			$ logfire sources delete --team-id <team-id> --source-id <source-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {

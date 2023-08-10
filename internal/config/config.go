@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config represents the configuration structure
+// AuthConfig Config represents the configuration structure
 type AuthConfig struct {
 	Username     string `mapstructure:"username"`
 	Token        string `mapstructure:"token"`
@@ -78,41 +78,41 @@ func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, end
 	// Write the updated configuration to the file
 
 	if username != nil {
-		viper.Set("username", username)
+		viper.Set("username", *username)
 		c.AuthCfg.Username = *username
 
 	}
 
 	if token != nil {
-		viper.Set("token", token)
+		viper.Set("token", *token)
 		c.AuthCfg.Token = *token
 
 	}
 
 	if profileID != nil {
-		viper.Set("profile_id", profileID)
+		viper.Set("profile_id", *profileID)
 		c.AuthCfg.ProfileID = *profileID
 
 	}
 
 	if refreshToken != nil {
-		viper.Set("refresh_token", refreshToken)
+		viper.Set("refresh_token", *refreshToken)
 		c.AuthCfg.RefreshToken = *refreshToken
 
 	}
 
 	if teamid != nil {
-		viper.Set("team_id", teamid)
+		viper.Set("team_id", *teamid)
 		c.AuthCfg.TeamId = *teamid
 	}
 
 	if endpoint != nil {
-		viper.Set("endpoint", endpoint)
+		viper.Set("endpoint", *endpoint)
 		c.AuthCfg.EndPoint = *endpoint
 	}
 
 	if grpcEndpoint != nil {
-		viper.Set("grpc_endpoint", grpcEndpoint)
+		viper.Set("grpc_endpoint", *grpcEndpoint)
 		c.AuthCfg.GrpcEndpoint = *grpcEndpoint
 	}
 

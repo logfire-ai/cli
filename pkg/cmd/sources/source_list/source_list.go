@@ -2,11 +2,12 @@ package source_list
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/olekukonko/tablewriter"
-	"net/http"
-	"os"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -49,6 +50,9 @@ func NewSourceListCmd(f *cmdutil.Factory) *cobra.Command {
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire sources list
+
+			# start argument setup
+			$ logfire sources list --team-id <team-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {

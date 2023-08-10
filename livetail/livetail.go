@@ -45,15 +45,26 @@ func NewLivetail() (*Livetail, error) {
 	return livetail, nil
 }
 
+// Inverse map
+var OperatorToName = map[string]string{
+	":":  pb.FieldBasedFilter_Operator_name[0],
+	"!:": pb.FieldBasedFilter_Operator_name[1],
+	"=":  pb.FieldBasedFilter_Operator_name[2],
+	"!=": pb.FieldBasedFilter_Operator_name[3],
+	">":  pb.FieldBasedFilter_Operator_name[4],
+	">=": pb.FieldBasedFilter_Operator_name[5],
+	"<":  pb.FieldBasedFilter_Operator_name[6],
+	"<=": pb.FieldBasedFilter_Operator_name[7],
+}
+
 func (livetail *Livetail) ApplyFilter(
 	cfg config.Config,
 	sourceFilter []string,
-	//SearchFilter []string,
 	StartDateTimeFilter string,
 	EndDateTimeFilter string,
-	// FieldBasedFilterName string,
-	// FieldBasedFilterValue string,
-	// FieldBasedFilterCondition string,
+	FieldBasedFilterName string,
+	FieldBasedFilterValue string,
+	FieldBasedFilterCondition string,
 ) {
 
 	client := &http.Client{}
@@ -83,10 +94,18 @@ func (livetail *Livetail) ApplyFilter(
 		}
 	}
 
+	if FieldBasedFilterName != "" && FieldBasedFilterValue != "" && FieldBasedFilterCondition != "" {
+		request.FieldBasedFilters = append(request.FieldBasedFilters, &pb.FieldBasedFilter{
+			FieldName:  FieldBasedFilterName,
+			FieldValue: FieldBasedFilterValue,
+			Operator:   pb.FieldBasedFilter_Operator(pb.FieldBasedFilter_Operator_value[OperatorToName[FieldBasedFilterCondition]]),
+		})
+
+	}
 	return
 }
 
-func (l *Livetail) GenerateLogs(place string, stop chan error) {
+func (l *Livetail) GenerateLogs(stop chan error) {
 	for {
 		select {
 		case <-stop:
@@ -98,19 +117,12 @@ func (l *Livetail) GenerateLogs(place string, stop chan error) {
 				return
 			}
 
-			if place == "onboarding" {
-				if len(response.Records) > 0 {
-					stop <- nil
-					return
-				}
-			} else {
-				if len(response.Records) > 0 {
-					sort.Sort(ByOffset(response.Records))
-					l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
-					l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
-					newLogs := showLogsWithColor(response.Records)
-					l.Logs += newLogs
-				}
+			if len(response.Records) > 0 {
+				sort.Sort(ByOffset(response.Records))
+				l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
+				l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
+				newLogs := showLogsWithColor(response.Records)
+				l.Logs += newLogs
 			}
 
 			time.Sleep(500 * time.Millisecond)
