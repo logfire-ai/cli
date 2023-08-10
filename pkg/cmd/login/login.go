@@ -218,8 +218,11 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 
 	io.StopProgressIndicator()
 
-	cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, nil, nil, nil)
+	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil)
+	if err != nil {
+		return
+	}
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
 
 	return

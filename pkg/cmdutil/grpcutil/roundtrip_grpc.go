@@ -29,7 +29,7 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 
 	request.Sources = pbSources
 
-	request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
+	request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-4 * time.Second))
 
 	for {
 		select {

@@ -3,6 +3,8 @@ package integrations
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/integrations/integrations_create"
@@ -12,7 +14,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type PromptIntegrationsOptions struct {

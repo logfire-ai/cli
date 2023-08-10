@@ -134,7 +134,6 @@ func GetSource(token, endpoint string, teamId, sourceId string) (models.Source, 
 	}
 
 	return sourceResp.Data, nil
-
 }
 
 func CreateSource(token, endpoint string, teamId, sourceName, platform string) (models.Source, error) {
@@ -216,4 +215,45 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 	}
 
 	return sourceResp.Data, nil
+}
+
+func GetSchema(token, endpoint, teamId string, sourceids []string) ([]map[string]string, error) {
+	client := http.Client{}
+
+	idsParam := strings.Join(sourceids, "&")
+
+	url := fmt.Sprintf("%s/api/team/%s/schema?%s", endpoint, teamId, idsParam)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Error: Non-200 response code")
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return nil, err
+	}
+
+	var data []map[string]string
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return nil, err
+	}
+
+	return data, nil
 }

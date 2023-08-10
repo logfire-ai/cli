@@ -2,6 +2,9 @@ package member_remove
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -10,8 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type MemberRemoveOptions struct {
@@ -35,17 +36,17 @@ func NewMemberRemoveCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "remove member",
+		Use:   "remove-member",
 		Short: "remove member of a team",
 		Long: heredoc.Docf(`
 			remove member of a team.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
-			$ logfire teams remove member
+			$ logfire teams remove-member
 
 			# start argument setup
-			$ logfire teams remove member --teamid <team-id> --memberid <member-id>
+			$ logfire teams remove-member --teamid <team-id> --memberid <member-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {

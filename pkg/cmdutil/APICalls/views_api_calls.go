@@ -126,8 +126,10 @@ func GetView(client *http.Client, token string, endpoint string, teamId string, 
 	return ListViewResp.Data, err
 }
 
-func CreateView(client *http.Client, token string, endpoint string, teamId string, sourceFilter []sourceModels.Source, searchFilter []string, fieldName, fieldValue,
+func CreateView(token string, endpoint string, teamId string, sourceFilter []sourceModels.Source, searchFilter []string, fieldName, fieldValue,
 	fieldCondition, startDate, endDate, viewName string) error {
+
+	client := &http.Client{}
 
 	fieldFilter := []models.SearchObj{{
 		Key:       fieldName,
@@ -135,9 +137,13 @@ func CreateView(client *http.Client, token string, endpoint string, teamId strin
 		Condition: fieldCondition,
 	}}
 
-	dateFilter := models.DateInterval{
-		StartDate: filters.ShortDateTimeToGoDate(startDate),
-		EndDate:   filters.ShortDateTimeToGoDate(endDate),
+	var dateFilter = models.DateInterval{}
+	if startDate != "" {
+		dateFilter.StartDate = filters.ShortDateTimeToGoDate(startDate)
+	}
+
+	if endDate != "" {
+		dateFilter.EndDate = filters.ShortDateTimeToGoDate(endDate)
 	}
 
 	data := models.ViewResponseBody{
