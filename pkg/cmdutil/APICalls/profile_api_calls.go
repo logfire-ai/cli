@@ -343,6 +343,8 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 		Credential: strings.TrimSpace(token),
 	}
 
+	client := &http.Client{}
+
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
 		fmt.Printf("Failed to marshal request body: %v\n", err)
@@ -351,17 +353,17 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 
 	url := endpoint + "api/auth/signin"
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		fmt.Printf("Failed to send POST request: %v\n", err)
 		return err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
 
-		}
-	}(resp.Body)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
