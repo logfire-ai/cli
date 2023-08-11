@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/livetail"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -47,9 +48,11 @@ func NewUI() *UI {
 
 	displayInstance := NewDisplay(cfg)
 	ui := &UI{
-		Config:  cfg,
-		Display: displayInstance,
-		app:     displayInstance.App,
+		Config:              cfg,
+		Display:             displayInstance,
+		app:                 displayInstance.App,
+		StartDateTimeFilter: "",
+		EndDateTimeFilter:   "",
 	}
 	ui.app.EnableMouse(true)
 	ui.SetDisplayCapture()
@@ -185,6 +188,14 @@ func (u *UI) SetDisplayCapture() {
 				RunLivetail(u, livetailStatus, stop)
 			case "stop":
 				StopLivetail(u, livetailStatus, stop)
+			case "q":
+				os.Exit(0)
+			case "quit":
+				os.Exit(0)
+			case "exit":
+				os.Exit(0)
+			case "6":
+				os.Exit(0)
 			case "1":
 				u.Display.input.SetText("source=")
 				u.Display.input.Autocomplete()
@@ -198,14 +209,14 @@ func (u *UI) SetDisplayCapture() {
 			case "5":
 				u.Display.input.SetText("save-view=")
 			default:
-				//u.display.PlaceholderField.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
-				//
-				//go func() {
-				//	time.Sleep(1000 * time.Millisecond)
-				//
-				//	u.display.PlaceholderField.SetPlaceholder("  source [source=source-name,source-name,source-name...] start-date [start-date=now-2d] end-date [end-date=now] field-filter [field-filter=level=info] save-view [save-view=name]").
-				//		SetPlaceholderTextColor(tcell.ColorGray)
-				//}()
+				u.Display.PlaceholderField.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
+
+				go func() {
+					time.Sleep(1000 * time.Millisecond)
+
+					u.Display.PlaceholderField.SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.QUIT [q | quit | exit]").
+						SetPlaceholderTextColor(tcell.ColorGray)
+				}()
 			}
 
 			return nil

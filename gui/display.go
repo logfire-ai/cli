@@ -214,7 +214,7 @@ func NewDisplay(cfg config.Config) *Display {
 	PlaceholderField := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
-		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name]").
+		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.QUIT [q | quit | exit]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
 	PlaceholderField.SetDisabled(true)

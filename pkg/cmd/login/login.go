@@ -189,17 +189,25 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 		Credential: password,
 	}
 
+	client := &http.Client{}
+
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
 		return
 	}
 
 	url := endpoint + "api/auth/signin"
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -236,6 +244,8 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 		Credential: strings.TrimSpace(token),
 	}
 
+	client := &http.Client{}
+
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
 		fmt.Printf("Failed to marshal request body: %v\n", err)
@@ -244,17 +254,17 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 
 	url := endpoint + "api/auth/signin"
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		fmt.Printf("Failed to send POST request: %v\n", err)
 		return err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
 
-		}
-	}(resp.Body)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
 
 	IO.StopProgressIndicator()
 
