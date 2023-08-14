@@ -5,7 +5,8 @@ import (
 	"github.com/epiclabs-io/winman"
 	"github.com/gdamore/tcell/v2"
 	"github.com/logfire-sh/cli/internal/config"
-	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	sourceModel "github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	"github.com/logfire-sh/cli/pkg/cmd/views/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/rivo/tview"
 	"log"
@@ -18,31 +19,22 @@ type Display struct {
 	View             *tview.TextView
 	input            *tview.InputField
 	PlaceholderField *tview.InputField
-	//SelectedSourceIDs *[]string
-	List       *tview.List
-	Window     *winman.WindowBase
-	App        *tview.Application
-	SourceList []models.Source
+	List             *tview.List
+	Window           *winman.WindowBase
+	App              *tview.Application
+	SourceList       []sourceModel.Source
+	ViewsList        []models.ViewResponseBody
 }
-
-//type listItem struct {
-//	MainText      string // The main text of the list item.
-//	SecondaryText string // A secondary text to be shown underneath the main text.
-//	Shortcut      rune   // The key to select the list item directly, 0 if there is no shortcut.
-//	Selected      func() // The optional function which is called when the item is selected.
-//}
 
 type Task struct {
 	Title string `json:"text"`
 	Id    string
 }
 
-//type company struct {
-//	Name string `json:"name"`
-//}
-
 var wordList []string
 var schemaList []string
+
+var viewList []string
 
 func NewDisplay(cfg config.Config) *Display {
 	//var sourcesTask []Task
@@ -61,15 +53,20 @@ func NewDisplay(cfg config.Config) *Display {
 	for _, source := range sourcesList {
 		wordList = append(wordList, source.Name)
 		sourceIds = append(sourceIds, source.ID)
-		//task := Task{Title: source.Name, Id: source.ID}
-		//sourcesTask = append(sourcesTask, task)
-		//s := makeTaskListingTitle(task, selectedSources[source.Name])
-		//list.AddItem(s, "", 0, func() {})
 	}
 
 	schemaMap, err := APICalls.GetSchema(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().TeamId, sourceIds)
 	if err != nil {
 		log.Fatalln(fmt.Sprint(err))
+	}
+
+	views, err := APICalls.ListView(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().TeamId)
+	if err != nil {
+		log.Fatalln(fmt.Sprint(err))
+	}
+
+	for _, view := range views {
+		viewList = append(viewList, view.Name)
 	}
 
 	// Assuming the schemaMap is of type []map[string]string
@@ -90,10 +87,6 @@ func NewDisplay(cfg config.Config) *Display {
 			schemaList = append(schemaList, key)
 		}
 	}
-
-	//list := tview.NewList().ShowSecondaryText(false).SetSelectedBackgroundColor(tcell.ColorDarkBlue)
-
-	//var selectedSourceIDs []string
 
 	inputField := tview.NewInputField().
 		SetLabel("> ").
@@ -131,6 +124,13 @@ func NewDisplay(cfg config.Config) *Display {
 					if strings.HasPrefix(strings.ToLower(word), strings.ToLower(field)) && !strings.Contains(currentText, word) {
 						entries = append(entries, word)
 					}
+				}
+			}
+		} else if strings.HasPrefix(typedText, "stream-view=") {
+			view := strings.TrimPrefix(typedText, "stream-view=")
+			for _, v := range viewList {
+				if strings.HasPrefix(strings.ToLower(v), strings.ToLower(view)) && !strings.Contains(currentText, v) {
+					entries = append(entries, v)
 				}
 			}
 		} else {
@@ -204,6 +204,8 @@ func NewDisplay(cfg config.Config) *Display {
 						}
 					}
 				}
+			} else if strings.HasPrefix(typedText, "stream-view=") {
+				inputField.SetText("stream-view=" + text)
 			} else {
 				inputField.SetText(text)
 			}
@@ -214,7 +216,7 @@ func NewDisplay(cfg config.Config) *Display {
 	PlaceholderField := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
-		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.QUIT [q | quit | exit]").
+		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.stream-view [stream-view=view-name] 7.QUIT [q | quit | exit]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
 	PlaceholderField.SetDisabled(true)
@@ -223,88 +225,11 @@ func NewDisplay(cfg config.Config) *Display {
 		SetDynamicColors(true).
 		SetRegions(true)
 
-	//var items []listItem
-	//
-	//var item = listItem{
-	//	MainText: "List1",
-	//}
-
-	//items = append(items, item)
-
-	// Initialize the WindowManager with the tview application.
-	//wm := winman.NewWindowManager()
-
-	// Create the winman window and set its root to the list.
-	//window := wm.NewWindow().
-	//	Show().
-	//	SetRoot(list).
-	//	SetDraggable(false).
-	//	SetResizable(false).
-	//	SetTitle("Select sources to filter by:")
-	//
-	//window.SetRect(5, 5, 30, 10)
-
 	// Create the Grid and add items to it.
 	grid := tview.NewGrid().SetRows(-1, 1, 1).SetColumns(-1)
 	grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
 	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
 	grid.AddItem(PlaceholderField, 2, 0, 1, 1, 0, 0, false)
-
-	//window.
-	//	AddButton(&winman.Button{
-	//		Symbol: 'X',
-	//		OnClick: func() {
-	//			grid.SetRows(-1, 1, 1).SetColumns(-1)
-	//			grid.Clear()
-	//			grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
-	//			grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
-	//			grid.AddItem(PlaceholderField, 2, 0, 1, 1, 0, 0, false)
-	//			app.SetFocus(inputField)
-	//		},
-	//	})
-	//
-	//list.AddItem("Quit", "Press to exit", 'q', func() {
-	//	grid.SetRows(-1, 1, 1).SetColumns(-1)
-	//	grid.Clear()
-	//	grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
-	//	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
-	//	grid.AddItem(PlaceholderField, 2, 0, 1, 1, 0, 0, false)
-	//	app.SetFocus(inputField)
-	//})
-
-	//list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-	//	switch event.Key() {
-	//	case tcell.KeyEnter:
-	//		// Handle Enter key
-	//		itemIndex := list.GetCurrentItem()
-	//		sourceID := sourcesTask[itemIndex].Id
-	//
-	//		// Toggle the selection status of the source
-	//		if selectedSources[sourceID] {
-	//			selectedSources[sourceID] = false
-	//			for i, id := range selectedSourceIDs {
-	//				if id == sourceID {
-	//					selectedSourceIDs = append(selectedSourceIDs[:i], selectedSourceIDs[i+1:]...)
-	//					break
-	//				}
-	//			}
-	//		} else {
-	//			selectedSources[sourceID] = true
-	//			selectedSourceIDs = append(selectedSourceIDs, sourceID)
-	//		}
-	//
-	//		// Update the list item's title with the new checkbox status
-	//		newTitle := makeTaskListingTitle(sourcesTask[itemIndex], selectedSources[sourceID])
-	//		list.SetItemText(itemIndex, newTitle, "")
-	//
-	//	case tcell.KeyRune:
-	//		switch event.Rune() {
-	//		case 'q':
-	//			grid.RemoveItem(list)
-	//		}
-	//	}
-	//	return event
-	//})
 
 	return &Display{
 		Grid:             grid,
@@ -316,6 +241,7 @@ func NewDisplay(cfg config.Config) *Display {
 		//Window:            window,
 		App:        app,
 		SourceList: sourcesList,
+		ViewsList:  views,
 	}
 }
 
@@ -328,12 +254,3 @@ func contains(slice []string, item string) bool {
 	}
 	return false
 }
-
-//func makeTaskListingTitle(task Task, selected bool) string {
-//	checkbox := "[ ]"
-//	if selected {
-//		checkbox = "[x[]"
-//	}
-//
-//	return fmt.Sprintf("[%s]%s %s [%s]", "smokewhite", checkbox, task.Title, task.Id[:4])
-//}

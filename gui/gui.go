@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/livetail"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 	"os"
 	"regexp"
 	"strings"
@@ -24,13 +25,16 @@ type UI struct {
 
 	Config config.Config
 
-	StartDateTimeFilter       string
-	EndDateTimeFilter         string
+	StartDateTimeFilter       time.Time
+	EndDateTimeFilter         time.Time
 	SourceFilter              []string
 	SearchFilter              []string
 	FieldBasedFilterName      string
 	FieldBasedFilterValue     string
 	FieldBasedFilterCondition string
+
+	StartDateUnParsed string
+	EndDateUnParsed   string
 }
 
 type LivetailStatus struct {
@@ -48,11 +52,9 @@ func NewUI() *UI {
 
 	displayInstance := NewDisplay(cfg)
 	ui := &UI{
-		Config:              cfg,
-		Display:             displayInstance,
-		app:                 displayInstance.App,
-		StartDateTimeFilter: "",
-		EndDateTimeFilter:   "",
+		Config:  cfg,
+		Display: displayInstance,
+		app:     displayInstance.App,
 	}
 	ui.app.EnableMouse(true)
 	ui.SetDisplayCapture()
@@ -93,15 +95,15 @@ func splitFieldFilterValue(input string) (field, operator, value string) {
 	return parts[0], op, parts[1]
 }
 
+var sourceNamesList []string
+var sourceIds []string
+
 func (u *UI) SetDisplayCapture() {
 	u.Display.input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEnter:
 			input := u.Display.input.GetText()
 			u.Display.input.SetText("")
-
-			var sourceNamesList []string
-			var sourceIds []string
 
 			if len(strings.Split(input, "=")) > 1 {
 				if strings.Split(input, "=")[0] == "source" {
@@ -124,9 +126,9 @@ func (u *UI) SetDisplayCapture() {
 
 					RunLivetail(u, livetailStatus, stop)
 
-					break
 				} else if strings.Split(input, "=")[0] == "start-date" {
-					u.StartDateTimeFilter = strings.Split(input, "=")[1]
+					u.StartDateTimeFilter = filters.ShortDateTimeToGoDate(strings.Split(input, "=")[1])
+					u.StartDateUnParsed = strings.Split(input, "=")[1]
 
 					ClearLogs(u, livetailStatus, stop)
 
@@ -135,7 +137,8 @@ func (u *UI) SetDisplayCapture() {
 					RunLivetail(u, livetailStatus, stop)
 
 				} else if strings.Split(input, "=")[0] == "end-date" {
-					u.EndDateTimeFilter = strings.Split(input, "=")[1]
+					u.EndDateTimeFilter = filters.ShortDateTimeToGoDate(strings.Split(input, "=")[1])
+					u.EndDateUnParsed = strings.Split(input, "=")[1]
 
 					ClearLogs(u, livetailStatus, stop)
 
@@ -150,6 +153,7 @@ func (u *UI) SetDisplayCapture() {
 					u.FieldBasedFilterCondition = operator
 					u.FieldBasedFilterValue = value
 
+					ClearLogs(u, livetailStatus, stop)
 					ClearLogs(u, livetailStatus, stop)
 
 					time.Sleep(500 * time.Millisecond)
@@ -169,7 +173,7 @@ func (u *UI) SetDisplayCapture() {
 						}
 					}
 
-					err := APICalls.CreateView(u.Config.Get().Token, u.Config.Get().EndPoint, u.Config.Get().TeamId, selectedSource, []string{}, u.FieldBasedFilterName, u.FieldBasedFilterValue, u.FieldBasedFilterCondition, u.StartDateTimeFilter, u.EndDateTimeFilter, name)
+					err := APICalls.CreateView(u.Config.Get().Token, u.Config.Get().EndPoint, u.Config.Get().TeamId, selectedSource, []string{}, u.FieldBasedFilterName, u.FieldBasedFilterValue, u.FieldBasedFilterCondition, u.StartDateUnParsed, u.EndDateUnParsed, name)
 					if err != nil {
 						u.Display.input.SetFieldTextColor(tcell.ColorRed)
 						input = "Failed to create view"
@@ -180,7 +184,35 @@ func (u *UI) SetDisplayCapture() {
 							input = ""
 						}()
 					}
+				} else if strings.Split(input, "=")[0] == "stream-view" {
+					name := strings.Split(input, "=")[1]
+
+					for _, view := range u.Display.ViewsList {
+						if view.Name == name {
+							u.StartDateTimeFilter = view.DateFilter.StartDate
+							u.EndDateTimeFilter = view.DateFilter.EndDate
+
+							if len(view.SourcesFilter) > 0 {
+								for _, source := range view.SourcesFilter {
+									u.SourceFilter = append(u.SourceFilter, source.ID)
+								}
+							}
+
+							u.SearchFilter = view.TextFilter
+							u.FieldBasedFilterName = view.SearchFilter[0].Key
+							u.FieldBasedFilterValue = view.SearchFilter[0].Value
+							u.FieldBasedFilterCondition = view.SearchFilter[0].Condition
+						}
+					}
+
+					ClearLogs(u, livetailStatus, stop)
+
+					time.Sleep(500 * time.Millisecond)
+
+					RunLivetail(u, livetailStatus, stop)
 				}
+
+				break
 			}
 
 			switch input {
@@ -189,12 +221,13 @@ func (u *UI) SetDisplayCapture() {
 			case "stop":
 				StopLivetail(u, livetailStatus, stop)
 			case "q":
+				ClearLogs(u, livetailStatus, stop)
 				os.Exit(0)
 			case "quit":
+				ClearLogs(u, livetailStatus, stop)
 				os.Exit(0)
 			case "exit":
-				os.Exit(0)
-			case "6":
+				ClearLogs(u, livetailStatus, stop)
 				os.Exit(0)
 			case "1":
 				u.Display.input.SetText("source=")
@@ -208,13 +241,19 @@ func (u *UI) SetDisplayCapture() {
 				u.Display.input.Autocomplete()
 			case "5":
 				u.Display.input.SetText("save-view=")
+			case "6":
+				u.Display.input.SetText("stream-view=")
+				u.Display.input.Autocomplete()
+			case "7":
+				ClearLogs(u, livetailStatus, stop)
+				os.Exit(0)
 			default:
 				u.Display.PlaceholderField.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
 
 				go func() {
 					time.Sleep(1000 * time.Millisecond)
 
-					u.Display.PlaceholderField.SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.QUIT [q | quit | exit]").
+					u.Display.PlaceholderField.SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.stream-view [stream-view=view-name] 7.QUIT [q | quit | exit]").
 						SetPlaceholderTextColor(tcell.ColorGray)
 				}()
 			}
