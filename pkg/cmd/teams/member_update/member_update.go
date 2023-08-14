@@ -7,6 +7,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -74,27 +75,35 @@ func UpdateMemberRun(opts *MemberUpdateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		opts.MemberId, _ = pre_defined_prompters.AskMemberId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		opts.Role, _ = opts.Prompter.Select("Select a new role:", "", []string{"admin", "member"})
+	} else {
+		if opts.TeamId == "" {
+			fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
+			os.Exit(0)
+		}
+
+		if opts.MemberId == "" {
+			fmt.Fprint(opts.IO.ErrOut, "member-id is required.")
+			os.Exit(0)
+		}
+
+		if opts.Role == "" {
+			fmt.Fprint(opts.IO.ErrOut, "role is required.")
+			os.Exit(0)
+		}
+
+		if (opts.Role != "admin") && (opts.Role != "member") {
+			fmt.Fprint(opts.IO.ErrOut, "role is not valid.")
+			os.Exit(0)
+		}
+	}
+
 	roleInt := RoleOptions[opts.Role]
-
-	if opts.TeamId == "" {
-		fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
-		os.Exit(0)
-	}
-
-	if opts.MemberId == "" {
-		fmt.Fprint(opts.IO.ErrOut, "member-id is required.")
-		os.Exit(0)
-	}
-
-	if opts.Role == "" {
-		fmt.Fprint(opts.IO.ErrOut, "role is required.")
-		os.Exit(0)
-	}
-
-	if (opts.Role != "admin") && (opts.Role != "member") {
-		fmt.Fprint(opts.IO.ErrOut, "role is not valid.")
-		os.Exit(0)
-	}
 
 	err = APICalls.UpdateMember(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.MemberId, roleInt)
 	if err != nil {

@@ -21,6 +21,11 @@ func AskTeamId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, 
 		os.Exit(1)
 	}
 
+	if len(teamsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No teams created. Please create a team\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
 	var teamsListIdNames []string
 	var idMap map[string]string = make(map[string]string)
 
@@ -62,6 +67,11 @@ func AskAlertIntegrationIds(client *http.Client, cfg config.Config, io *iostream
 		return []string{}, err
 	}
 
+	if len(integrationsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No integrations created. Please create an integration\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
 	for _, integration := range integrationsList {
 		lastFour := ""
 		if len(integration.ModelId) > 4 {
@@ -94,10 +104,15 @@ func AskAlertIntegrationIds(client *http.Client, cfg config.Config, io *iostream
 }
 
 func AskViewId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter, teamId string) (string, error) {
-	ViewsList, err := APICalls.ListView(client, cfg.Get().Token, cfg.Get().EndPoint, teamId)
+	ViewsList, err := APICalls.ListView(cfg.Get().Token, cfg.Get().EndPoint, teamId)
 	if err != nil {
 		fmt.Fprintf(io.ErrOut, "%s Failed to Get Views list\n", cs.FailureIcon())
 		return "", err
+	}
+
+	if len(ViewsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No views created. Please create a view\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 
 	var viewsIdNames []string
@@ -139,6 +154,11 @@ func AskAlertIds(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 	if err != nil {
 		fmt.Fprintf(io.ErrOut, "%s Failed to Get Alerts list\n", cs.FailureIcon())
 		return []string{}, err
+	}
+
+	if len(alertsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No alerts created. Please create an alert\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 
 	for _, alert := range alertsList {
@@ -183,6 +203,11 @@ func AskAlertId(client *http.Client, cfg config.Config, io *iostreams.IOStreams,
 		return "", err
 	}
 
+	if len(alertsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No alerts created. Please create an alert\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
 	for _, alert := range alertsList {
 		lastFour := ""
 		if len(alert.Id) > 4 {
@@ -219,6 +244,11 @@ func AskIntegrationId(client *http.Client, cfg config.Config, io *iostreams.IOSt
 	if err != nil {
 		fmt.Fprintf(io.ErrOut, "%s Failed to Get Integrations list\n", cs.FailureIcon())
 		return "", err
+	}
+
+	if len(integrationsList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No integrations created. Please create an integration\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 
 	for _, integration := range integrationsList {
@@ -261,6 +291,11 @@ func AskSourceId(client *http.Client, cfg config.Config, io *iostreams.IOStreams
 		return "", err
 	}
 
+	if len(sourceList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No source created. Please create a source\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
 	for _, source := range sourceList {
 		lastFour := ""
 		if len(source.ID) > 4 {
@@ -296,6 +331,11 @@ func AskSourceIds(client *http.Client, cfg config.Config, io *iostreams.IOStream
 	if err != nil {
 		fmt.Fprintf(io.ErrOut, "%s Failed to Get Alerts list\n", cs.FailureIcon())
 		return []string{}, err
+	}
+
+	if len(sourceList) == 0 {
+		fmt.Fprintf(io.ErrOut, "%s No source created. Please create a source\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 
 	for _, source := range sourceList {

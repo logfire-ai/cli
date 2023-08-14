@@ -95,8 +95,16 @@ func CreateIntegrationRun(opts *CreateIntegrationOptions) {
 		}
 
 		opts.IntegrationType, err = opts.Prompter.Select("Select a type of the Integration:", "", IntegrationOptions)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Integration type\n", cs.FailureIcon())
+			return
+		}
 
 		opts.Id, err = opts.Prompter.Input("Enter ID of the Integration", "")
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Integration id\n", cs.FailureIcon())
+			return
+		}
 	} else {
 		if opts.TeamId == "" {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
@@ -105,6 +113,16 @@ func CreateIntegrationRun(opts *CreateIntegrationOptions) {
 
 		if opts.Name == "" {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Name is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.IntegrationType == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Integration type is required.\n", cs.FailureIcon())
+			os.Exit(0)
+		}
+
+		if opts.Id == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Integration id is required.\n", cs.FailureIcon())
 			os.Exit(0)
 		}
 	}

@@ -15,7 +15,7 @@ type CreateIntegrationRequest struct {
 }
 
 type CreateIntegrationResponse struct {
-	IsSuccessful bool     `json:"is_successful" validate:"required"`
+	IsSuccessful bool     `json:"isSuccessful" validate:"required"`
 	Message      []string `json:"message,omitempty"`
 }
 
