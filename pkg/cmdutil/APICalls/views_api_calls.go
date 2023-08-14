@@ -50,7 +50,9 @@ func DeleteView(client *http.Client, token string, endpoint string, teamId strin
 	return nil
 }
 
-func ListView(client *http.Client, token string, endpoint string, teamId string) ([]models.ViewResponseBody, error) {
+func ListView(token string, endpoint string, teamId string) ([]models.ViewResponseBody, error) {
+	client := &http.Client{}
+
 	req, err := http.NewRequest("GET", endpoint+"api/team/"+teamId+"/view", nil)
 	if err != nil {
 		return []models.ViewResponseBody{}, err
@@ -88,7 +90,9 @@ func ListView(client *http.Client, token string, endpoint string, teamId string)
 	return ListViewResp.Views, err
 }
 
-func GetView(client *http.Client, token string, endpoint string, teamId string, viewId string) (models.ViewResponseBody, error) {
+func GetView(token string, endpoint string, teamId string, viewId string) (models.ViewResponseBody, error) {
+	client := &http.Client{}
+
 	req, err := http.NewRequest("GET", endpoint+"api/team/"+teamId+"/view/"+viewId, nil)
 	if err != nil {
 		return models.ViewResponseBody{}, err

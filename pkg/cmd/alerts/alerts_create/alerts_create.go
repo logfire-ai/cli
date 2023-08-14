@@ -41,8 +41,8 @@ func NewCreateAlertCmd(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new alert",
-		Long:  "Create a new alert",
+		Short: "create a new alert",
+		Long:  "create a new alert",
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire alerts create

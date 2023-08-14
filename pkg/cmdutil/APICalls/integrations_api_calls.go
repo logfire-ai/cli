@@ -50,7 +50,6 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 }
 
 func CreateIntegration(client *http.Client, token string, endpoint string, teamId string, name, description, Id, integrationType string) error {
-
 	data := IntegrationModels.CreateIntegrationRequest{
 		Name:            name,
 		IntegrationType: IntegrationModels.IntegrationMap[integrationType],

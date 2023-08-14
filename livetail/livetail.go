@@ -11,7 +11,6 @@ import (
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
-	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/logfire-sh/cli/services/flink-service"
@@ -60,8 +59,8 @@ var OperatorToName = map[string]string{
 func (livetail *Livetail) ApplyFilter(
 	cfg config.Config,
 	sourceFilter []string,
-	StartDateTimeFilter string,
-	EndDateTimeFilter string,
+	StartDateTimeFilter time.Time,
+	EndDateTimeFilter time.Time,
 	FieldBasedFilterName string,
 	FieldBasedFilterValue string,
 	FieldBasedFilterCondition string,
@@ -82,15 +81,15 @@ func (livetail *Livetail) ApplyFilter(
 
 	livetail.pbSources = createGrpcSource(sources)
 
-	if StartDateTimeFilter == "" {
+	if StartDateTimeFilter.IsZero() {
 		request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
 	}
 
-	if StartDateTimeFilter != "" {
-		request.DateTimeFilter.StartTimeStamp = timestamppb.New(filters.ShortDateTimeToGoDate(StartDateTimeFilter))
+	if !StartDateTimeFilter.IsZero() {
+		request.DateTimeFilter.StartTimeStamp = timestamppb.New(StartDateTimeFilter)
 
-		if EndDateTimeFilter != "" {
-			request.DateTimeFilter.EndTimeStamp = timestamppb.New(filters.ShortDateTimeToGoDate(EndDateTimeFilter))
+		if !EndDateTimeFilter.IsZero() {
+			request.DateTimeFilter.EndTimeStamp = timestamppb.New(EndDateTimeFilter)
 		}
 	}
 

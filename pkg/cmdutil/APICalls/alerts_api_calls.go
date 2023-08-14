@@ -72,7 +72,7 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 	}
 
 	if !CreateAlertResp.IsSuccessful {
-		return errors.New("failed to create alert")
+		return errors.New(CreateAlertResp.Message[0])
 	}
 
 	return nil

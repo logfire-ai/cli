@@ -104,7 +104,7 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 		os.Exit(0)
 	}
 
-	view, err := APICalls.GetView(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.ViewId)
+	view, err := APICalls.GetView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.ViewId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return

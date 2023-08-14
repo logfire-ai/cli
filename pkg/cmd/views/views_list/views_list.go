@@ -78,7 +78,7 @@ func viewsListRun(opts *ViewListOptions) {
 
 	}
 
-	list, err := APICalls.ListView(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
+	list, err := APICalls.ListView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to list view\n", cs.FailureIcon())
 	} else {

@@ -54,6 +54,7 @@ type CreateAlertBody struct {
 
 type CreateAlertResponse struct {
 	IsSuccessful bool            `json:"isSuccessful"`
+	Message      []string        `json:"message,omitempty"`
 	Data         CreateAlertBody `json:"data,omitempty"`
 }
 

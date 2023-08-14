@@ -37,8 +37,8 @@ func NewListAlertCmd(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all alerts",
-		Long:  "List all alerts",
+		Short: "list all alerts",
+		Long:  "list all alerts",
 		Example: heredoc.Doc(`
 			# start interactive setup
 			$ logfire alerts list
@@ -79,7 +79,7 @@ func ListAlertRun(opts *ListAlertOptions) {
 	data, err := APICalls.ListAlert(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
-	} else {
+	} else if len(data) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "Alert-Id"})
 
@@ -88,5 +88,8 @@ func ListAlertRun(opts *ListAlertOptions) {
 		}
 
 		table.Render()
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s No alerts created. Please create an alert\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 }

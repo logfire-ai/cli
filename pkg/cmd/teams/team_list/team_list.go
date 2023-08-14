@@ -3,7 +3,9 @@ package team_list
 import (
 	"fmt"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/olekukonko/tablewriter"
 	"net/http"
+	"os"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -63,9 +65,14 @@ func listRun(opts *TeamOptions) {
 	teams, err := APICalls.ListTeams(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
-	}
+	} else {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Name", "Team-Id"})
 
-	for _, v := range teams {
-		fmt.Fprintf(opts.IO.Out, "%s %s\n", v.Name, v.ID)
+		for _, i2 := range teams {
+			table.Append([]string{i2.Name, i2.ID})
+		}
+
+		table.Render()
 	}
 }
