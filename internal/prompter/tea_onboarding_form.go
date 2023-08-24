@@ -3,6 +3,11 @@ package prompter
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -11,10 +16,6 @@ import (
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
-	"io"
-	"log"
-	"strings"
-	"time"
 )
 
 func NewOnboardingForm() {
@@ -339,7 +340,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID, nil, nil)
+				err = m.config.UpdateConfig(nil, nil, nil, nil, &team.ID, nil, nil, nil)
 				if err != nil {
 					m.err = err
 					return m, nil

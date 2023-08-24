@@ -10,18 +10,19 @@ import (
 
 // AuthConfig Config represents the configuration structure
 type AuthConfig struct {
-	Username     string `mapstructure:"username"`
-	Token        string `mapstructure:"token"`
-	ProfileID    string `mapstructure:"profile_id"`
-	RefreshToken string `mapstructure:"refresh_token"`
-	EndPoint     string `mapstructure:"endpoint"`
-	TeamId       string `mapstructure:"team_id"`
-	GrpcEndpoint string `mapstructure:"grpc_endpoint"`
+	Username      string `mapstructure:"username"`
+	Token         string `mapstructure:"token"`
+	ProfileID     string `mapstructure:"profile_id"`
+	RefreshToken  string `mapstructure:"refresh_token"`
+	EndPoint      string `mapstructure:"endpoint"`
+	TeamId        string `mapstructure:"team_id"`
+	GrpcEndpoint  string `mapstructure:"grpc_endpoint"`
+	GrpcIngestion string `mapstructure:"grpc_ingestion"`
 }
 
 type Config interface {
 	UpdateEndpoint(string) error
-	UpdateConfig(*string, *string, *string, *string, *string, *string, *string) error
+	UpdateConfig(*string, *string, *string, *string, *string, *string, *string, *string) error
 	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
@@ -43,8 +44,9 @@ func NewConfig() (Config, error) {
 	viper.SetDefault("username", "")
 	viper.SetDefault("token", "")
 	viper.SetDefault("profile_id", "")
-	viper.Set("endpoint", "https://api.logfire.ai/")
-	viper.Set("grpc_endpoint", "api.logfire.ai:443")
+	viper.SetDefault("endpoint", "https://api.logfire.ai/")
+	viper.SetDefault("grpc_endpoint", "api.logfire.ai:443")
+	viper.SetDefault("grpc_ingestion", "https://in.logfire.ai")
 	viper.SetDefault("team_id", "")
 
 	// Check if the config file exists
@@ -74,7 +76,7 @@ func (c *cfg) Get() *AuthConfig {
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, endpoint, grpcEndpoint *string) error {
+func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, endpoint, grpcEndpoint, grpcIngestion *string) error {
 	// Write the updated configuration to the file
 
 	if username != nil {
@@ -116,6 +118,11 @@ func (c *cfg) UpdateConfig(username, token, profileID, refreshToken, teamid, end
 		c.AuthCfg.GrpcEndpoint = *grpcEndpoint
 	}
 
+	if grpcIngestion != nil {
+		viper.Set("grpc_ingestion", *grpcIngestion)
+		c.AuthCfg.GrpcIngestion = *grpcIngestion
+	}
+
 	if err := viper.WriteConfig(); err != nil {
 		return err
 	}
@@ -142,6 +149,9 @@ func (c *cfg) DeleteConfig() error {
 	c.AuthCfg.Username = ""
 	c.AuthCfg.Token = ""
 	c.AuthCfg.ProfileID = ""
+	c.AuthCfg.EndPoint = "https://api.logfire.ai/"
+	c.AuthCfg.GrpcEndpoint = "api.logfire.ai:443"
+	c.AuthCfg.GrpcIngestion = "https://in.logfire.ai"
 
 	configFile, err := getHomeConfigPath()
 	if err != nil {

@@ -2,6 +2,11 @@ package roundtrip
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"os/exec"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -11,10 +16,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"log"
-	"net/http"
-	"os/exec"
-	"time"
 )
 
 var platformOptions = []string{
@@ -60,11 +61,10 @@ type PromptRoundTripOptions struct {
 	Choice      string
 
 	TeamId     string
+	SourceId   string
 	SourceName string
 	Platform   string
 }
-
-var choices = []string{"Create", "List", "Delete", "Update"}
 
 func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptRoundTripOptions{
@@ -88,6 +88,9 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the sources will be fetched.")
+	cmd.Flags().StringVarP(&opts.SourceId, "source-id", "s", "", "Source ID for which the roundtrip is tested)")
+
 	return cmd
 }
 
@@ -100,7 +103,40 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		return
 	}
 
-	if opts.Interactive {
+	if opts.TeamId != "" && opts.SourceId != "" {
+		source, err := APICalls.GetSource(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
+
+		id := uuid.New()
+
+		cmd := exec.Command("curl",
+			"--location",
+			cfg.Get().GrpcIngestion,
+			"--header",
+			"Content-Type: application/json",
+			"--header",
+			fmt.Sprintf("Authorization: Bearer %s", source.SourceToken),
+			"--header",
+			"Diagnostic: True",
+			"--data",
+			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go grpcutil.WaitForLog(cfg, id, opts.TeamId, opts.SourceId, stop)
+
+		start := time.Now()
+
+		_ = cmd.Run()
+
+		<-stop
+
+		elapsed := time.Since(start)
+
+		fmt.Printf("The round trip took %s\n", elapsed)
+
+	} else {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		sourceList, err := APICalls.GetAllSources(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
@@ -177,13 +213,13 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		cmd := exec.Command("curl",
 			"--location",
-			"https://in.logfire.ai",
+			cfg.Get().GrpcIngestion,
 			"--header",
 			"Content-Type: application/json",
 			"--header",
 			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
 			"--header",
-			fmt.Sprintf("Diagnostic: True"),
+			"Diagnostic: True",
 			"--data",
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
@@ -202,6 +238,5 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		elapsed := time.Since(start)
 
 		fmt.Printf("The round trip took %s\n", elapsed)
-
 	}
 }

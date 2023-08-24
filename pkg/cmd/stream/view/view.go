@@ -2,13 +2,14 @@ package view
 
 import (
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -54,14 +55,11 @@ func NewViewStreamOptionsCmd(f *cmdutil.Factory) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Stream view",
 		Long: heredoc.Docf(`
-			Get stream of logs from selected view.
+			Get stream of logs from specific view.
 		`),
 		Example: heredoc.Doc(`
-			# start stream of logs from selected view
+			# start stream of logs from specific view
 			$ logfire stream view --team-id <team-id> --view-id <view-id>
-
-			# start interactive setup
-			$ logfire stream view
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -135,9 +133,7 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 	}
 
 	if len(view.TextFilter) != 0 {
-		for _, t := range view.TextFilter {
-			request.SearchQueries = append(request.SearchQueries, t)
-		}
+		request.SearchQueries = append(request.SearchQueries, view.TextFilter...)
 	}
 
 	pbSources := grpcutil.CreateGrpcSource(view.SourcesFilter)

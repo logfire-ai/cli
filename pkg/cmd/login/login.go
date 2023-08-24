@@ -35,6 +35,7 @@ type LoginOptions struct {
 	Email    string
 	Password string
 	Token    string
+	Staging  bool
 }
 
 func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
@@ -47,7 +48,6 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "login",
-		Args:  cobra.ExactArgs(0),
 		Short: "Login to logfire.ai",
 		Long: heredoc.Docf(`
 			Login to logfire.ai using a email and password or token.
@@ -82,6 +82,7 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.Email, "email", "e", "", "Email ID of the user.")
 	cmd.Flags().StringVarP(&opts.Password, "password", "p", "", "Password of the user.")
 	cmd.Flags().StringVarP(&opts.Token, "token", "t", "", "Single Sign in token of the user.")
+	cmd.Flags().BoolVarP(&opts.Staging, "staging", "s", false, "Use staging server?")
 	return cmd
 }
 
@@ -91,6 +92,18 @@ func loginRun(opts *LoginOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
+	}
+
+	if opts.Staging {
+		endpoint := "https://api-stg.logfire.ai/"
+		grpc_endpoint := "api-stg.logfire.ai:443"
+		grpc_ingestion := "https://in-stg.logfire.ai"
+
+		err = cfg.UpdateConfig(nil, nil, nil,
+			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion)
+		if err != nil {
+			return
+		}
 	}
 
 	var choiceList = []string{"Magic link", "Password"}
@@ -227,7 +240,7 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	io.StopProgressIndicator()
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
 	if err != nil {
 		return
 	}
@@ -290,7 +303,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
 	if err != nil {
 		return err
 	}

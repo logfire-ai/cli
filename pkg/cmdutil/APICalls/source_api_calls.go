@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/logfire-sh/cli/internal/config"
-	pb "github.com/logfire-sh/cli/services/flink-service"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/logfire-sh/cli/internal/config"
+	pb "github.com/logfire-sh/cli/services/flink-service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 )
