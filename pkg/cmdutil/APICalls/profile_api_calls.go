@@ -382,7 +382,7 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, nil, nil, nil)
+		&response.BearerToken.RefreshToken, nil, nil, nil, nil)
 	if err != nil {
 		fmt.Printf("Failed to update config: %v\n", err)
 		return err

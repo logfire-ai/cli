@@ -2,11 +2,12 @@ package livetail
 
 import (
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
@@ -64,9 +65,6 @@ func NewLivetailCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire stream livetail --team-id <team-id> --source-id <source-id> --search <search>
 			  --field-name <field-name> --field-value <field-value> --field-condition <field-condition> 
 			  --start-date <start-date> --end-date <end-date> --save-view <true|default=false> --view-name <view-name>
-
-			# start interactive setup
-			$ logfire stream livetail
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
