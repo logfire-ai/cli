@@ -2,6 +2,9 @@ package pre_defined_prompters
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/alerts/models"
@@ -10,8 +13,6 @@ import (
 	MemberModels "github.com/logfire-sh/cli/pkg/cmd/teams/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/iostreams"
-	"net/http"
-	"os"
 )
 
 func AskTeamId(client *http.Client, cfg config.Config, io *iostreams.IOStreams, cs *iostreams.ColorScheme, prompter prompter.Prompter) (string, error) {
