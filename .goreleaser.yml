@@ -28,11 +28,11 @@ archives:
       - goos: windows
         format: zip
     #replacements:
-     # darwin: Darwin
-      #linux: Linux
-      #windows: Windows
-      #386: x86
-      #amd64: x86_64
+    # darwin: Darwin
+    #linux: Linux
+    #windows: Windows
+    #386: x86
+    #amd64: x86_64
 snapshot:
   name_template: SNAPSHOT-{{ .Tag }}-{{ .Commit }}
 checksum:
@@ -87,12 +87,12 @@ brews:
       name: tap
       owner: logfire-sh
     ids:
-    description: "Logfire command line interface"
-    homepage: "https://github.com/logfire-sh/cli"
-    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    description: 'Logfire command line interface'
+    homepage: 'https://github.com/logfire-sh/cli'
+    url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     download_strategy: CurlDownloadStrategy
     folder: Formula
-    license: "Apache 2.0"
+    license: 'Apache 2.0'
     dependencies:
       - name: git
     commit_author:
@@ -104,32 +104,31 @@ brews:
 nfpms:
   - maintainer: logfire-sh
     id: logfire
-    description: "Logfire command line tool"
-    homepage: "https://github.com/{{ .Env.REPO_NAME }}"
-    package_name: "{{ .ProjectName }}"
+    description: 'Logfire command line tool'
+    homepage: 'https://github.com/{{ .Env.REPO_NAME }}'
+    package_name: '{{ .ProjectName }}'
     formats:
       - deb
       - rpm
     #replacements:
-     # darwin: Darwin
+    # darwin: Darwin
     bindir: /usr/bin
     release: 1
 
 scoops:
-  -
-    name: logfire
-    url_template: "https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+  - name: logfire
+    url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
       name: logfire-sh
-    commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
-    homepage: "https://logfire.ai/"
-    description: "Logfire command line interface."
+    commit_msg_template: 'Scoop update for {{ .ProjectName }} version {{ .Tag }}'
+    homepage: 'https://logfire.ai/'
+    description: 'Logfire command line interface.'
     skip_upload: false
-    depends: ["git"]
-    shortcuts: [["logfire.exe", "logfire"]]
+    depends: ['git']
+    shortcuts: [['logfire.exe', 'logfire']]
     goamd64: v3
     bucket:
       owner: logfire-sh
       name: cli
       branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      token: '{{ .Env.GITHUB_TOKEN }}'
