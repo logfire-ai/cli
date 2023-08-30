@@ -99,7 +99,7 @@ func loginRun(opts *LoginOptions) {
 		grpc_endpoint := "api-stg.logfire.ai:443"
 		grpc_ingestion := "https://in-stg.logfire.ai"
 
-		err = cfg.UpdateConfig(nil, nil, nil,
+		err = cfg.UpdateConfig(nil, nil, nil, nil,
 			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion)
 		if err != nil {
 			return
@@ -133,6 +133,10 @@ func loginRun(opts *LoginOptions) {
 			fmt.Fprintf(opts.IO.Out, "%s Magic link sent to %s\n", cs.SuccessIcon(), opts.Email)
 
 			opts.Token, err = opts.Prompter.Input("Enter the token received on your email:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read token\n", cs.FailureIcon())
+				return
+			}
 
 			opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
 			TokenSignin(opts.IO, cfg, cs, opts.Token, cfg.Get().EndPoint)
@@ -239,14 +243,12 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 
 	io.StopProgressIndicator()
 
-	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
 		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
 	if err != nil {
 		return
 	}
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
-
-	return
 }
 
 func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, token, endpoint string) error {
@@ -302,7 +304,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 		return errors.New(response.Message[0])
 	}
 
-	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
 		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
 	if err != nil {
 		return err

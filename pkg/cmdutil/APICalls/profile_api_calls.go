@@ -57,7 +57,7 @@ func SendMagicLink(endpoint, email string) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -102,7 +102,7 @@ func ResetPassword(token string, endpoint string, profileId string, password str
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -151,6 +151,7 @@ func SetPassword(token string, endpoint string, profileId string, password strin
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
+			return
 		}
 	}(resp.Body)
 
@@ -172,10 +173,11 @@ func SetPassword(token string, endpoint string, profileId string, password strin
 	return nil
 }
 
-func UpdateProfile(client *http.Client, token string, endpoint string, profileId string, firstName string, lastName string) error {
+func UpdateProfile(client *http.Client, token string, endpoint string, profileId string, firstName string, lastName string, role string) error {
 	data := UpdateProfileModels.UpdateProfileRequest{
 		FirstName: firstName,
 		LastName:  lastName,
+		Role:      role,
 	}
 
 	reqBody, err := json.Marshal(data)
@@ -198,7 +200,7 @@ func UpdateProfile(client *http.Client, token string, endpoint string, profileId
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -220,7 +222,7 @@ func UpdateProfile(client *http.Client, token string, endpoint string, profileId
 	return nil
 }
 
-func SignupFlow(email string, endpoint string) (string, error) {
+func SignupFlow(email, endpoint string) (string, error) {
 	signupReq := SignupModels.SignupRequest{
 		Email: email,
 	}
@@ -258,7 +260,7 @@ func SignupFlow(email string, endpoint string) (string, error) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -285,7 +287,7 @@ func SignupFlow(email string, endpoint string) (string, error) {
 	}
 }
 
-func OnboardingFlow(profileID, authToken string, endpoint, firstName, lastName string) error {
+func OnboardingFlow(profileID, authToken, endpoint, firstName, lastName, role string) error {
 	var response LoginModels.Response
 
 	onboardReq := SignupModels.OnboardRequest{
@@ -381,7 +383,7 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 		return errors.New(response.Message[0])
 	}
 
-	err = cfg.UpdateConfig(&response.UserBody.Email, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
 		&response.BearerToken.RefreshToken, nil, nil, nil, nil)
 	if err != nil {
 		fmt.Printf("Failed to update config: %v\n", err)

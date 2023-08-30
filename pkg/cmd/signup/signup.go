@@ -2,6 +2,9 @@ package signup
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -10,8 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type SignupOptions struct {
@@ -27,6 +28,7 @@ type SignupOptions struct {
 	credentialToken string
 	FirstName       string
 	LastName        string
+	Role            string
 }
 
 func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
@@ -66,6 +68,7 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.credentialToken, "token", "t", "", "Token received on email")
 	cmd.Flags().StringVarP(&opts.FirstName, "first-name", "f", "", "First name")
 	cmd.Flags().StringVarP(&opts.LastName, "last-name", "l", "", "Last name")
+	cmd.Flags().StringVarP(&opts.Role, "role", "r", "", "Role")
 
 	return cmd
 }
@@ -142,7 +145,7 @@ func SignupRun(opts *SignupOptions) {
 	}
 
 	if !interactive {
-		onboardingMessage := fmt.Sprintf("Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>\""))
+		onboardingMessage := fmt.Sprintf("Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name> --role <role>\""))
 		fmt.Fprint(opts.IO.ErrOut, onboardingMessage)
 	}
 
@@ -162,11 +165,15 @@ func SignupRun(opts *SignupOptions) {
 func OnboardingRun(opts *SignupOptions) error {
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
+	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Config failed to load %s\n", cs.FailureIcon(), cs.Bold(opts.credentialToken))
+		return err
+	}
 
 	if opts.credentialToken == "" {
 		opts.credentialToken, err = opts.Prompter.Input("Please paste the token received in the email here:", "")
 		if err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Unable to read token %s\n", cs.SuccessIcon(), cs.Bold(opts.credentialToken))
+			fmt.Fprintf(opts.IO.ErrOut, "%s Unable to read token %s\n", cs.FailureIcon(), cs.Bold(opts.credentialToken))
 			return err
 		}
 	}
@@ -189,9 +196,16 @@ func OnboardingRun(opts *SignupOptions) error {
 				return err
 			}
 		}
+
+		if opts.Role == "" {
+			opts.Role, err = opts.Prompter.Input("Enter your Role:", "")
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	err = APICalls.OnboardingFlow(cfg.Get().ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName)
+	err = APICalls.OnboardingFlow(cfg.Get().ProfileID, cfg.Get().Token, cfg.Get().EndPoint, opts.FirstName, opts.LastName, opts.Role)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s %s", cs.FailureIcon(), err.Error())
 		return err
