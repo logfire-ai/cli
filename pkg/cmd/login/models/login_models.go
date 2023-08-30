@@ -5,6 +5,7 @@ type UserBody struct {
 	TeamID    string `json:"teamId"`
 	Onboarded bool   `json:"onboarded"`
 	Email     string `json:"email"`
+	Role      string `json:"role"`
 }
 
 type BearerToken struct {

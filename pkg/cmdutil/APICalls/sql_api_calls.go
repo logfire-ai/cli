@@ -2,7 +2,6 @@ package APICalls
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -39,8 +38,6 @@ func GetRecommendations(token string, endpoint string, teamId string, role strin
 	if err != nil {
 		return models.RecommendResponse{}, err
 	}
-
-	fmt.Println(string(body))
 
 	var RecommendationsResp models.RecommendResponse
 	err = json.Unmarshal(body, &RecommendationsResp)

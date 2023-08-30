@@ -2,6 +2,9 @@ package update_profile
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -9,8 +12,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type UpdateProfileOptions struct {
@@ -24,6 +25,7 @@ type UpdateProfileOptions struct {
 
 	FirstName string
 	LastName  string
+	Role      string
 }
 
 func UpdateProfileCmd(f *cmdutil.Factory) *cobra.Command {
@@ -71,6 +73,10 @@ func UpdateProfileRun(opts *UpdateProfileOptions) {
 
 	if opts.Interactive && opts.FirstName == "" && opts.LastName == "" {
 		updateFirstName, err := opts.Prompter.Confirm("Do you want to update your First name?", false)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read\n", cs.FailureIcon())
+			return
+		}
 
 		if updateFirstName {
 			opts.FirstName, err = opts.Prompter.Input("Enter First name:", "")
@@ -81,9 +87,27 @@ func UpdateProfileRun(opts *UpdateProfileOptions) {
 		}
 
 		updateLastName, err := opts.Prompter.Confirm("Do you want to update your Last name?", false)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+			return
+		}
 
 		if updateLastName {
 			opts.LastName, err = opts.Prompter.Input("Enter Last name:", "")
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
+				return
+			}
+		}
+
+		updateRole, err := opts.Prompter.Confirm("Do you want to update your Role?", false)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read\n", cs.FailureIcon())
+			return
+		}
+
+		if updateRole {
+			opts.Role, err = opts.Prompter.Input("Enter Role:", "")
 			if err != nil {
 				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Name\n", cs.FailureIcon())
 				return
@@ -97,7 +121,7 @@ func UpdateProfileRun(opts *UpdateProfileOptions) {
 		}
 	}
 
-	err = APICalls.UpdateProfile(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.FirstName, opts.LastName)
+	err = APICalls.UpdateProfile(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.FirstName, opts.LastName, opts.Role)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	} else {

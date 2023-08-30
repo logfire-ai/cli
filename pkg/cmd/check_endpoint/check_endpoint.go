@@ -20,8 +20,6 @@ type CheckEndpointOptions struct {
 
 	HttpClient func() *http.Client
 	Config     func() (config.Config, error)
-
-	Endpoint bool
 }
 
 type CheckResponse struct {
@@ -52,8 +50,6 @@ func NewCheckEndpointCmd(f *cmdutil.Factory) *cobra.Command {
 		GroupID: "core",
 	}
 
-	cmd.Flags().BoolVarP(&opts.Endpoint, "staging", "s", false, "To check for Staging Endpoint (TRUE|FALSE = default).")
-
 	return cmd
 }
 
@@ -63,13 +59,6 @@ func CheckEndpointRun(opts *CheckEndpointOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
-	}
-
-	if opts.Endpoint {
-		err := cfg.UpdateEndpoint("https://api-stg.logfire.ai/")
-		if err != nil {
-			return
-		}
 	}
 
 	auth := CheckAuth(opts.HttpClient(), cfg.Get().EndPoint)
@@ -187,7 +176,7 @@ func CheckEndpointRun(opts *CheckEndpointOptions) {
 }
 
 func CheckAuth(client *http.Client, endpoint string) (response string) {
-	req, err := http.NewRequest("GET", endpoint+"api/auth", nil)
+	req, _ := http.NewRequest("GET", endpoint+"api/auth", nil)
 	req.Header.Set("User-Agent", "Logfire-cli")
 
 	resp, err := client.Do(req)
@@ -201,7 +190,7 @@ func CheckAuth(client *http.Client, endpoint string) (response string) {
 		}
 	}(resp.Body)
 
-	body, err := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 
 	return string(body)
 }
@@ -221,7 +210,7 @@ func CheckProfile(client *http.Client, endpoint string) (response CheckResponse)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -253,7 +242,7 @@ func CheckSource(client *http.Client, endpoint string) (response CheckResponse) 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -284,7 +273,7 @@ func CheckSourceById(client *http.Client, endpoint string) (response CheckRespon
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -316,7 +305,7 @@ func CheckTeamInvite(client *http.Client, endpoint string) (response CheckRespon
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -348,7 +337,7 @@ func CheckTeamMember(client *http.Client, endpoint string) (response CheckRespon
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -380,7 +369,7 @@ func CheckTeam(client *http.Client, endpoint string) (response CheckResponse) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -412,7 +401,7 @@ func CheckSchema(client *http.Client, endpoint string) (response CheckResponse) 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -444,7 +433,7 @@ func CheckTeamById(client *http.Client, endpoint string) (response CheckResponse
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -476,7 +465,7 @@ func CheckView(client *http.Client, endpoint string) (response CheckResponse) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -508,7 +497,7 @@ func CheckViewById(client *http.Client, endpoint string) (response CheckResponse
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -540,7 +529,7 @@ func CheckAlert(client *http.Client, endpoint string) (response CheckResponse) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -572,7 +561,7 @@ func CheckAlertById(client *http.Client, endpoint string) (response CheckRespons
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -604,7 +593,7 @@ func CheckIntegration(client *http.Client, endpoint string) (response CheckRespo
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -636,7 +625,7 @@ func CheckIntegrationById(client *http.Client, endpoint string) (response CheckR
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -668,7 +657,7 @@ func CheckAlertIntegration(client *http.Client, endpoint string) (response Check
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
