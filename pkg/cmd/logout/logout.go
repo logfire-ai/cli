@@ -100,6 +100,8 @@ func logout(client *http.Client, token string, endpoint string, refreshToken str
 		"RefreshToken": refreshToken,
 	}
 
+	// r
+
 	jsonValue, _ := json.Marshal(reqBody)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonValue))
