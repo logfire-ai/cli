@@ -144,7 +144,7 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		elapsed := time.Since(start)
 
-		fmt.Printf("The round trip took %s\n", elapsed)
+		fmt.Printf("The round trip took: %s\n", elapsed)
 
 	} else {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
@@ -259,6 +259,6 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		elapsed := time.Since(start)
 
-		fmt.Printf("The round trip took %s\n", elapsed)
+		fmt.Printf("The round trip took: %s\n", elapsed)
 	}
 }
