@@ -75,31 +75,34 @@ func NewCmdSql(f *cmdutil.Factory) *cobra.Command {
 }
 
 func GetRecommendations(opts *SQLQueryOptions, cfg config.Config) {
+	opts.IO.StartProgressIndicatorWithLabel("Getting recommendations, please wait...")
+
 	recommendations, _ := APICalls.GetRecommendations(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, cfg.Get().Role)
 
 	var options []string
 
 	for _, recommendation := range recommendations.Data {
-		options = append(options, fmt.Sprintf(`
-Title: %s
-Description: %s
-Query: %s
-`, recommendation.CaptionTitle,
-			recommendation.CaptionDescription,
-			recommendation.SQLStatement,
-		))
+		options = append(options, fmt.Sprintf(`Title: %s`, recommendation.CaptionTitle))
 	}
+
+	opts.IO.StopProgressIndicator()
 
 	selectedQuery, _ := opts.Prompter.Select("Select a recommended query to run", "", options)
 
-	// Define a regular expression to match the Query section
-	re := regexp.MustCompile(`Query:\s+(.+)`)
+	var selectedQueryParsed string
 
-	// Find the submatch (the query) in the input string
-	submatches := re.FindStringSubmatch(selectedQuery)
+	ret := regexp.MustCompile(`Title:\s+(.+)`)
 
-	if len(submatches) > 1 {
-		opts.SQLQuery = submatches[1]
+	for _, recommendation := range recommendations.Data {
+		submatches := ret.FindStringSubmatch(selectedQuery)
+		if recommendation.CaptionTitle == submatches[1] {
+			selectedQueryParsed = recommendation.SQLStatement
+		}
+	}
+
+	if len(selectedQueryParsed) > 1 {
+		opts.SQLQuery = selectedQueryParsed
+		fmt.Fprintf(opts.IO.Out, "Query: %s\n", selectedQueryParsed)
 	} else {
 		log.Fatal("Query not found in the input.")
 	}
