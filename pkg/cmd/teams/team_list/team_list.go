@@ -2,10 +2,11 @@ package team_list
 
 import (
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
-	"github.com/olekukonko/tablewriter"
 	"net/http"
 	"os"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -65,7 +66,7 @@ func listRun(opts *TeamOptions) {
 	teams, err := APICalls.ListTeams(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
-	} else {
+	} else if len(teams) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "Team-Id"})
 
@@ -74,5 +75,8 @@ func listRun(opts *TeamOptions) {
 		}
 
 		table.Render()
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s No teams created. Please create a team\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 }
