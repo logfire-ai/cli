@@ -3,16 +3,17 @@ package gui
 import (
 	"errors"
 	"fmt"
-	"github.com/logfire-sh/cli/internal/config"
-	"github.com/logfire-sh/cli/livetail"
-	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
-	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
-	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/logfire-sh/cli/internal/config"
+	"github.com/logfire-sh/cli/livetail"
+	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -153,7 +154,6 @@ func (u *UI) SetDisplayCapture() {
 					u.FieldBasedFilterCondition = operator
 					u.FieldBasedFilterValue = value
 
-					ClearLogs(u, livetailStatus, stop)
 					ClearLogs(u, livetailStatus, stop)
 
 					time.Sleep(500 * time.Millisecond)
