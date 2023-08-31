@@ -214,8 +214,8 @@ func initialModel() *model {
 	inputs[lastName].Prompt = ""
 
 	inputs[role] = textinput.New()
-	inputs[role].Placeholder = "Last name"
-	inputs[role].Width = 10
+	inputs[role].Placeholder = "Role"
+	inputs[role].Width = 30
 	inputs[role].Prompt = ""
 
 	inputs[password] = textinput.New()
@@ -564,8 +564,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -603,8 +603,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -642,8 +642,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 %s 
 %s
 
@@ -680,8 +680,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -722,8 +722,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -773,8 +773,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -832,8 +832,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -891,8 +891,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -955,8 +955,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -1019,8 +1019,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s
@@ -1089,8 +1089,8 @@ func (m model) View() string {
 	
 %s%s
 
-%s  %s  %s
-%s  %s  %s
+%s   %s   %s
+%s   %s   %s
 
 %s 
 %s

@@ -93,7 +93,7 @@ func sourceListRun(opts *SourceListOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
-	} else {
+	} else if len(sources) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "Source-Id", "Platform", "Token"})
 
@@ -102,6 +102,8 @@ func sourceListRun(opts *SourceListOptions) {
 		}
 
 		table.Render()
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s No sources created. Please create a source\n", cs.FailureIcon())
+		os.Exit(0)
 	}
-
 }

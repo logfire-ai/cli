@@ -98,20 +98,16 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 var stop = make(chan bool)
 
 func PromptRoundTripRun(opts *PromptRoundTripOptions) {
-	fmt.Println("Code started.")
 
 	cfg, _ := opts.Config()
 	cs := opts.IO.ColorScheme()
 
 	if opts.TeamId != "" && opts.SourceId != "" {
-		fmt.Println("Getting sources.")
 
 		source, err := APICalls.GetSource(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Println("Got sources.")
 
 		id := uuid.New()
 
@@ -128,24 +124,18 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
 
-		fmt.Println("CMD Setup.")
-
 		go grpcutil.WaitForLog(cfg, id, opts.TeamId, opts.SourceId, stop)
-
-		fmt.Println("GoRoutine Started.")
 
 		start := time.Now()
 
 		_ = cmd.Run()
-
-		fmt.Println("CMD Run.")
 
 		timeout := 20 * time.Second
 
 		select {
 		case <-stop:
 		case <-time.After(time.Until(start.Add(timeout))):
-			fmt.Println("grpcutil.WaitForLog timed out.")
+			fmt.Println("Request timed out.")
 			close(stop) // Signal the goroutine to stop
 			os.Exit(1)
 		}
@@ -258,7 +248,7 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		select {
 		case <-stop:
 		case <-time.After(time.Until(start.Add(timeout))):
-			fmt.Println("grpcutil.WaitForLog timed out.")
+			fmt.Println("Request timed out.")
 			close(stop) // Signal the goroutine to stop
 			os.Exit(1)
 		}

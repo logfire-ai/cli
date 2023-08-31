@@ -2,6 +2,9 @@ package integrations_list
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -11,8 +14,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type ListIntegrationsOptions struct {
@@ -80,7 +81,7 @@ func ListIntegrationsRun(opts *ListIntegrationsOptions) {
 	data, err := APICalls.GetIntegrationsList(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
-	} else {
+	} else if len(data) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "Integration-Id"})
 
@@ -89,5 +90,8 @@ func ListIntegrationsRun(opts *ListIntegrationsOptions) {
 		}
 
 		table.Render()
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s No alerts created. Please create an alert\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 }

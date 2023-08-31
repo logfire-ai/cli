@@ -2,6 +2,9 @@ package views_list
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -11,8 +14,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type ViewListOptions struct {
@@ -81,7 +82,7 @@ func viewsListRun(opts *ViewListOptions) {
 	list, err := APICalls.ListView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to list view\n", cs.FailureIcon())
-	} else {
+	} else if len(list) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "View-Id"})
 
@@ -90,5 +91,8 @@ func viewsListRun(opts *ViewListOptions) {
 		}
 
 		table.Render()
+	} else {
+		fmt.Fprintf(opts.IO.ErrOut, "%s No views created. Please create a view\n", cs.FailureIcon())
+		os.Exit(0)
 	}
 }
