@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -171,7 +170,7 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -198,22 +197,13 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 
 	cfg, _ := config.NewConfig()
 	grpc_url := cfg.Get().GrpcEndpoint
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
+	conn, _ := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	defer conn.Close()
 
 	// Create a gRPC client
 	grpcClient := pb.NewFlinkServiceClient(conn)
 
-	_, err = grpcClient.CreateSource(context.Background(), pbSource)
-	if err != nil {
-		return models.Source{}, err
-	}
-	if err != nil {
-		return models.Source{}, err
-	}
+	grpcClient.CreateSource(context.Background(), pbSource)
 
 	return sourceResp.Data, nil
 }
