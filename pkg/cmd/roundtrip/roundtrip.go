@@ -156,7 +156,6 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		}
 
 		var selectedSource string
-		var sourceId string
 		var sourceToken string
 
 		if len(sourceList) != 0 {
@@ -183,14 +182,14 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 			var ok bool
 
-			sourceId, ok = idMap[selectedSource]
+			opts.SourceId, ok = idMap[selectedSource]
 			if !ok {
 				log.Fatalf("%s Failed to map to original ID\n\n", cs.FailureIcon())
 				return
 			}
 
 			for _, source := range sourceList {
-				if sourceId == source.ID {
+				if opts.SourceId == source.ID {
 					sourceToken = source.SourceToken
 				}
 			}
@@ -215,7 +214,7 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 				return
 			}
 
-			sourceId = source.ID
+			opts.SourceId = source.ID
 			sourceToken = source.SourceToken
 		}
 
@@ -252,8 +251,6 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			close(stop) // Signal the goroutine to stop
 			os.Exit(1)
 		}
-
-		<-stop
 
 		<-stop
 

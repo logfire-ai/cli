@@ -1,13 +1,14 @@
 package grpcutil
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string, stop chan bool) {
@@ -24,6 +25,7 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 	if err != nil {
 		return
 	}
+
 	sources = append(sources, source)
 	pbSources := CreateGrpcSource(sources)
 
@@ -36,6 +38,7 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 		case <-stop:
 			return
 		default:
+
 			response, err := MakeGrpcCall(request)
 			if err != nil {
 				continue
