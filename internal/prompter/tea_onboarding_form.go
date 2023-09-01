@@ -125,6 +125,7 @@ type model struct {
 	stage       string
 	endpoint    string
 	list        list.Model
+	roleList    list.Model
 	choice      string
 	quitting    bool
 	config      config.Config
@@ -177,6 +178,12 @@ func initialModel() *model {
 		item("syslog-ng"),
 	}
 
+	roles := []list.Item{
+		item("Software Engineer"),
+		item("Data Scientist"),
+		item("Product Manager"),
+	}
+
 	const defaultWidth = 100
 	const listHeight = 14
 
@@ -213,10 +220,13 @@ func initialModel() *model {
 	inputs[lastName].Width = 10
 	inputs[lastName].Prompt = ""
 
-	inputs[role] = textinput.New()
-	inputs[role].Placeholder = "Role"
-	inputs[role].Width = 30
-	inputs[role].Prompt = ""
+	lr := list.New(roles, itemDelegate{}, 35, 7)
+	lr.Title = "What is your Role?"
+	lr.SetShowStatusBar(false)
+	lr.SetFilteringEnabled(false)
+	lr.SetShowHelp(false)
+	lr.Styles.Title = listTitileStyle
+	lr.Styles.PaginationStyle = paginationStyle
 
 	inputs[password] = textinput.New()
 	inputs[password].Placeholder = "Password"
@@ -242,6 +252,7 @@ func initialModel() *model {
 		stage:    "email",
 		spinner:  s,
 		list:     l,
+		roleList: lr,
 		choice:   "",
 		config:   cfg,
 		log:      "",
@@ -317,9 +328,10 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 				m.nextInput()
 			}
 		case "role":
-			if m.inputs[role].Value() != "" {
+			i, _ := m.roleList.SelectedItem().(item)
+			if string(i) != "" {
 				err := APICalls.OnboardingFlow(m.config.Get().ProfileID, m.config.Get().Token, m.config.Get().EndPoint,
-					m.inputs[firstName].Value(), m.inputs[lastName].Value(), m.inputs[role].Value())
+					m.inputs[firstName].Value(), m.inputs[lastName].Value(), string(i))
 				if err != nil {
 					m.err = err
 					return m, nil
@@ -437,11 +449,19 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if m.focused != 7 && m.focused != 9 && m.focused != 10 && m.focused != 11 && m.focused != 12 && m.focused != 13 {
+	if m.focused != 4 && m.focused != 7 && m.focused != 9 && m.focused != 10 && m.focused != 11 && m.focused != 12 && m.focused != 13 {
 		for i := range m.inputs {
 			m.inputs[i].Blur()
 			m.inputs[m.focused].Focus()
 		}
+	} else if subStep == "role" {
+		// Update list
+		for i := range m.inputs {
+			m.inputs[i].Blur()
+		}
+		var listCmd tea.Cmd
+		m.roleList, listCmd = m.roleList.Update(msg)
+		cmds = append(cmds, listCmd)
 	} else {
 		// Update list
 		for i := range m.inputs {
@@ -564,9 +584,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -581,10 +602,9 @@ func (m model) View() string {
 				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				continueStyle.Render("Continue ->"),
@@ -603,9 +623,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -620,10 +641,9 @@ func (m model) View() string {
 				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				continueStyle.Render("Continue ->"),
@@ -642,8 +662,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
+
+%s
 %s 
 %s
 
@@ -658,10 +680,9 @@ func (m model) View() string {
 				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				continueStyle.Render("Continue ->"),
@@ -680,9 +701,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -697,10 +719,9 @@ func (m model) View() string {
 				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				continueStyle.Render("Continue ->"),
@@ -722,9 +743,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -745,10 +767,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -773,9 +794,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -803,10 +825,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -832,9 +853,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -862,10 +884,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -891,9 +912,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -923,10 +945,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -955,9 +976,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -987,10 +1009,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -1019,9 +1040,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -1053,10 +1075,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
@@ -1089,9 +1110,10 @@ func (m model) View() string {
 	
 %s%s
 
-%s   %s   %s
-%s   %s   %s
+%s   %s
+%s   %s
 
+%s
 %s 
 %s
 
@@ -1126,10 +1148,9 @@ func (m model) View() string {
 				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
 				inputStyle.Render("First name"),
 				inputStyle.Render("Last name"),
-				inputStyle.Render("Role"),
 				m.inputs[firstName].View(),
 				m.inputs[lastName].View(),
-				m.inputs[role].View(),
+				m.roleList.View(),
 				inputStyle.Render("Password"),
 				m.inputs[password].View(),
 				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
