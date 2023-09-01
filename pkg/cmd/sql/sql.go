@@ -178,13 +178,23 @@ func showQuery(io *iostreams.IOStreams, records string) {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(fieldsNames)
+	table.SetAutoWrapText(false)
 
 	for _, record := range parsedData.Records {
 		var row []string
 
 		for _, field := range parsedData.Fields {
 			name := field.Name
-			row = append(row, record[name].(string))
+			strValue := fmt.Sprintf("%v", record[name])
+
+			// Truncate if length is more than 150 characters
+			if len(strValue) > 150 {
+				strValue = strValue[:150] + "..." // Truncate and add ellipsis
+			}
+
+			re := regexp.MustCompile(`\s+`)
+
+			row = append(row, re.ReplaceAllString(strValue, " "))
 		}
 
 		table.Append(row)
