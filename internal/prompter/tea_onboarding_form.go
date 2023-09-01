@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -298,6 +299,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					return m, nil
 				} else if msg == "already registered user. Sent link to login" {
 					m.err = errors.New("you are already a user, please use logfire commands")
+					os.Exit(0)
 					return m, nil
 				}
 				subStep = "token"
@@ -417,6 +419,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 			m.nextInput()
 		}
 	case "complete":
+		os.Exit(0)
 		return m, tea.Quit
 	}
 

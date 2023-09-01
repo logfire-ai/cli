@@ -2,6 +2,10 @@ package gui
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/epiclabs-io/winman"
 	"github.com/gdamore/tcell/v2"
 	"github.com/logfire-sh/cli/internal/config"
@@ -9,9 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmd/views/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/rivo/tview"
-	"log"
-	"net/http"
-	"strings"
 )
 
 type Display struct {
@@ -93,6 +94,8 @@ func NewDisplay(cfg config.Config) *Display {
 		SetFieldWidth(0).
 		SetAcceptanceFunc(tview.InputFieldMaxLength(200)).
 		SetFieldStyle(tcell.StyleDefault)
+
+	inputField.SetBackgroundColor(tcell.ColorWhite)
 
 	// Set up autocomplete function.
 	var typedText string
@@ -219,14 +222,19 @@ func NewDisplay(cfg config.Config) *Display {
 		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.stream-view [stream-view=view-name] 7.QUIT [q | quit | exit]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
+	PlaceholderField.SetBackgroundColor(tcell.ColorWhite)
+
 	PlaceholderField.SetDisabled(true)
 
 	textView := tview.NewTextView().
 		SetDynamicColors(true).
 		SetRegions(true)
 
+	textView.SetBackgroundColor(tcell.ColorWhite)
+
 	// Create the Grid and add items to it.
 	grid := tview.NewGrid().SetRows(-1, 1, 1).SetColumns(-1)
+	grid.SetBackgroundColor(tcell.ColorWhite)
 	grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
 	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
 	grid.AddItem(PlaceholderField, 2, 0, 1, 1, 0, 0, false)
