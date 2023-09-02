@@ -1,6 +1,7 @@
 package grpcutil
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,13 +34,18 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 
 	request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-4 * time.Second))
 
+	request.SearchQueries = []string{id.String()}
+
+	filterService := NewFilterService("Diagnostic", "True")
+	defer filterService.CloseConnection()
+
 	for {
 		select {
 		case <-stop:
 			return
 		default:
 
-			response, err := MakeGrpcCall(request)
+			response, err := filterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
 				continue
 			}

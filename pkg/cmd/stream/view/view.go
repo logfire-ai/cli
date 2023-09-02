@@ -1,6 +1,7 @@
 package view
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -139,8 +140,11 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 	pbSources := grpcutil.CreateGrpcSource(view.SourcesFilter)
 	var sourcesOffset = make(map[string]uint64)
 
+	filterService := grpcutil.NewFilterService()
+	defer filterService.CloseConnection()
+
 	for {
-		response, err := grpcutil.MakeGrpcCall(request)
+		response, err := filterService.Client.GetFilteredData(context.Background(), request)
 		if err != nil {
 			continue
 		}

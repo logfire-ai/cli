@@ -1,6 +1,7 @@
 package livetail
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -228,8 +229,11 @@ func livetailRun(opts *LivetailOptions) {
 
 	request.Sources = pbSources
 
+	filterService := grpcutil.NewFilterService()
+	defer filterService.CloseConnection()
+
 	for {
-		response, err := grpcutil.MakeGrpcCall(request)
+		response, err := filterService.Client.GetFilteredData(context.Background(), request)
 		if err != nil {
 			continue
 		}
