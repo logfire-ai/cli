@@ -1,6 +1,7 @@
 package grpcutil
 
 import (
+	"context"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	pb "github.com/logfire-sh/cli/services/flink-service"
@@ -30,13 +31,16 @@ func GetLog(token string, endpoint string, teamId string, sourceId string, stop 
 
 	request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
 
+	filterService := NewFilterService()
+	defer filterService.CloseConnection()
+
 	for {
 		select {
 		case <-stop:
 			stop <- err
 			return
 		default:
-			response, err := MakeGrpcCall(request)
+			response, err := filterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
 				stop <- err
 				return

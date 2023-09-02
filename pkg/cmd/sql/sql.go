@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,10 +21,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type SQLQueryOptions struct {
@@ -152,7 +150,17 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	pbSources := createGrpcSource(sources)
 
-	response, err := makeGrpcCall(pbSources, opts)
+	// Prepare the request payload
+	request := &pb.SQLRequest{
+		Sql:       opts.SQLQuery,
+		Sources:   pbSources,
+		BatchSize: 100,
+	}
+
+	filterService := grpcutil.NewFilterService()
+	defer filterService.CloseConnection()
+
+	response, err := filterService.Client.SubmitSQL(context.Background(), request)
 	if err != nil {
 		return
 	}
@@ -234,27 +242,6 @@ func getSQL(client pb.FlinkServiceClient, sources []*pb.Source, opts *SQLQueryOp
 	response, err := client.SubmitSQL(context.Background(), request)
 	if err != nil {
 		return nil, err
-	}
-
-	return response, nil
-}
-
-// MakeGrpcCall makes creates a connection and makes a call to the server
-func makeGrpcCall(pbSources []*pb.Source, opts *SQLQueryOptions) (*pb.SQLResponse, error) {
-	grpc_url := "api-stg.logfire.ai:443"
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	// Create a gRPC client
-	client := pb.NewFlinkServiceClient(conn)
-
-	response, err := getSQL(client, pbSources, opts)
-	if err != nil {
-		fmt.Println(err)
-		return response, errors.Wrap(err, "[MakeGrpcCall][getSQL]")
 	}
 
 	return response, nil
