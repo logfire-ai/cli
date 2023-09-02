@@ -3,7 +3,7 @@ package livetail
 import (
 	"context"
 	"fmt"
-	"log"
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"net/http"
 	"sort"
 	"time"
@@ -14,10 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/logfire-sh/cli/services/flink-service"
-
-	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type Livetail struct {
@@ -105,12 +101,15 @@ func (livetail *Livetail) ApplyFilter(
 }
 
 func (l *Livetail) GenerateLogs(stop chan error) {
+	filterService := grpcutil.NewFilterService()
+	defer filterService.CloseConnection()
+	request.Sources = l.pbSources
 	for {
 		select {
 		case <-stop:
 			return
 		default:
-			response, err := makeGrpcCall(l.pbSources)
+			response, err := filterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
 				stop <- err
 				return
@@ -179,28 +178,6 @@ func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.Fi
 	response, err := client.GetFilteredData(context.Background(), request)
 	if err != nil {
 		return nil, err
-	}
-
-	return response, nil
-}
-
-// MakeGrpcCall makes creates a connection and makes a call to the server
-func makeGrpcCall(pbSources []*pb.Source) (*pb.FilteredRecords, error) {
-	cfg, _ := config.NewConfig()
-	grpc_url := cfg.Get().GrpcEndpoint
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	// Create a gRPC client
-	client := pb.NewFlinkServiceClient(conn)
-
-	response, err := getFilteredData(client, pbSources)
-	if err != nil {
-		log.Fatal(err)
-		return response, errors.Wrap(err, "[MakeGrpcCall][getFilteredData]")
 	}
 
 	return response, nil
