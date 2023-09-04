@@ -1,26 +1,26 @@
 {
-    "version": "3.9",
+    "version": "4.0",
     "architecture": {
         "32bit": {
-            "url": "https://github.com/logfire-sh/cli/releases/download/v3.9/logfire_windows_386.zip",
+            "url": "https://github.com/logfire-sh/cli/releases/download/v4.0/logfire_windows_386.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "eebe8cb50e47a6bba601bd85e372e96dcd058c1293d2dd5e1c703c00c66aba37"
+            "hash": "e5747a122b308467b601b003ec710ef8a6ecb203898b478b02dca71819b8a744"
         },
         "64bit": {
-            "url": "https://github.com/logfire-sh/cli/releases/download/v3.9/logfire_windows_amd64.zip",
+            "url": "https://github.com/logfire-sh/cli/releases/download/v4.0/logfire_windows_amd64.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "a809c6ee7fed0b6bce9e18c2618319ec992ea56f80e69b3accee3a99e5b443c7"
+            "hash": "6bc01d9c10d5b59e7ad0e5f6e061b2b1e515e220245f993605b951d4e37e0fae"
         },
         "arm64": {
-            "url": "https://github.com/logfire-sh/cli/releases/download/v3.9/logfire_windows_arm64.zip",
+            "url": "https://github.com/logfire-sh/cli/releases/download/v4.0/logfire_windows_arm64.zip",
             "bin": [
                 "logfire.exe"
             ],
-            "hash": "b5fa2772c9d61c37e2c9b8469cf77dbfb8402fcfa6fc9a7bf2d6974a915c0751"
+            "hash": "a8f99f62da3bb3361d035edd00f5b2fd81173ddbbe3c4068f47b5176b7e82470"
         }
     },
     "homepage": "https://logfire.ai/",
