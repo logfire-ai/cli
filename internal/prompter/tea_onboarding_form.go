@@ -189,7 +189,7 @@ func initialModel() *model {
 	const listHeight = 14
 
 	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = "Select the source type you want to create:"
+	l.Title = fmt.Sprintf("%s %s", "Select the source type you want to create:", continueStyle.Render("Choose the environment from which you'll be sending logs"))
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = listTitileStyle
@@ -485,14 +485,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	if m.err != nil {
-		return fmt.Sprintf("%s", m.err)
-	}
-
-	curlCommand := fmt.Sprintf(
-
-		`%s
+func (m model) renderCurlCommand() string {
+	return fmt.Sprintf(
+		`
+%s
 %s %s %s \
 %s %s \
 %s %s \
@@ -501,7 +497,8 @@ func (m model) View() string {
 %s
 
 %s %s %s %s %s
-%s`,
+%s
+`,
 		continueStyle.Render("******************************************************************************************"),
 		colorThree.Render(`curl`),
 		colorThree.Render(`--location`),
@@ -519,663 +516,128 @@ func (m model) View() string {
 		`after you have copied`,
 		continueStyle.Render("******************************************************************************************"),
 	)
+}
 
-	waitingForLog := continueStyle.Render("Waiting for logs...")
+func renderWelcome() string {
+	welcomeText := continueStyle.Render("\nWelcome to logfireAI. We'll guide you through a series of steps to get started with using our platform.\n" +
+		"If all goes well, you'd have sent and received your very first log in a couple of minutes.")
 
-	awesomeLogReceived := colorTwo.Render("Awesome! log received")
+	return fmt.Sprintf("%s\n", welcomeText)
+}
 
-	welcomeTest := continueStyle.Render("Welcome to logfireAI. We'll guide you through a series of steps to get started with using our platform.\n" +
-		"If all goes well, you'll have sent and received your very first log in a couple of minutes.")
+func renderSection(title string, checked bool) string {
+	mark := checkMark
+	if !checked {
+		mark = unCheckMarked
+	}
+	return fmt.Sprintf("\n%s%s\n", mark, colorOneBackgroundColorFourForeground.Render(title))
+}
 
-	switch step {
-	case "signup":
-		switch subStep {
-		case "email":
-			return fmt.Sprintf(
-				`%s
+func (m model) renderEmail() string {
+	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Email"), m.inputs[email].View())
+}
 
-%s%s
-	
-%s 
-%s
-	
-%s
-	`,
-				welcomeTest,
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
+func (m model) renderToken() string {
+	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Token [paste]"), m.inputs[token].View())
+}
 
-		case "token":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s
-	`,
-				welcomeTest,
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		}
-	case "account-setup":
-		switch subStep {
-		case "firstName":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
+func (m model) renderAccountSetup() string {
+	return fmt.Sprintf(`
 %s   %s
 %s   %s
 
 %s
-%s 
 %s
-
-%s
-	`,
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "lastName":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s
-	`,
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "password":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s
-	`,
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "role":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s
-	`,
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		}
-	case "team":
-		switch subStep {
-		case "teamName":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s
-	`,
-
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		}
-	case "send-logs":
-		switch subStep {
-		case "select-source":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
-
-%s
-
-%s
-%s
-
-%s
-	`,
-
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "sourceName":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
-
-%s
-
-%s
-%s
-
-%s
-	`,
-
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "curl":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
-
-%s
-
-%s
-%s
-
-%s
-
-%s
-	`,
-
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
-
-				curlCommand,
-
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		case "wait":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
-%s
-
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
-
-%s
-
-%s
 %s
+`, inputStyle.Render("First name"),
+		inputStyle.Render("Last name"),
+		m.inputs[firstName].View(),
+		m.inputs[lastName].View(),
+		m.roleList.View(),
+		inputStyle.Render("Password"),
+		m.inputs[password].View())
+}
+
+func (m model) renderTeamName() string {
+	return fmt.Sprintf("\n%s %s\n%s\n", inputStyle.Render("Team name"), continueStyle.Render("Assign a name for your team; you can interact with one team at a time, each with its own sources and members"),
+		m.inputs[teamName].View())
+}
+
+func (m model) renderSource() string {
+	return fmt.Sprintf(`
 
 %s
 
 %s %s
-	`,
-
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
-
-				curlCommand,
-				waitingForLog,
-				m.spinner.View(),
-			) + "\n"
-		case "awesome":
-			return fmt.Sprintf(
-				`%s
-
-%s%s
-	
-%s 
 %s
+`, m.list.View(),
+		inputStyle.Render("Source name"), continueStyle.Render("Name this source for easy identification among multiple sources in your team"),
+		m.inputs[sourceName].View(),
+	)
+}
 
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
+func (m model) renderConfig() string {
+	return fmt.Sprintf(`
 
 %s
 
 %s
-%s
+`, continueStyle.Render("Follow the provided steps to configure your environment for log transmission"),
+		"Config")
+}
 
-%s
+func (m model) View() string {
+	if m.err != nil {
+		return fmt.Sprintf("%s", m.err)
+	}
 
-%s%s
+	waitingForLog := continueStyle.Render(fmt.Sprintf("\nWaiting for logs... %s", m.spinner.View()))
 
-%s
-	`,
+	awesomeLogReceived := colorTwo.Render("\nAwesome! log received\n")
 
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
+	continueMessage := continueStyle.Render("\nContinue ->")
 
-				curlCommand,
-				awesomeLogReceived,
-				" ",
-				continueStyle.Render("Continue ->"),
-			) + "\n"
-		}
-	case "config-source":
+	switch step {
+
+	case "signup":
 		switch subStep {
-		case "source-config":
-			return fmt.Sprintf(
-				`%s
 
-%s%s
-	
-%s 
-%s
+		case "email":
+			return renderWelcome() + renderSection("Signup", false) + m.renderEmail() + continueMessage
 
-%s 
-%s
-	
-%s%s
-
-%s   %s
-%s   %s
-
-%s
-%s 
-%s
-
-%s%s
-
-%s
-%s
-
-%s%s
-
-%s
-
-%s
-%s
-
-%s
-
-%s%s
-
-%s%s
-
-%s
-			
-%s
-				`,
-				welcomeTest,
-				checkMark, colorOneBackgroundColorFourForeground.Render("Signup"),
-				inputStyle.Render("Email"),
-				m.inputs[email].View(),
-				inputStyle.Render("Token [paste]"),
-				m.inputs[token].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Account setup"),
-				inputStyle.Render("First name"),
-				inputStyle.Render("Last name"),
-				m.inputs[firstName].View(),
-				m.inputs[lastName].View(),
-				m.roleList.View(),
-				inputStyle.Render("Password"),
-				m.inputs[password].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Team name"),
-				inputStyle.Render("Team name"),
-				m.inputs[teamName].View(),
-				checkMark, colorOneBackgroundColorFourForeground.Render("Send logs"),
-				m.list.View(),
-				inputStyle.Render("Source name"),
-				m.inputs[sourceName].View(),
-
-				curlCommand,
-				awesomeLogReceived,
-				" ",
-
-				unCheckMarked, colorOneBackgroundColorFourForeground.Render("Config source"),
-
-				`You can setup your source using this config`,
-
-				continueStyle.Render("Continue ->"),
-			) + "\n"
+		case "token":
+			return renderWelcome() + renderSection("Signup", false) + m.renderEmail() + m.renderToken() + continueMessage
 		}
+
+	case "account-setup":
+		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", false) + m.renderAccountSetup() + continueMessage
+
+	case "team":
+		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", false) + m.renderTeamName() + continueMessage
+
+	case "send-logs":
+		switch subStep {
+		case "select-source":
+			return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", false) + m.renderSource() + continueMessage
+
+		case "sourceName":
+			return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", false) + m.renderSource() + continueMessage
+
+		case "curl":
+			return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", false) + m.renderSource() + m.renderCurlCommand() + continueMessage
+
+		case "wait":
+			return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", false) + m.renderSource() + m.renderCurlCommand() + waitingForLog
+
+		case "awesome":
+			return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", false) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + continueMessage
+		}
+
+	case "config-source":
+		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) + m.renderConfig() + continueMessage
+
 	case "complete":
+
 		return "Completed!"
 	}
 
