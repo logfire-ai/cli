@@ -3,7 +3,6 @@ package livetail
 import (
 	"context"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"net/http"
 	"sort"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/logfire-sh/cli/services/flink-service"
@@ -20,6 +20,7 @@ type Livetail struct {
 	Logs          string
 	pbSources     []*pb.Source
 	sourcesOffset map[string]uint64
+	FilterService *grpcutil.FilterService
 }
 
 var request = &pb.FilterRequest{
@@ -95,21 +96,25 @@ func (livetail *Livetail) ApplyFilter(
 			FieldValue: FieldBasedFilterValue,
 			Operator:   pb.FieldBasedFilter_Operator(pb.FieldBasedFilter_Operator_value[OperatorToName[FieldBasedFilterCondition]]),
 		})
-
+	} else {
+		request.FieldBasedFilters = []*pb.FieldBasedFilter{}
 	}
-	return
+
+}
+
+func (l *Livetail) CreateConnection() {
+	l.FilterService = grpcutil.NewFilterService()
 }
 
 func (l *Livetail) GenerateLogs(stop chan error) {
-	filterService := grpcutil.NewFilterService()
-	defer filterService.CloseConnection()
 	request.Sources = l.pbSources
+
 	for {
 		select {
 		case <-stop:
 			return
 		default:
-			response, err := filterService.Client.GetFilteredData(context.Background(), request)
+			response, err := l.FilterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
 				stop <- err
 				return
@@ -171,17 +176,17 @@ func addOffset(sources []*pb.Source, offset map[string]uint64) []*pb.Source {
 }
 
 // getFilteredData makes the actual grpc call to connect with flink-service.
-func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.FilteredRecords, error) {
-	// Invoke the gRPC method
-	request.Sources = sources
+// func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.FilteredRecords, error) {
+// 	// Invoke the gRPC method
+// 	request.Sources = sources
 
-	response, err := client.GetFilteredData(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
+// 	response, err := client.GetFilteredData(context.Background(), request)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return response, nil
-}
+// 	return response, nil
+// }
 
 func getOffsets(offsets map[string]uint64, records []*pb.FilteredRecord) map[string]uint64 {
 	for _, record := range records {
