@@ -17,14 +17,16 @@ import (
 
 type Display struct {
 	*tview.Grid
-	View             *tview.TextView
-	input            *tview.InputField
-	PlaceholderField *tview.InputField
-	List             *tview.List
-	Window           *winman.WindowBase
-	App              *tview.Application
-	SourceList       []sourceModel.Source
-	ViewsList        []models.ViewResponseBody
+	View       *tview.TextView
+	input      *tview.InputField
+	BottomHelp *tview.InputField
+	TopHelp    *tview.InputField
+	List       *tview.List
+	Window     *winman.WindowBase
+	App        *tview.Application
+	Livetail   bool
+	SourceList []sourceModel.Source
+	ViewsList  []models.ViewResponseBody
 }
 
 type Task struct {
@@ -127,8 +129,8 @@ func NewDisplay(cfg config.Config) *Display {
 					}
 				}
 			}
-		} else if strings.HasPrefix(typedText, "stream-view=") {
-			view := strings.TrimPrefix(typedText, "stream-view=")
+		} else if strings.HasPrefix(typedText, "view=") {
+			view := strings.TrimPrefix(typedText, "view=")
 			for _, v := range viewList {
 				if strings.HasPrefix(strings.ToLower(v), strings.ToLower(view)) && !strings.Contains(currentText, v) {
 					entries = append(entries, v)
@@ -205,8 +207,8 @@ func NewDisplay(cfg config.Config) *Display {
 						}
 					}
 				}
-			} else if strings.HasPrefix(typedText, "stream-view=") {
-				inputField.SetText("stream-view=" + text)
+			} else if strings.HasPrefix(typedText, "view=") {
+				inputField.SetText("view=" + text)
 			} else {
 				inputField.SetText(text)
 			}
@@ -214,32 +216,41 @@ func NewDisplay(cfg config.Config) *Display {
 		return source == tview.AutocompletedTab || source == tview.AutocompletedClick
 	})
 
-	PlaceholderField := tview.NewInputField().
+	// BottomHelp
+	BottomHelp := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
-		SetPlaceholder("  1.source [source=source-name,source-name,source-name...] 2.start-date [start-date=now-2d] 3.end-date [end-date=now] 4.field-filter [field-filter=level=info] 5.save-view [save-view=name] 6.stream-view [stream-view=view-name] 7.QUIT [q | quit | exit]").
+		SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name] 8.QUIT [q | quit | exit]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
-	PlaceholderField.SetDisabled(true)
+	BottomHelp.SetDisabled(true)
+
+	//TopHelp
+	TopHelp := tview.NewInputField().
+		SetFieldWidth(0).
+		SetFieldStyle(tcell.StyleDefault).
+		SetPlaceholder("  Stream > Livetail | 1. livetail 2. view").
+		SetPlaceholderTextColor(tcell.ColorGray)
+
+	TopHelp.SetDisabled(true)
 
 	textView := tview.NewTextView().
 		SetDynamicColors(true).
 		SetRegions(true)
 
 	// Create the Grid and add items to it.
-	grid := tview.NewGrid().SetRows(-1, 1, 1).SetColumns(-1)
-	grid.AddItem(textView, 0, 0, 1, 1, 0, 0, false)
-	grid.AddItem(inputField, 1, 0, 1, 1, 0, 0, true)
-	grid.AddItem(PlaceholderField, 2, 0, 1, 1, 0, 0, false)
+	grid := tview.NewGrid().SetRows(1, -1, 1, 1).SetColumns(-1)
+	grid.AddItem(TopHelp, 0, 0, 1, 1, 0, 0, false)
+	grid.AddItem(textView, 1, 0, 1, 1, 0, 0, false)
+	grid.AddItem(inputField, 2, 0, 1, 1, 0, 0, true)
+	grid.AddItem(BottomHelp, 3, 0, 1, 1, 0, 0, false)
 
 	return &Display{
-		Grid:             grid,
-		View:             textView,
-		input:            inputField,
-		PlaceholderField: PlaceholderField,
-		//List:              list,
-		//SelectedSourceIDs: &selectedSourceIDs,
-		//Window:            window,
+		Grid:       grid,
+		View:       textView,
+		input:      inputField,
+		BottomHelp: BottomHelp,
+		TopHelp:    TopHelp,
 		App:        app,
 		SourceList: sourcesList,
 		ViewsList:  views,
