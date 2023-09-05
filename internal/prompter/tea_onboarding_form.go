@@ -50,9 +50,9 @@ const (
 
 const (
 	darkGray    = lipgloss.Color("#767676")
-	logfireGray = lipgloss.Color("#607d8b")
+	logfireGray = lipgloss.Color("#285cde")
 
-	colorOneStyle = lipgloss.Color("#27374D")
+	colorOneStyle = lipgloss.Color("#202f55")
 
 	colorTwoStyle = lipgloss.Color("#526D82")
 
