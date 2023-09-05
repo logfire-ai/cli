@@ -109,7 +109,7 @@ func display(u *UI, l *livetail.Livetail, stop chan error) {
 					// Reset the numDots counter
 					numDots = 0
 
-					// Case 4: If l.Logs is not empty and only contains "Waiting for logs...", do nothing.
+					// Case 4: If l.Logs is not empty and only contains "Waiting for logs...", do nothing
 					if l.Logs == "Waiting for logs..." {
 						return
 					}
