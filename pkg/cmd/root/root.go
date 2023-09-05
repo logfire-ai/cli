@@ -3,6 +3,7 @@ package root
 import (
 	"errors"
 	"fmt"
+
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/alerts"
 	"github.com/logfire-sh/cli/pkg/cmd/bootstrap"
@@ -42,7 +43,7 @@ var choices = []string{"Reset password", "Logout", "Sources", "Teams",
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
-func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
+func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	opts := &PromptRootOptions{
 		IO:       f.IOStreams,
 		Prompter: f.Prompter,
@@ -112,7 +113,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 				case choices[3]:
 					teams.NewCmdTeam(f).Run(cmd, []string{})
 				case choices[4]:
-					stream.NewCmdStream(f).Run(cmd, []string{})
+					stream.NewCmdStream(f, cmdCh).Run(cmd, []string{})
 				case choices[5]:
 					views.NewCmdViews(f).Run(cmd, []string{})
 				case choices[6]:
@@ -133,16 +134,6 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	}
 
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
-	//cmd.PersistentFlags().BoolVarP(&opts.Staging, "staging", "s", false, "Change server to staging")
-	//
-	//if opts.Staging == true {
-	//	endpoint := "https://api-stg.logfire.ai/"
-	//	grpcEndpoint := "api-stg.logfire.ai:443"
-	//	err = cfg.UpdateConfig(nil, nil, nil, nil, nil, &endpoint, &grpcEndpoint)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
 
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
@@ -168,7 +159,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(logout.NewLogoutCmd(f))
 	cmd.AddCommand(sources.NewCmdSource(f))
 	cmd.AddCommand(teams.NewCmdTeam(f))
-	cmd.AddCommand(stream.NewCmdStream(f))
+	cmd.AddCommand(stream.NewCmdStream(f, cmdCh))
 	cmd.AddCommand(views.NewCmdViews(f))
 	cmd.AddCommand(alerts.NewCmdAlerts(f))
 	cmd.AddCommand(integrations.NewCmdIntegrations(f))
@@ -177,6 +168,13 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(update_profile.UpdateProfileCmd(f))
 	cmd.AddCommand(bootstrap.NewCmdBootstrap(f))
 	cmd.AddCommand(roundtrip.NewCmdRoundTrip(f))
+
+	// go func() {
+	// 	for range cmdCh {
+	// 		PromptRootRun(opts)
+	// 	}
+	// }()
+
 	return cmd, nil
 }
 
@@ -188,7 +186,6 @@ func NotLoggedInPromptRun(opts *PromptRootOptions) {
 			fmt.Fprintf(opts.IO.ErrOut, "Failed to read choice\n")
 		}
 	}
-
 }
 
 func PromptRootRun(opts *PromptRootOptions) {

@@ -1,6 +1,9 @@
 package stream
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/logfire-sh/cli/gui"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -9,8 +12,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"log"
-	"net/http"
 )
 
 type PromptStreamOptions struct {
@@ -24,7 +25,7 @@ type PromptStreamOptions struct {
 	Choice      string
 }
 
-func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
+func NewCmdStream(f *cmdutil.Factory, cmdCh chan bool) *cobra.Command {
 	opts := &PromptStreamOptions{
 		IO:       f.IOStreams,
 		Prompter: f.Prompter,
@@ -42,7 +43,7 @@ func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 				opts.Interactive = true
 			}
 
-			PromptStreamRun(opts)
+			PromptStreamRun(opts, cmdCh)
 		},
 	}
 
@@ -51,13 +52,13 @@ func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func PromptStreamRun(opts *PromptStreamOptions) {
+func PromptStreamRun(opts *PromptStreamOptions, cmdCh chan bool) {
 	if !opts.Interactive {
 		return
 	}
 
 	if opts.Interactive {
-		ui := gui.NewUI()
+		ui := gui.NewUI(cmdCh)
 		if err := ui.Run(); err != nil {
 			log.Fatal(err)
 		}
