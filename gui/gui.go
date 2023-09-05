@@ -3,7 +3,6 @@ package gui
 import (
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -11,7 +10,9 @@ import (
 
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/livetail"
+	"github.com/logfire-sh/cli/pkg/cmd/factory"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/filters"
 
@@ -24,9 +25,13 @@ type UI struct {
 	Display *Display
 	logs    string
 
+	f *cmdutil.Factory
+
 	Config config.Config
 
 	Livetail *livetail.Livetail
+
+	CmdCh chan bool
 
 	StartDateTimeFilter       time.Time
 	EndDateTimeFilter         time.Time
@@ -50,7 +55,7 @@ var livetailStatus = &LivetailStatus{
 
 var stop = make(chan error)
 
-func NewUI() *UI {
+func NewUI(cmdCh chan bool) *UI {
 	cfg, _ := config.NewConfig()
 
 	displayInstance := NewDisplay(cfg)
@@ -58,16 +63,19 @@ func NewUI() *UI {
 		Config:  cfg,
 		Display: displayInstance,
 		app:     displayInstance.App,
+		CmdCh:   cmdCh,
 	}
 	ui.app.EnableMouse(true)
 	ui.SetDisplayCapture()
 	ui.Display.Livetail = true
 
+	ui.f = factory.New()
+
 	err := errors.New("")
 	ui.Livetail, err = livetail.NewLivetail()
 	if err != nil {
 		ui.Display.View.SetText(fmt.Sprintf("Error while initiating livetail:\n%s", err.Error()))
-		os.Exit(0)
+		ui.app.Stop()
 	}
 
 	// go checkWaitingForLogs(ui, ui.Livetail)
@@ -150,6 +158,11 @@ func splitFieldFilterValue(input string) (field, operator, value string) {
 
 var sourceNamesList []string
 var sourceIds []string
+
+func (u *UI) runRootCmd() {
+	StopLivetail(u, livetailStatus, stop)
+	u.app.Stop()
+}
 
 func (u *UI) SetDisplayCapture() {
 	u.Display.input.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -281,14 +294,11 @@ func (u *UI) SetDisplayCapture() {
 				case "stop":
 					StopLivetail(u, livetailStatus, stop)
 				case "q":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "quit":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "exit":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "1":
 				case "2":
 					StopLivetail(u, livetailStatus, stop)
@@ -302,8 +312,8 @@ func (u *UI) SetDisplayCapture() {
 					u.Display.input.Autocomplete()
 
 					u.Display.Livetail = false
-					u.Display.TopHelp.SetPlaceholder("  Stream > View | 1. livetail 2. view")
-					u.Display.BottomHelp.SetPlaceholder("  3.view [view=view-name] 4.QUIT [q | quit | exit]")
+					u.Display.TopHelp.SetPlaceholder("  Stream > View | 1. livetail 2. view 9.QUIT [q | quit | exit]")
+					u.Display.BottomHelp.SetPlaceholder("  3.view [view=view-name]")
 				case "3":
 					u.Display.input.SetText("source=")
 					u.Display.input.Autocomplete()
@@ -316,9 +326,8 @@ func (u *UI) SetDisplayCapture() {
 					u.Display.input.Autocomplete()
 				case "7":
 					u.Display.input.SetText("save-view=")
-				case "8":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+				case "9":
+					u.runRootCmd()
 				default:
 					u.Display.BottomHelp.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
 
@@ -336,14 +345,11 @@ func (u *UI) SetDisplayCapture() {
 				case "stop":
 					StopLivetail(u, livetailStatus, stop)
 				case "q":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "quit":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "exit":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+					u.runRootCmd()
 				case "1":
 					StopLivetail(u, livetailStatus, stop)
 
@@ -354,17 +360,16 @@ func (u *UI) SetDisplayCapture() {
 					RunLivetail(u, livetailStatus, stop)
 
 					u.Display.Livetail = true
-					u.Display.TopHelp.SetPlaceholder("  Stream > Livetail | 1. livetail 2. view").
+					u.Display.TopHelp.SetPlaceholder("  Stream > Livetail | 1. livetail 2. view 9.QUIT [q | quit | exit]").
 						SetPlaceholderTextColor(tcell.ColorGray)
-					u.Display.BottomHelp.SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name] 8.QUIT [q | quit | exit]").
+					u.Display.BottomHelp.SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name]").
 						SetPlaceholderTextColor(tcell.ColorGray)
 				case "2":
 				case "3":
 					u.Display.input.SetText("view=")
 					u.Display.input.Autocomplete()
-				case "4":
-					StopLivetail(u, livetailStatus, stop)
-					os.Exit(0)
+				case "9":
+					u.runRootCmd()
 				default:
 					u.Display.BottomHelp.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
 

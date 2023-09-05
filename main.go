@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	surveyCore "github.com/AlecAivazis/survey/v2/core"
 	"github.com/logfire-sh/cli/pkg/cmd/factory"
 	"github.com/logfire-sh/cli/pkg/cmd/root"
 	"github.com/mgutz/ansi"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -60,9 +61,12 @@ type SigninPasswordRequest struct {
 
 func main() {
 	cmdFactory := factory.New()
+
+	cmdCh := make(chan bool)
+
 	stderr := cmdFactory.IOStreams.ErrOut
 
-	rootCmd, err := root.NewCmdRoot(cmdFactory)
+	rootCmd, err := root.NewCmdRoot(cmdFactory, cmdCh)
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
 		return

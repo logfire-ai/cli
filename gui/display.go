@@ -220,7 +220,7 @@ func NewDisplay(cfg config.Config) *Display {
 	BottomHelp := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
-		SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name] 8.QUIT [q | quit | exit]").
+		SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
 	BottomHelp.SetDisabled(true)
@@ -229,7 +229,7 @@ func NewDisplay(cfg config.Config) *Display {
 	TopHelp := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
-		SetPlaceholder("  Stream > Livetail | 1. livetail 2. view").
+		SetPlaceholder("  Stream > Livetail | 1. livetail 2. view 9.QUIT [q | quit | exit]").
 		SetPlaceholderTextColor(tcell.ColorGray)
 
 	TopHelp.SetDisabled(true)
