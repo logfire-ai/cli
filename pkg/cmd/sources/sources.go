@@ -3,8 +3,11 @@ package sources
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
+	"github.com/logfire-sh/cli/pkg/cmd/sources/source_config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/source_create"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/source_delete"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/source_list"
@@ -12,7 +15,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type PromptSourceOptions struct {
@@ -26,7 +28,7 @@ type PromptSourceOptions struct {
 	Choice      string
 }
 
-var choices = []string{"Create", "List", "Delete", "Update"}
+var choices = []string{"Create", "List", "Delete", "Update", "Configuration"}
 
 func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptSourceOptions{
@@ -57,6 +59,8 @@ func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 				source_delete.NewSourceDeleteCmd(f).Run(cmd, []string{})
 			case choices[3]:
 				source_update.NewSourceUpdateCmd(f).Run(cmd, []string{})
+			case choices[4]:
+				source_config.NewSourceConfigCmd(f).Run(cmd, []string{})
 			}
 		},
 	}
@@ -65,6 +69,7 @@ func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(source_create.NewSourceCreateCmd(f))
 	cmd.AddCommand(source_update.NewSourceUpdateCmd(f))
 	cmd.AddCommand(source_delete.NewSourceDeleteCmd(f))
+	cmd.AddCommand(source_config.NewSourceConfigCmd(f))
 	return cmd
 }
 
