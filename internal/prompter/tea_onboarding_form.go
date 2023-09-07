@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/logfire-sh/cli/internal/config"
@@ -20,27 +19,8 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 )
 
-const useHighPerformanceRenderer = false
-
-var (
-	titleStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		b.Right = "├"
-		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
-	}()
-
-	infoStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		b.Left = "┤"
-		return titleStyle.Copy().BorderStyle(b)
-	}()
-)
-
 func NewOnboardingForm() {
-	p := tea.NewProgram(
-		initialModel(),
-		// tea.WithMouseCellMotion(),
-	)
+	p := tea.NewProgram(initialModel())
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -153,9 +133,6 @@ type model struct {
 	log         string
 	sourceId    string
 	sourceToken string
-	content     string
-	ready       bool
-	viewport    viewport.Model
 }
 
 func (m *model) resetSpinner() {
@@ -164,12 +141,6 @@ func (m *model) resetSpinner() {
 }
 
 func initialModel() *model {
-	content, err := os.ReadFile("./internal/prompter/artichoke.md")
-	if err != nil {
-		fmt.Println("could not load file:", err)
-		os.Exit(1)
-	}
-
 	cfg, _ := config.NewConfig()
 
 	m := &model{}
@@ -275,8 +246,6 @@ func initialModel() *model {
 	inputs[sourceName].Width = 20
 	inputs[sourceName].Prompt = ""
 
-	m.viewport.Init()
-
 	return &model{
 		inputs:   inputs,
 		focused:  0,
@@ -289,7 +258,6 @@ func initialModel() *model {
 		config:   cfg,
 		log:      "",
 		sourceId: "",
-		content:  string(content),
 	}
 }
 
@@ -427,19 +395,6 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 
 				m.sourceId = source.ID
 				m.sourceToken = source.SourceToken
-
-				// configuration, err := APICalls.GetConfiguration(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId)
-				// if err != nil {
-				// 	log.Fatal(err)
-				// }
-
-				// prettyJSON, err := json.MarshalIndent(configuration, "", "  ")
-				// if err != nil {
-				// 	log.Fatalf("Error encoding JSON: %s", err)
-				// }
-
-				// m.content = string(prettyJSON)
-
 				subStep = "curl"
 				m.nextInput()
 			}
@@ -472,10 +427,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -494,41 +446,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleKeyPres()
 		}
 
-	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(m.headerView())
-		footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := headerHeight + footerHeight
-
-		if !m.ready {
-			// Since this program is using the full size of the viewport we
-			// need to wait until we've received the window dimensions before
-			// we can initialize the viewport. The initial dimensions come in
-			// quickly, though asynchronously, which is why we wait for them
-			// here.
-			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.YPosition = headerHeight
-			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-			m.viewport.SetContent(m.content)
-			m.ready = true
-
-			// This is only necessary for high performance rendering, which in
-			// most cases you won't need.
-			//
-			// Render the viewport one line below the header.
-			m.viewport.YPosition = headerHeight + 1
-		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - verticalMarginHeight
-		}
-
-		if useHighPerformanceRenderer {
-			// Render (or re-render) the whole viewport. Necessary both to
-			// initialize the viewport and when the window is resized.
-			//
-			// This is needed for high-performance rendering only.
-			cmds = append(cmds, viewport.Sync(m.viewport))
-		}
-
 	// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
@@ -539,9 +456,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i := range m.inputs {
 			m.inputs[i].Blur()
 			m.inputs[m.focused].Focus()
-			var inputCmd tea.Cmd
-			m.inputs[i], inputCmd = m.inputs[i].Update(msg)
-			cmds = append(cmds, inputCmd)
 		}
 	} else if subStep == "role" {
 		// Update list
@@ -551,7 +465,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var listCmd tea.Cmd
 		m.roleList, listCmd = m.roleList.Update(msg)
 		cmds = append(cmds, listCmd)
-	} else if m.focused == 7 {
+	} else {
 		// Update list
 		for i := range m.inputs {
 			m.inputs[i].Blur()
@@ -561,9 +475,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, listCmd)
 	}
 
-	// Handle keyboard and mouse events in the viewport
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
+	// Update inputs
+	for i := range m.inputs {
+		var inputCmd tea.Cmd
+		m.inputs[i], inputCmd = m.inputs[i].Update(msg)
+		cmds = append(cmds, inputCmd)
+	}
 
 	return m, tea.Batch(cmds...)
 }
@@ -660,22 +577,10 @@ func (m model) renderSource() string {
 }
 
 func (m model) renderConfig() string {
-	// m.viewport.SetContent(m.content)
+	return fmt.Sprintf(`
 
-	if !m.ready {
-		return "\n  Initializing..."
-	}
-
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
-
-	// 	return fmt.Sprintf(`
-
-	// %s
-
-	// %s
-	// `, continueStyle.Render("Follow the provided steps to configure your environment for log transmission"),
-	//
-	//	configuration)
+%s
+`, continueStyle.Render("Use \"logfire sources configuration\" to configure the source"))
 }
 
 func (m model) View() string {
@@ -688,6 +593,8 @@ func (m model) View() string {
 	awesomeLogReceived := colorTwo.Render("\nAwesome! log received\n")
 
 	continueMessage := continueStyle.Render("\nContinue ->")
+
+	finishMessage := continueStyle.Render("\nFinish ->")
 
 	switch step {
 
@@ -726,35 +633,16 @@ func (m model) View() string {
 		}
 
 	case "config-source":
-		// return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) +
-		return m.renderConfig()
-		// + continueMessage
+		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) + m.renderConfig() + finishMessage
 
 	case "complete":
+
+		os.Exit(0)
 
 		return "Completed!"
 	}
 
 	return ""
-}
-
-func (m model) headerView() string {
-	title := titleStyle.Render("Mr. Pager")
-	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
-}
-
-func (m model) footerView() string {
-	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
-	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // nextInput focuses the next input field
