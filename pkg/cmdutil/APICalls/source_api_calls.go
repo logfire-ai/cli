@@ -248,3 +248,39 @@ func GetSchema(token, endpoint, teamId string, sourceids []string) ([]map[string
 
 	return data, nil
 }
+
+func GetConfiguration(token, endpoint string, teamId, sourceId string) (interface{}, error) {
+	client := http.Client{}
+
+	url := fmt.Sprintf(endpoint+"api/team/%s/source/%s/configuration", teamId, sourceId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return models.ConfigurationResponse{}, err
+	}
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.ConfigurationResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return models.ConfigurationResponse{}, err
+	}
+
+	var configResp models.ConfigurationResponse
+
+	err = json.Unmarshal(body, &configResp)
+	if err != nil {
+		return models.ConfigurationResponse{}, err
+	}
+
+	if !configResp.IsSuccessful {
+		return models.ConfigurationResponse{}, errors.New(configResp.Message[0])
+	}
+
+	return configResp.Data, nil
+}

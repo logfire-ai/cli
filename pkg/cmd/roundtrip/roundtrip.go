@@ -65,6 +65,7 @@ type PromptRoundTripOptions struct {
 	SourceId   string
 	SourceName string
 	Platform   string
+	Run        string
 }
 
 func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
@@ -91,6 +92,7 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the sources will be fetched.")
 	cmd.Flags().StringVarP(&opts.SourceId, "source-id", "s", "", "Source ID for which the roundtrip is tested)")
+	cmd.Flags().StringVarP(&opts.Run, "run", "r", "", "")
 
 	return cmd
 }
@@ -229,6 +231,8 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
 			"--header",
 			"Diagnostic: True",
+			"--header",
+			fmt.Sprintf("Github-Run: %s", opts.Run),
 			"--data",
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
