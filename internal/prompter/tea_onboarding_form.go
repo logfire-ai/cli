@@ -1,6 +1,7 @@
 package prompter
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/logfire-sh/cli/internal/config"
@@ -62,6 +64,20 @@ const (
 	stepText                   = lipgloss.Color("#DDE6ED")
 	textHiglight               = lipgloss.Color("#0089d2")
 	commandBackgroundHighlight = lipgloss.Color("#5f5f5f")
+)
+
+var (
+	titleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}()
+
+	infoStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return titleStyle.Copy().BorderStyle(b)
+	}()
 )
 
 var (
@@ -133,6 +149,9 @@ type model struct {
 	log         string
 	sourceId    string
 	sourceToken string
+	viewport    viewport.Model
+	content     string
+	ready       bool
 }
 
 func (m *model) resetSpinner() {
@@ -450,6 +469,32 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		m.err = msg
 		return m, nil
+
+	case tea.WindowSizeMsg:
+		headerHeight := lipgloss.Height(m.headerView())
+		footerHeight := lipgloss.Height(m.footerView())
+		verticalMarginHeight := headerHeight + footerHeight
+
+		if !m.ready {
+			// Since this program is using the full size of the viewport we
+			// need to wait until we've received the window dimensions before
+			// we can initialize the viewport. The initial dimensions come in
+			// quickly, though asynchronously, which is why we wait for them
+			// here.
+			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
+			m.viewport.YPosition = headerHeight
+			// m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+			m.ready = true
+
+			// This is only necessary for high performance rendering, which in
+			// most cases you won't need.
+			//
+			// Render the viewport one line below the header.
+			m.viewport.YPosition = headerHeight + 1
+		} else {
+			m.viewport.Width = msg.Width
+			m.viewport.Height = msg.Height - verticalMarginHeight
+		}
 	}
 
 	if m.focused != 4 && m.focused != 7 && m.focused != 9 && m.focused != 10 && m.focused != 11 && m.focused != 12 && m.focused != 13 {
@@ -577,13 +622,29 @@ func (m model) renderSource() string {
 }
 
 func (m model) renderConfig() string {
-	return fmt.Sprintf(`
+	configuration, err := APICalls.GetConfiguration(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-%s
+	prettyJSON, err := json.MarshalIndent(configuration, "", "  ")
+	if err != nil {
+		log.Fatalf("Error encoding JSON: %s", err)
+	}
 
-%s
-`, continueStyle.Render("Follow the provided steps to configure your environment for log transmission"),
-		"Config")
+	m.content = string(prettyJSON)
+	m.viewport.SetContent(m.content)
+
+	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+
+	// 	return fmt.Sprintf(`
+
+	// %s
+
+	// %s
+	// `, continueStyle.Render("Follow the provided steps to configure your environment for log transmission"),
+	//
+	//	configuration)
 }
 
 func (m model) View() string {
@@ -647,6 +708,25 @@ func (m model) View() string {
 // nextInput focuses the next input field
 func (m *model) nextInput() {
 	m.focused = (m.focused + 1) % len(m.inputs)
+}
+
+func (m model) headerView() string {
+	title := titleStyle.Render("Configuration")
+	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+}
+
+func (m model) footerView() string {
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
+	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // prevInput focuses the previous input field
