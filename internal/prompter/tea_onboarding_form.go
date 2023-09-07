@@ -1,7 +1,6 @@
 package prompter
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -21,8 +20,27 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 )
 
+const useHighPerformanceRenderer = false
+
+var (
+	titleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}()
+
+	infoStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return titleStyle.Copy().BorderStyle(b)
+	}()
+)
+
 func NewOnboardingForm() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(
+		initialModel(),
+		// tea.WithMouseCellMotion(),
+	)
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -64,20 +82,6 @@ const (
 	stepText                   = lipgloss.Color("#DDE6ED")
 	textHiglight               = lipgloss.Color("#0089d2")
 	commandBackgroundHighlight = lipgloss.Color("#5f5f5f")
-)
-
-var (
-	titleStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		b.Right = "├"
-		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
-	}()
-
-	infoStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		b.Left = "┤"
-		return titleStyle.Copy().BorderStyle(b)
-	}()
 )
 
 var (
@@ -149,9 +153,9 @@ type model struct {
 	log         string
 	sourceId    string
 	sourceToken string
-	viewport    viewport.Model
 	content     string
 	ready       bool
+	viewport    viewport.Model
 }
 
 func (m *model) resetSpinner() {
@@ -160,6 +164,12 @@ func (m *model) resetSpinner() {
 }
 
 func initialModel() *model {
+	content, err := os.ReadFile("./internal/prompter/artichoke.md")
+	if err != nil {
+		fmt.Println("could not load file:", err)
+		os.Exit(1)
+	}
+
 	cfg, _ := config.NewConfig()
 
 	m := &model{}
@@ -265,6 +275,8 @@ func initialModel() *model {
 	inputs[sourceName].Width = 20
 	inputs[sourceName].Prompt = ""
 
+	m.viewport.Init()
+
 	return &model{
 		inputs:   inputs,
 		focused:  0,
@@ -277,6 +289,7 @@ func initialModel() *model {
 		config:   cfg,
 		log:      "",
 		sourceId: "",
+		content:  string(content),
 	}
 }
 
@@ -414,6 +427,19 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 
 				m.sourceId = source.ID
 				m.sourceToken = source.SourceToken
+
+				// configuration, err := APICalls.GetConfiguration(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId)
+				// if err != nil {
+				// 	log.Fatal(err)
+				// }
+
+				// prettyJSON, err := json.MarshalIndent(configuration, "", "  ")
+				// if err != nil {
+				// 	log.Fatalf("Error encoding JSON: %s", err)
+				// }
+
+				// m.content = string(prettyJSON)
+
 				subStep = "curl"
 				m.nextInput()
 			}
@@ -446,7 +472,10 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -465,11 +494,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleKeyPres()
 		}
 
-	// We handle errors just like any other message
-	case errMsg:
-		m.err = msg
-		return m, nil
-
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(m.headerView())
 		footerHeight := lipgloss.Height(m.footerView())
@@ -483,7 +507,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
-			// m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+			m.viewport.SetContent(m.content)
 			m.ready = true
 
 			// This is only necessary for high performance rendering, which in
@@ -495,12 +520,28 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
 		}
+
+		if useHighPerformanceRenderer {
+			// Render (or re-render) the whole viewport. Necessary both to
+			// initialize the viewport and when the window is resized.
+			//
+			// This is needed for high-performance rendering only.
+			cmds = append(cmds, viewport.Sync(m.viewport))
+		}
+
+	// We handle errors just like any other message
+	case errMsg:
+		m.err = msg
+		return m, nil
 	}
 
 	if m.focused != 4 && m.focused != 7 && m.focused != 9 && m.focused != 10 && m.focused != 11 && m.focused != 12 && m.focused != 13 {
 		for i := range m.inputs {
 			m.inputs[i].Blur()
 			m.inputs[m.focused].Focus()
+			var inputCmd tea.Cmd
+			m.inputs[i], inputCmd = m.inputs[i].Update(msg)
+			cmds = append(cmds, inputCmd)
 		}
 	} else if subStep == "role" {
 		// Update list
@@ -510,7 +551,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var listCmd tea.Cmd
 		m.roleList, listCmd = m.roleList.Update(msg)
 		cmds = append(cmds, listCmd)
-	} else {
+	} else if m.focused == 7 {
 		// Update list
 		for i := range m.inputs {
 			m.inputs[i].Blur()
@@ -520,12 +561,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, listCmd)
 	}
 
-	// Update inputs
-	for i := range m.inputs {
-		var inputCmd tea.Cmd
-		m.inputs[i], inputCmd = m.inputs[i].Update(msg)
-		cmds = append(cmds, inputCmd)
-	}
+	// Handle keyboard and mouse events in the viewport
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -622,18 +660,11 @@ func (m model) renderSource() string {
 }
 
 func (m model) renderConfig() string {
-	configuration, err := APICalls.GetConfiguration(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// m.viewport.SetContent(m.content)
 
-	prettyJSON, err := json.MarshalIndent(configuration, "", "  ")
-	if err != nil {
-		log.Fatalf("Error encoding JSON: %s", err)
+	if !m.ready {
+		return "\n  Initializing..."
 	}
-
-	m.content = string(prettyJSON)
-	m.viewport.SetContent(m.content)
 
 	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
 
@@ -695,7 +726,9 @@ func (m model) View() string {
 		}
 
 	case "config-source":
-		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) + m.renderConfig() + continueMessage
+		// return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) +
+		return m.renderConfig()
+		// + continueMessage
 
 	case "complete":
 
@@ -705,13 +738,8 @@ func (m model) View() string {
 	return ""
 }
 
-// nextInput focuses the next input field
-func (m *model) nextInput() {
-	m.focused = (m.focused + 1) % len(m.inputs)
-}
-
 func (m model) headerView() string {
-	title := titleStyle.Render("Configuration")
+	title := titleStyle.Render("Mr. Pager")
 	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
@@ -727,6 +755,11 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// nextInput focuses the next input field
+func (m *model) nextInput() {
+	m.focused = (m.focused + 1) % len(m.inputs)
 }
 
 // prevInput focuses the previous input field

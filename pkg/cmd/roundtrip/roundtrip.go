@@ -65,7 +65,7 @@ type PromptRoundTripOptions struct {
 	SourceId   string
 	SourceName string
 	Platform   string
-	Run        string
+	Run        int
 }
 
 func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
@@ -92,7 +92,7 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the sources will be fetched.")
 	cmd.Flags().StringVarP(&opts.SourceId, "source-id", "s", "", "Source ID for which the roundtrip is tested)")
-	cmd.Flags().StringVarP(&opts.Run, "run", "r", "", "")
+	cmd.Flags().IntVarP(&opts.Run, "run", "r", 0, "Number of rounds")
 
 	return cmd
 }
@@ -122,6 +122,8 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			fmt.Sprintf("Authorization: Bearer %s", source.SourceToken),
 			"--header",
 			"Diagnostic: True",
+			"--header",
+			fmt.Sprintf("Github-Run: %v", opts.Run),
 			"--data",
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
@@ -147,7 +149,6 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		elapsed := time.Since(start)
 
 		fmt.Printf("The round trip took: %s\n", elapsed)
-
 	} else {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
@@ -231,8 +232,6 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
 			"--header",
 			"Diagnostic: True",
-			"--header",
-			fmt.Sprintf("Github-Run: %s", opts.Run),
 			"--data",
 			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
 		)
