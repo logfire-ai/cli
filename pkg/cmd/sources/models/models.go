@@ -70,3 +70,9 @@ var PlatformMap map[string]int = map[string]int{
 	"syslog-ng":  28,
 	"demo":       29,
 }
+
+type ConfigurationResponse struct {
+	IsSuccessful bool        `json:"isSuccessful"`
+	Message      []string    `json:"message,omitempty"`
+	Data         interface{} `json:"data"`
+}
