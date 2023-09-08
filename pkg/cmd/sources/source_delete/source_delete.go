@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 
@@ -122,6 +124,11 @@ func deleteSource(client *http.Client, token, endpoint string, teamId, sourceId 
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer resp.Body.Close()

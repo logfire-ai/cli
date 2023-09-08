@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 )
@@ -31,6 +34,11 @@ func InviteMembers(client *http.Client, token string, endpoint string, teamId st
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -78,6 +86,11 @@ func RemoveMember(client *http.Client, token string, endpoint string, teamId str
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -126,6 +139,11 @@ func UpdateMember(client *http.Client, token string, endpoint string, teamId str
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -155,7 +173,6 @@ func UpdateMember(client *http.Client, token string, endpoint string, teamId str
 
 func MembersList(client *http.Client, token, endpoint string, teamId string) ([]models.TeamMemberRes, error) {
 	url := endpoint + "api/team/" + teamId + "/members"
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return []models.TeamMemberRes{}, err
@@ -165,6 +182,11 @@ func MembersList(client *http.Client, token, endpoint string, teamId string) ([]
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.TeamMemberRes{}, err
 	}
 	defer resp.Body.Close()

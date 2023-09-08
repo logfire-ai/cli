@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -44,12 +45,12 @@ func NewSignupCmd(f *cmdutil.Factory) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Signup to logfire",
 		Long: heredoc.Docf(`
-			Signup to logfire to create a new account.
-		`, "`"),
+
+		Signup to logfire to create a new account.`),
 		Example: heredoc.Doc(`
 			# start normal setup
-			$ logfire signup --email <email>
-			$ logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name>
+			1. $ logfire signup --email <email>
+			2. $ logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name> --role <role>
 
 
 			# start interactive setup
@@ -118,6 +119,10 @@ func SignupRun(opts *SignupOptions) {
 
 	msg, err := APICalls.SignupFlow(opts.Email, cfg.Get().EndPoint)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+			os.Exit(0)
+		}
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Error while signing up %s\n", cs.FailureIcon(), err.Error())
 		return
 	}
@@ -134,6 +139,11 @@ func SignupRun(opts *SignupOptions) {
 
 		err = login.TokenSignin(opts.IO, cfg, cs, opts.credentialToken, cfg.Get().EndPoint)
 		if err != nil {
+			if strings.Contains(err.Error(), "no such host") {
+				fmt.Fprintf(opts.IO.ErrOut, "%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+				os.Exit(0)
+				return
+			}
 			fmt.Fprintf(opts.IO.ErrOut, "%s Unable to sign in with token \n", cs.FailureIcon())
 			return
 		}

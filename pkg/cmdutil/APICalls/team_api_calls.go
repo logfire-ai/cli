@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/logfire-sh/cli/pkg/cmd/teams/models"
 )
@@ -19,6 +22,11 @@ func DeleteTeam(client *http.Client, token string, endpoint string, teamID strin
 	req.Header.Set("User-Agent", "Logfire-cli")
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -66,6 +74,11 @@ func UpdateTeam(client *http.Client, token string, endpoint string, teamID strin
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.Team{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -95,9 +108,13 @@ func UpdateTeam(client *http.Client, token string, endpoint string, teamID strin
 
 func ListTeams(client *http.Client, token string, endpoint string) ([]models.Team, error) {
 	url := endpoint + "api/team"
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.Team{}, err
 	}
 	req.Header.Set("User-Agent", "Logfire-cli")
@@ -105,6 +122,11 @@ func ListTeams(client *http.Client, token string, endpoint string) ([]models.Tea
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.Team{}, err
 	}
 	defer resp.Body.Close()
@@ -154,6 +176,11 @@ func CreateTeam(token, endpoint string, teamName string) (models.Team, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.Team{}, err
 	}
 	defer func(Body io.ReadCloser) {

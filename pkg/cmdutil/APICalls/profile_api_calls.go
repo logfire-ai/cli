@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/logfire-sh/cli/internal/config"
@@ -52,6 +53,11 @@ func SendMagicLink(endpoint, email string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -97,6 +103,11 @@ func ResetPassword(token string, endpoint string, profileId string, password str
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -146,6 +157,11 @@ func SetPassword(token string, endpoint string, profileId string, password strin
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -195,6 +211,11 @@ func UpdateProfile(client *http.Client, token string, endpoint string, profileId
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -255,6 +276,11 @@ func SignupFlow(email, endpoint string) (string, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return "", err
 	}
 	defer func(Body io.ReadCloser) {
@@ -314,6 +340,11 @@ func OnboardingFlow(profileID, authToken, endpoint, firstName, lastName, role st
 	req.Header.Set("User-Agent", "Logfire-cli")
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer resp.Body.Close()
@@ -364,6 +395,11 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 

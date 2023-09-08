@@ -35,7 +35,6 @@ type PromptRootOptions struct {
 	Choice            string
 	NotLoggedInChoice string
 	LoggedIn          bool
-	//Staging           bool
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
@@ -113,7 +112,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 				case choices[3]:
 					teams.NewCmdTeam(f).Run(cmd, []string{})
 				case choices[4]:
-					stream.NewCmdStream(f, cmdCh).Run(cmd, []string{})
+					stream.NewCmdStream(f).Run(cmd, []string{})
 				case choices[5]:
 					views.NewCmdViews(f).Run(cmd, []string{})
 				case choices[6]:
@@ -159,7 +158,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	cmd.AddCommand(logout.NewLogoutCmd(f))
 	cmd.AddCommand(sources.NewCmdSource(f))
 	cmd.AddCommand(teams.NewCmdTeam(f))
-	cmd.AddCommand(stream.NewCmdStream(f, cmdCh))
+	cmd.AddCommand(stream.NewCmdStream(f))
 	cmd.AddCommand(views.NewCmdViews(f))
 	cmd.AddCommand(alerts.NewCmdAlerts(f))
 	cmd.AddCommand(integrations.NewCmdIntegrations(f))

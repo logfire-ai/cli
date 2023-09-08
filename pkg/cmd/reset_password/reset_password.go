@@ -2,6 +2,10 @@ package reset_password
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -9,8 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type ResetPasswordOptions struct {
@@ -56,7 +58,7 @@ func NewResetPasswordCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.Password, "password", "", "Password of the user.")
+	cmd.Flags().StringVarP(&opts.Password, "password", "p", "", "New password.")
 	return cmd
 }
 
@@ -82,6 +84,11 @@ func ResetPasswordRun(opts *ResetPasswordOptions) {
 
 	err = APICalls.ResetPassword(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().ProfileID, opts.Password)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+			os.Exit(0)
+			return
+		}
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 	} else {
 		fmt.Fprintf(opts.IO.Out, "%s Password reset successfully!\n", cs.SuccessIcon())
