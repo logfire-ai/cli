@@ -637,6 +637,8 @@ func (m model) View() string {
 
 	case "complete":
 
+		fmt.Println("Thank you for signing up")
+
 		os.Exit(0)
 
 		return "Completed!"
