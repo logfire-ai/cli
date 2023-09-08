@@ -31,8 +31,6 @@ type UI struct {
 
 	Livetail *livetail.Livetail
 
-	CmdCh chan bool
-
 	StartDateTimeFilter       time.Time
 	EndDateTimeFilter         time.Time
 	SourceFilter              []string
@@ -55,15 +53,13 @@ var livetailStatus = &LivetailStatus{
 
 var stop = make(chan error)
 
-func NewUI(cmdCh chan bool) *UI {
-	cfg, _ := config.NewConfig()
+func NewUI(cfg config.Config) *UI {
 
 	displayInstance := NewDisplay(cfg)
 	ui := &UI{
 		Config:  cfg,
 		Display: displayInstance,
 		app:     displayInstance.App,
-		CmdCh:   cmdCh,
 	}
 	ui.app.EnableMouse(true)
 	ui.SetDisplayCapture()

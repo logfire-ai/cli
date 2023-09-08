@@ -72,7 +72,6 @@ func NewSourceConfigCmd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func sourceListRun(opts *SourceConfigurationOptions) {
-
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
@@ -97,8 +96,16 @@ func sourceListRun(opts *SourceConfigurationOptions) {
 	opts.SourceId, _ = pre_defined_prompters.AskSourceId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
 	source, err := APICalls.GetSource(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+			return
+		}
+		fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to load sources\n", cs.FailureIcon())
+		return
+	}
 
-	configuration, err := APICalls.GetConfiguration(cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().TeamId, opts.SourceId)
+	configuration, err := APICalls.GetConfiguration(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, opts.SourceId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -115,19 +122,6 @@ func sourceListRun(opts *SourceConfigurationOptions) {
 	}
 
 	printKeys("", data, source.ID, source.SourceToken)
-
-	// var formattedConfig string
-
-	// for key, _ := range data {
-	// 	keyIsNum, err := strconv.Atoi(key)
-	// 	if err != nil {
-	// 		formattedConfig = fmt.Sprintf("%s\n", key)
-	// 	} else {
-	// 		formattedConfig = fmt.Sprintf("Step %v:\n", keyIsNum)
-	// 	}
-	// }
-
-	// fmt.Println(formattedConfig)
 }
 
 func printKeys(prefix string, data interface{}, id, token string) {

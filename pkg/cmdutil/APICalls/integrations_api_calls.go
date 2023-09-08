@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	AlertModels "github.com/logfire-sh/cli/pkg/cmd/alerts/models"
 	IntegrationModels "github.com/logfire-sh/cli/pkg/cmd/integrations/models"
@@ -22,6 +25,10 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
 		return []AlertModels.AlertIntegrationBody{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -110,6 +117,10 @@ func GetIntegrationsList(client *http.Client, token string, endpoint string, tea
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
 		return []IntegrationModels.IntegrationBody{}, err
 	}
 	defer func(Body io.ReadCloser) {

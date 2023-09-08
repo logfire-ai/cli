@@ -2,8 +2,10 @@ package APICalls
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -25,6 +27,11 @@ func GetRecommendations(token string, endpoint string, teamId string, role strin
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.RecommendResponse{}, err
 	}
 	defer func(Body io.ReadCloser) {

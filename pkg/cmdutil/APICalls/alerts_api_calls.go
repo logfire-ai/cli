@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/logfire-sh/cli/pkg/cmd/alerts/models"
 )
@@ -51,6 +54,11 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -81,6 +89,10 @@ func CreateAlert(client *http.Client, token string, endpoint string, teamId stri
 func ListAlert(client *http.Client, token string, endpoint string, teamId string) ([]models.CreateAlertBody, error) {
 	req, err := http.NewRequest("GET", endpoint+"api/team/"+teamId+"/alert", nil)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
 		return []models.CreateAlertBody{}, err
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
@@ -89,6 +101,11 @@ func ListAlert(client *http.Client, token string, endpoint string, teamId string
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.CreateAlertBody{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -133,6 +150,11 @@ func DeleteAlert(client *http.Client, token string, endpoint string, teamId stri
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -178,6 +200,11 @@ func PauseAlert(client *http.Client, token string, endpoint string, teamId strin
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -250,6 +277,11 @@ func UpdateAlert(client *http.Client, token string, endpoint string, teamId stri
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {

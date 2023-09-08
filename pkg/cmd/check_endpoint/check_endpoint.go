@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -181,6 +183,11 @@ func CheckAuth(client *http.Client, endpoint string) (response string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -205,6 +212,11 @@ func CheckProfile(client *http.Client, endpoint string) (response CheckResponse)
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -237,6 +249,11 @@ func CheckSource(client *http.Client, endpoint string) (response CheckResponse) 
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -268,6 +285,11 @@ func CheckSourceById(client *http.Client, endpoint string) (response CheckRespon
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -300,6 +322,11 @@ func CheckTeamInvite(client *http.Client, endpoint string) (response CheckRespon
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -332,6 +359,11 @@ func CheckTeamMember(client *http.Client, endpoint string) (response CheckRespon
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -364,6 +396,11 @@ func CheckTeam(client *http.Client, endpoint string) (response CheckResponse) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -396,6 +433,11 @@ func CheckSchema(client *http.Client, endpoint string) (response CheckResponse) 
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -428,6 +470,11 @@ func CheckTeamById(client *http.Client, endpoint string) (response CheckResponse
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -460,6 +507,11 @@ func CheckView(client *http.Client, endpoint string) (response CheckResponse) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -492,6 +544,11 @@ func CheckViewById(client *http.Client, endpoint string) (response CheckResponse
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -524,6 +581,11 @@ func CheckAlert(client *http.Client, endpoint string) (response CheckResponse) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -556,6 +618,11 @@ func CheckAlertById(client *http.Client, endpoint string) (response CheckRespons
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -588,6 +655,11 @@ func CheckIntegration(client *http.Client, endpoint string) (response CheckRespo
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -620,6 +692,11 @@ func CheckIntegrationById(client *http.Client, endpoint string) (response CheckR
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -652,6 +729,11 @@ func CheckAlertIntegration(client *http.Client, endpoint string) (response Check
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return
 	}
 	defer func(Body io.ReadCloser) {

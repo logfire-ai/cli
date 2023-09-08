@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	sourceModels "github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmd/views/models"
@@ -23,6 +26,11 @@ func DeleteView(client *http.Client, token string, endpoint string, teamId strin
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {
@@ -63,6 +71,11 @@ func ListView(token string, endpoint string, teamId string) ([]models.ViewRespon
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.ViewResponseBody{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -103,6 +116,11 @@ func GetView(token string, endpoint string, teamId string, viewId string) (model
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.ViewResponseBody{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -170,6 +188,11 @@ func CreateView(token string, endpoint string, teamId string, sourceFilter []sou
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer func(Body io.ReadCloser) {

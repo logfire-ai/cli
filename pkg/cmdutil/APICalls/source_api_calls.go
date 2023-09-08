@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/logfire-sh/cli/internal/config"
@@ -39,6 +40,11 @@ func UpdateSource(client *http.Client, token, endpoint string, teamid, sourceid,
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.Source{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -70,6 +76,7 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 	url := fmt.Sprintf(endpoint+"api/team/%s/source", teamId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+
 		return []models.Source{}, err
 	}
 	req.Header.Set("User-Agent", "Logfire-cli")
@@ -77,6 +84,11 @@ func GetAllSources(client *http.Client, token, endpoint string, teamId string) (
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return []models.Source{}, err
 	}
 	defer resp.Body.Close()
@@ -113,6 +125,11 @@ func GetSource(token, endpoint string, teamId, sourceId string) (models.Source, 
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.Source{}, err
 	}
 	defer resp.Body.Close()
@@ -165,6 +182,11 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.Source{}, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -224,6 +246,11 @@ func GetSchema(token, endpoint, teamId string, sourceids []string) ([]map[string
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -262,6 +289,11 @@ func GetConfiguration(token, endpoint string, teamId, sourceId string) (interfac
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return models.ConfigurationResponse{}, err
 	}
 	defer resp.Body.Close()

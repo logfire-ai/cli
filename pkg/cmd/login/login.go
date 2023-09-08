@@ -109,7 +109,6 @@ func loginRun(opts *LoginOptions) {
 	var choiceList = []string{"Magic link", "Password"}
 
 	if opts.Interactive && opts.Token == "" && opts.Email == "" && opts.Password == "" {
-
 		choice, err := opts.Prompter.Select("Select login method (Default: Magic link)", "Magic link", choiceList)
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())
@@ -126,7 +125,11 @@ func loginRun(opts *LoginOptions) {
 
 			err = APICalls.SendMagicLink(cfg.Get().EndPoint, opts.Email)
 			if err != nil {
-				fmt.Fprintf(opts.IO.ErrOut, "%s Failed to send magic link\n", cs.FailureIcon())
+				if strings.Contains(err.Error(), "no such host") {
+					fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+					return
+				}
+				fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to send magic link\n", cs.FailureIcon())
 				return
 			}
 
@@ -157,9 +160,20 @@ func loginRun(opts *LoginOptions) {
 			opts.Password = password
 
 			opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
-			PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
-		}
+			err = PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
+			if err != nil {
+				if strings.Contains(err.Error(), "no such host") {
+					fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+					return
+				} else if strings.Contains(err.Error(), "Password didn't match") {
+					fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Invalid password)\n", cs.FailureIcon())
+					return
+				}
 
+				fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to sign in\n", cs.FailureIcon())
+				return
+			}
+		}
 	} else {
 		isEmpty := func(s string) bool {
 			return s == ""
@@ -174,13 +188,29 @@ func loginRun(opts *LoginOptions) {
 			if isEmpty(opts.Password) {
 				err = APICalls.SendMagicLink(cfg.Get().EndPoint, opts.Email)
 				if err != nil {
-					fmt.Fprintf(opts.IO.ErrOut, "%s Failed to send magic link\n", cs.FailureIcon())
+					if strings.Contains(err.Error(), "no such host") {
+						fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+						return
+					}
+					fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to send magic link\n", cs.FailureIcon())
 					return
 				}
 				fmt.Fprintf(opts.IO.Out, "%s Magic link sent to %s \n%s Use \"logfire login --token <token>\" to sign-in using received token\n", cs.SuccessIcon(), opts.Email, cs.IntermediateIcon())
 			} else {
 				opts.IO.StartProgressIndicatorWithLabel("Logging in to logfire.ai")
-				PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
+				err = PasswordSignin(opts.IO, cfg, cs, opts.Email, opts.Password, cfg.Get().EndPoint)
+				if err != nil {
+					if strings.Contains(err.Error(), "no such host") {
+						fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+						return
+					} else if strings.Contains(err.Error(), "Password didn't match") {
+						fmt.Fprintf(opts.IO.ErrOut, "\n%s Error: Invalid password)\n", cs.FailureIcon())
+						return
+					}
+
+					fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to sign in\n", cs.FailureIcon())
+					return
+				}
 			}
 
 		case !isEmpty(opts.Email) && !isEmpty(opts.Password) && !isEmpty(opts.Token):
@@ -198,7 +228,7 @@ func loginRun(opts *LoginOptions) {
 	}
 }
 
-func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, email, password string, endpoint string) {
+func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, email, password string, endpoint string) error {
 	var response models.Response
 	signinReq := models.SigninRequest{
 		Email:      email,
@@ -210,30 +240,35 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
-		return
+		return err
 	}
 
 	url := endpoint + "api/auth/signin"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return
+		return err
 	}
 	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
+		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return
+		return err
 	}
 
 	if !response.IsSuccessful {
@@ -246,9 +281,10 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
 		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
 	if err != nil {
-		return
+		return err
 	}
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
+	return nil
 }
 
 func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.ColorScheme, token, endpoint string) error {
@@ -278,6 +314,11 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 
@@ -310,7 +351,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 		return err
 	}
 
-	fmt.Fprintf(IO.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.Email))
+	fmt.Fprintf(IO.Out, "%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.Email))
 
 	return nil
 }

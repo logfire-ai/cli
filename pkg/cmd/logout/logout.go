@@ -3,10 +3,10 @@ package logout
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -69,7 +69,6 @@ func logoutRun(opts *LogoutOptions) {
 
 	// Check if logged in
 	if cfg.Get().ProfileID == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s No user is currently logged in.\n", cs.FailureIcon())
 		return
 	}
 
@@ -79,8 +78,11 @@ func logoutRun(opts *LogoutOptions) {
 
 	err = logout(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, cfg.Get().RefreshToken)
 	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s %s.\n", cs.FailureIcon(), err.Error())
-		return
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Error: Connection failed (Server down or no internet)\n", cs.FailureIcon())
+			os.Exit(0)
+			return
+		}
 	}
 
 	err = cfg.DeleteConfig()
@@ -111,17 +113,23 @@ func logout(client *http.Client, token string, endpoint string, refreshToken str
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
 		return err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
 	if strings.Contains(string(body), "false") {
-		return errors.New("request can't be completed")
+		// return errors.New("request can't be completed")
+		return nil
 	}
 
 	return nil
