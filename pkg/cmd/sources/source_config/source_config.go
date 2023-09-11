@@ -121,7 +121,24 @@ func sourceListRun(opts *SourceConfigurationOptions) {
 		return
 	}
 
-	printKeys("", data, source.ID, source.SourceToken, opts)
+	if source.Platform == "javascript" {
+		mainHeadings := []string{"javascript-browser", "javascript-bunyan", "javascript-koa", "javascript-node", "javascript-pino", "javascript-winston"}
+
+		selectedHeading, err := opts.Prompter.Select("Pick Your Language/Framework for Configuration", "", mainHeadings)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Check if the selectedHeading key exists in the data map
+		if selectedHeadingData, ok := data[selectedHeading].(map[string]interface{}); ok {
+			printKeys("", selectedHeadingData, source.ID, source.SourceToken, opts)
+		} else {
+			fmt.Println(selectedHeading + " key not found")
+		}
+	} else {
+		printKeys("", data, source.ID, source.SourceToken, opts)
+	}
+
 }
 
 func promptForOS(opts *SourceConfigurationOptions) string {
@@ -199,14 +216,28 @@ func printKeys(prefix string, data interface{}, id, token string, opts *SourceCo
 			if err == nil {
 				// The key is a number (Step)
 				if keyIsNum == 1 {
-					// Special handling for Step 1
-					selectedOS := promptForOS(opts)
+					// Check if the map contains OS-specific keys
 					if osSteps, ok := value.(map[string]interface{}); ok {
-						if osStep, exists := osSteps[selectedOS]; exists {
-							stepColor.Printf("\n    %sStep %d (%s):\n", prefix, keyIsNum, selectedOS)
-							printKeys(prefix+"  ", osStep, id, token, opts)
-							continue
+						osKeys := []string{"centos", "ubuntu", "windows", "macos", "other"}
+						shouldPrompt := false
+						for _, osKey := range osKeys {
+							if _, exists := osSteps[osKey]; exists {
+								shouldPrompt = true
+								break
+							}
 						}
+
+						if shouldPrompt {
+							// Special handling for Step 1
+							selectedOS := promptForOS(opts)
+							if osStep, exists := osSteps[selectedOS]; exists {
+								stepColor.Printf("\n    %sStep %d (%s):\n", prefix, keyIsNum, selectedOS)
+								printKeys(prefix+"  ", osStep, id, token, opts)
+								continue
+							}
+						}
+					} else {
+						stepColor.Printf("\n    %sStep %d:\n", prefix, keyIsNum)
 					}
 				} else {
 					stepColor.Printf("\n    %sStep %d:\n", prefix, keyIsNum)
