@@ -121,24 +121,34 @@ func sourceListRun(opts *SourceConfigurationOptions) {
 		return
 	}
 
-	printKeys("", data, source.ID, source.SourceToken)
+	printKeys("", data, source.ID, source.SourceToken, opts)
 }
 
-func printKeys(prefix string, data interface{}, id, token string) {
+func promptForOS(opts *SourceConfigurationOptions) string {
+
+	os, err := opts.Prompter.Select("Pick Your OS for Configuration", "", []string{"CentOS", "Ubuntu", "Windows", "MacOS", "Other"})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.ToLower(os)
+}
+
+func printKeys(prefix string, data interface{}, id, token string, opts *SourceConfigurationOptions) {
 	//HR
 	rulerColor := color.New(color.FgHiBlack).Add(color.Bold)
 
 	// Heading
-	headingColor := color.New(color.FgCyan, color.Bold)
+	headingColor := color.New(color.FgWhite, color.Bold)
 
 	// Step
-	stepColor := color.New(color.FgYellow, color.Bold)
+	stepColor := color.New(color.FgWhite, color.Bold)
 
 	// Title
-	titleColor := color.New(color.FgGreen)
+	titleColor := color.New(color.FgBlue)
 
 	// Code
-	codeColor := color.New(color.FgBlue)
+	codeColor := color.New(color.FgWhite)
 
 	switch v := data.(type) {
 	case map[string]interface{}:
@@ -188,26 +198,37 @@ func printKeys(prefix string, data interface{}, id, token string) {
 			keyIsNum, err := strconv.Atoi(key)
 			if err == nil {
 				// The key is a number (Step)
-				stepColor.Printf("\n    %sStep %d:\n", prefix, keyIsNum)
+				if keyIsNum == 1 {
+					// Special handling for Step 1
+					selectedOS := promptForOS(opts)
+					if osSteps, ok := value.(map[string]interface{}); ok {
+						if osStep, exists := osSteps[selectedOS]; exists {
+							stepColor.Printf("\n    %sStep %d (%s):\n", prefix, keyIsNum, selectedOS)
+							printKeys(prefix+"  ", osStep, id, token, opts)
+							continue
+						}
+					}
+				} else {
+					stepColor.Printf("\n    %sStep %d:\n", prefix, keyIsNum)
+				}
 			} else {
 				// The key is a string
 				if key != "code" && key != "title" {
 					rulerColor.Print("****************************************************************************************")
-
 					headingColor.Printf("\n%s:\n", key)
 				}
 			}
 
 			// Recur with a new prefix for steps; otherwise, keep it the same
 			if err == nil {
-				printKeys(prefix+"  ", value, id, token)
+				printKeys(prefix+"  ", value, id, token, opts)
 			} else {
-				printKeys(prefix, value, id, token)
+				printKeys(prefix, value, id, token, opts)
 			}
 		}
 	case []interface{}:
 		for _, value := range v {
-			printKeys(prefix, value, id, token)
+			printKeys(prefix, value, id, token, opts)
 		}
 	default:
 		fmt.Printf("%s%v\n", prefix, v)
