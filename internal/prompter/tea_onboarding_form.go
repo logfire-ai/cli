@@ -206,7 +206,7 @@ func initialModel() *model {
 	inputs[email].Prompt = ""
 
 	inputs[token] = textinput.New()
-	inputs[token].Placeholder = "Token"
+	inputs[token].Placeholder = "Enter Token from Email"
 	inputs[token].Focus()
 	inputs[token].Width = 100
 	inputs[token].Prompt = ""
@@ -538,7 +538,7 @@ func (m model) renderEmail() string {
 }
 
 func (m model) renderToken() string {
-	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Enter Token from Email"), m.inputs[token].View())
+	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Token"), m.inputs[token].View())
 }
 
 func (m model) renderAccountSetup() string {
