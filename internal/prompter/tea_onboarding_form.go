@@ -538,7 +538,7 @@ func (m model) renderEmail() string {
 }
 
 func (m model) renderToken() string {
-	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Token [paste]"), m.inputs[token].View())
+	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Enter Token from Email"), m.inputs[token].View())
 }
 
 func (m model) renderAccountSetup() string {
