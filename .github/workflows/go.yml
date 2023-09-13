@@ -1,3 +1,6 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
 name: Goreleaser
 
 on:
@@ -9,21 +12,23 @@ permissions:
   contents: write
 
 jobs:
+
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Set Repository Name
+      -
+        name: Set Repository Name
         run: echo "REPO_NAME=${{ secrets.GITHUB_REPOSITORY }}" >> $GITHUB_ENV
-
-      - name: Checkout
-        uses: actions/checkout@v4
+      -
+        name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Set up Go
+      -
+        name: Set up Go
         uses: actions/setup-go@v4
-
-      - name: Run GoReleaser
+      -
+        name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4.3.0
         with:
           distribution: goreleaser
@@ -31,52 +36,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
-
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-
-      - name: List keys
-        run: gpg -K
-
-      - name: Copy .deb files to ppa directory
-        run: |
-          mkdir -p ppa
-          cp dist/*.deb ppa/
-
-      - name: Install dpkg-dev tools
-        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
-
-      - name: Generate Packages and Packages.gz
-        run: |
-          cd ppa
-          dpkg-scanpackages --multiversion . > Packages
-          gzip -k -f Packages
-
-      - name: Generate Release and Release.gpg
-        run: |
-          cd ppa
-          apt-ftparchive release . > Release
-          gpg --batch --default-key "constient-altrova@constient.com" -abs -o - Release > Release.gpg
-
-      - name: Generate InRelease
-        run: |
-          cd ppa
-          gpg --batch --default-key "constient-altrova@constient.com" --clearsign -o - Release > InRelease
-
-      - name: Create .list file
-        run: |
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/Release.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
-
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Checkout and Push to dev
-        run: |
-          git checkout dev
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add ppa/*
-          git commit -m "Add generated PPA files"
-          git push origin dev
