@@ -89,19 +89,17 @@ jobs:
         run: |
           cp -r ppa/* gh-pages/
 
-      - name: Install createrepo
-        run: sudo apt-get install -y createrepo
-
-      - name: Create YUM repository
+      - name: Create YUM repository using Docker
         run: |
+          docker run --rm -v $PWD:/workspace -w /workspace centos:7 bash -c "
+          yum install -y createrepo
           mkdir -p yum-repo
           cp dist/*.rpm yum-repo/
-          createrepo yum-repo/
+          createrepo yum-repo/"
 
-      - name: Sign RPM packages
-        run: |
-          # Assuming you have a script or command to sign RPM packages
-          sign-rpm-packages.sh
+      # - name: Sign RPM packages
+      #   run: |
+      #     sign-rpm-packages.sh
 
       - name: Copy YUM repo to gh-pages
         run: |
