@@ -1,13 +1,13 @@
 Package: logfire
 Version: 7.1.0-1
-Architecture: amd64
+Architecture: i386
 Maintainer: logfire-sh
-Installed-Size: 14864
-Filename: ./logfire_7.1_linux_amd64v3.deb
-Size: 5879604
-MD5sum: a8a756fb7640647c575feed0805d9ca4
-SHA1: e3f361d06a5e407038c1ed1037f4f0340f6a448d
-SHA256: 0f6cc3e02f7232eacee0df4e998d6e6b75e2e6555964ea0e401cd39206f9bf57
+Installed-Size: 13872
+Filename: ./logfire_7.1_linux_386.deb
+Size: 5530816
+MD5sum: c3f024392e52c95a5444bb8cd47eac78
+SHA1: 3e67af3d6fa8478d62b879a3af9eeccd0e561fc4
+SHA256: ae95e113191e486b02babe37ed2955ca6b063a42d320f75e16cc7d5093e6a1e7
 Priority: optional
 Homepage: https://github.com/
 Description: Logfire command line tool
@@ -28,14 +28,56 @@ Description: Logfire command line tool
 
 Package: logfire
 Version: 7.1.0-1
+Architecture: amd64
+Maintainer: logfire-sh
+Installed-Size: 14864
+Filename: ./logfire_7.1_linux_amd64v3.deb
+Size: 5879604
+MD5sum: a8a756fb7640647c575feed0805d9ca4
+SHA1: e3f361d06a5e407038c1ed1037f4f0340f6a448d
+SHA256: 0f6cc3e02f7232eacee0df4e998d6e6b75e2e6555964ea0e401cd39206f9bf57
+Priority: optional
+Homepage: https://github.com/
+Description: Logfire command line tool
+
+Package: logfire
+Version: 7.2.0-1
+Architecture: arm64
+Maintainer: logfire-sh
+Installed-Size: 14016
+Filename: ./logfire_7.2_linux_arm64.deb
+Size: 5352578
+MD5sum: 55f7392c53dae76fa1ab7e749c555ed6
+SHA1: 3b0ebbf327c8a4c1f74e5c2cb6e1acb87d029dfb
+SHA256: 41dbc49de04c2bbaf614a4344c4fc8502eafaacf61f55d0d0ff842ca736ea922
+Priority: optional
+Homepage: https://github.com/
+Description: Logfire command line tool
+
+Package: logfire
+Version: 7.2.0-1
 Architecture: i386
 Maintainer: logfire-sh
-Installed-Size: 13872
-Filename: ./logfire_7.1_linux_386.deb
-Size: 5530816
-MD5sum: c3f024392e52c95a5444bb8cd47eac78
-SHA1: 3e67af3d6fa8478d62b879a3af9eeccd0e561fc4
-SHA256: ae95e113191e486b02babe37ed2955ca6b063a42d320f75e16cc7d5093e6a1e7
+Installed-Size: 13868
+Filename: ./logfire_7.2_linux_386.deb
+Size: 5528100
+MD5sum: 58b19385b7f42f54e022c3d67562afab
+SHA1: cc25c7f9784cc7888d59a483c3d11cd23ca74093
+SHA256: d8c2c0e1bd93b7bf029a162eb65f4a561ec2f5c517d7b5e897d438c97789f249
+Priority: optional
+Homepage: https://github.com/
+Description: Logfire command line tool
+
+Package: logfire
+Version: 7.2.0-1
+Architecture: amd64
+Maintainer: logfire-sh
+Installed-Size: 14864
+Filename: ./logfire_7.2_linux_amd64v3.deb
+Size: 5877468
+MD5sum: a37c3bd400173a1eb2ea324c72105fa1
+SHA1: f75f7de3d9d56389ef63f3159b3971a1378c25d1
+SHA256: 9930cccee870fdbddb5a3dc0a9751f1f14e1359e327a3d8b6113fd0231cc5fb3
 Priority: optional
 Homepage: https://github.com/
 Description: Logfire command line tool
