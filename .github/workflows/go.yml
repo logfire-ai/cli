@@ -98,4 +98,4 @@ jobs:
           git commit -m "Update GitHub Pages"
           git push origin gh-pages
         env:
-          GIT_CREDENTIALS: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CREDENTIALS: ${{ secrets.TOKEN }}
