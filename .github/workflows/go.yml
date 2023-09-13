@@ -80,3 +80,31 @@ jobs:
           git add ppa/*
           git commit -m "Add generated PPA files"
           git push origin main
+
+      - name: Check if gh-pages exists
+        id: check-gh-pages
+        run: |
+          git ls-remote --exit-code --heads origin gh-pages || echo "gh-pages does not exist"
+
+      - name: Create gh-pages branch if it doesn't exist
+        if: steps.check-gh-pages.outcome == 'failure'
+        run: |
+          git checkout --orphan gh-pages
+          git rm -rf .
+          git commit --allow-empty -m "Initial gh-pages commit"
+          git push origin gh-pages
+
+      - name: Clone gh-pages branch
+        run: |
+          git clone --branch gh-pages https://github.com/your-repo.git gh-pages
+
+      - name: Copy ppa contents to gh-pages
+        run: |
+          cp -r ppa/* gh-pages/
+
+      - name: Commit and Push to gh-pages
+        run: |
+          cd gh-pages
+          git add .
+          git commit -m "Update GitHub Pages"
+          git push origin gh-pages
