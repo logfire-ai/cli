@@ -67,7 +67,7 @@ jobs:
 
       - name: Create .list file
         run: |
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/Release.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
 
       - name: Fetch all branches
         run: git fetch --all
