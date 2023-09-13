@@ -74,25 +74,11 @@ jobs:
 
       - name: Checkout and Push to main
         run: |
-          git checkout main
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add ppa/*
           git commit -m "Add generated PPA files"
           git push origin main
-
-      - name: Check if gh-pages exists
-        id: check-gh-pages
-        run: |
-          git ls-remote --exit-code --heads origin gh-pages || echo "gh-pages does not exist"
-
-      - name: Create gh-pages branch if it doesn't exist
-        if: steps.check-gh-pages.outcome == 'failure'
-        run: |
-          git checkout --orphan gh-pages
-          git rm -rf .
-          git commit --allow-empty -m "Initial gh-pages commit"
-          git push origin gh-pages
 
       - name: Clone gh-pages branch
         run: |
