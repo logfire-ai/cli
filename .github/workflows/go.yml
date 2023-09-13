@@ -94,6 +94,7 @@ jobs:
           cd gh-pages
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
           git add .
           git commit -m "Update GitHub Pages"
           git push origin gh-pages
