@@ -89,6 +89,24 @@ jobs:
         run: |
           cp -r ppa/* gh-pages/
 
+      - name: Install createrepo
+        run: sudo apt-get install -y createrepo
+
+      - name: Create YUM repository
+        run: |
+          mkdir -p yum-repo
+          cp dist/*.rpm yum-repo/
+          createrepo yum-repo/
+
+      - name: Sign RPM packages
+        run: |
+          # Assuming you have a script or command to sign RPM packages
+          sign-rpm-packages.sh
+
+      - name: Copy YUM repo to gh-pages
+        run: |
+          cp -r yum-repo/* gh-pages/yum-repo/
+
       - name: Commit and Push to gh-pages
         run: |
           cd gh-pages
@@ -96,7 +114,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
           git add .
-          git commit -m "Update GitHub Pages"
+          git commit -m "Update GitHub Pages with YUM repo"
           git push origin gh-pages
         env:
           GIT_CREDENTIALS: ${{ secrets.TOKEN }}
