@@ -104,6 +104,7 @@ jobs:
 
       - name: Copy YUM repo to gh-pages
         run: |
+          mkdir -p gh-pages/yum-repo
           cp -r yum-repo/* gh-pages/yum-repo/
 
       - name: Commit and Push to gh-pages
