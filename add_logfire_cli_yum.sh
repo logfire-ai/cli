@@ -12,7 +12,7 @@ tee /etc/yum.repos.d/$REPO_NAME.repo <<EOL
 name=Logfire CLI Repository
 baseurl=$REPO_URL
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=$GPG_KEY_URL
 EOL
 
