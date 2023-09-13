@@ -93,9 +93,13 @@ jobs:
       - name: Create YUM repository using Docker
         run: |
           docker run --rm -v $PWD:/workspace -w /workspace centos:7 bash -c "
-          yum install -y createrepo
+          yum install -y createrepo rpm-sign  # Install rpm-sign for signing
           mkdir -p yum-repo
           cp dist/*.rpm yum-repo/
+          echo '%_gpg_name YourKeyNameHere' > ~/.rpmmacros  # Replace with the name associated with your GPG key
+          for rpm in yum-repo/*.rpm; do
+            rpm --addsign \$rpm  # Sign each RPM package
+          done
           createrepo yum-repo/"
 
       # - name: Sign RPM packages
