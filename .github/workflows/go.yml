@@ -92,6 +92,8 @@ jobs:
       - name: Commit and Push to gh-pages
         run: |
           cd gh-pages
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add .
           git commit -m "Update GitHub Pages"
           git push origin gh-pages
