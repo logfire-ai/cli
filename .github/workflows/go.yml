@@ -96,7 +96,7 @@ jobs:
           yum install -y createrepo rpm-sign  # Install rpm-sign for signing
           mkdir -p yum-repo
           cp dist/*.rpm yum-repo/
-          echo '%_gpg_name YourKeyNameHere' > ~/.rpmmacros  # Replace with the name associated with your GPG key
+          echo '%_gpg_name Constient-Altrova@constient.com' > ~/.rpmmacros
           for rpm in yum-repo/*.rpm; do
             rpm --addsign \$rpm  # Sign each RPM package
           done
