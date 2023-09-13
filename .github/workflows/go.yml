@@ -38,7 +38,9 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: List keys
-        run: gpg -K
+        run: |
+          git checkout main
+          gpg -K
 
       - name: Copy .deb files to ppa directory
         run: |
@@ -74,7 +76,6 @@ jobs:
 
       - name: Checkout and Push to main
         run: |
-          git checkout main
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add ppa/*
