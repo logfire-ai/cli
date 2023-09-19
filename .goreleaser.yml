@@ -93,9 +93,9 @@ brews:
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
-    repository:
-      name: cli
-      owner: logfire-ai
+#    repository:
+#      name: cli
+#      owner: logfire-ai
 #      branch: main
 #      git:
 #        url: 'git@github.com:logfire-sh/cli.git'
