@@ -97,9 +97,9 @@ brews:
       name: cli
       owner: logfire-ai
       branch: main
-      git:
-        url: 'git@github.com:logfire-sh/cli.git'
-        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
+#      git:
+#        url: 'git@github.com:logfire-sh/cli.git'
+#        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
 
 nfpms:
   - maintainer: logfire-ai
