@@ -78,7 +78,7 @@ release:
     ## Thanks!
 
 brews:
-  - name: logfire
+  - name: logfire-ai
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-sh/cli'
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
@@ -116,7 +116,7 @@ nfpms:
     release: 1
 
 scoops:
-  - name: logfire
+  - name: logfire-ai
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
       name: logfire

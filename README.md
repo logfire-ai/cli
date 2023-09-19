@@ -22,7 +22,7 @@ You can run the following commands from the command-line interface (CLI) by dire
 `logfire` is available on **macOS** and **linux** via [Homebrew](https://brew.sh/).
 
 ```bash
-$ brew tap logfire-sh/tap
+$ brew tap logfire-ai/tap
 $ brew install logfire
 ```
 
@@ -31,19 +31,12 @@ $ brew install logfire
 `logfire` is available on **windows** available via [Scoop](https://scoop.sh/).
 
 ```bash
-$ scoop bucket add logfire-sh https://github.com/logfire-sh/cli.git
-$ scoop install logfire-sh/logfire
+$ scoop bucket add logfire-ai https://github.com/logfire-sh/cli.git
+$ scoop install logfire-ai/logfire
 ```
 
 ## Release
 
 We are using [goreleaser](https://goreleaser.com/) to automate creation of release artifacts for various operating systems and architectures.
-
-To do a release run the following commands after pushing the code to master branch:
-
-```bash
-$ git tag -a <tag-name> -m <tag-message>
-$ git push origin <tag-name>
-```
 
 GitHub actions will automatically handle syncing and publishing.
