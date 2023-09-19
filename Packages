@@ -4,10 +4,10 @@ Architecture: i386
 Maintainer: logfire-ai
 Installed-Size: 13872
 Filename: ./logfire_1.0_linux_386.deb
-Size: 5530762
-MD5sum: b2779323c98bf91bc12c499ec982b712
-SHA1: 226d1f8281e01214c33b841cca28c2794ff968eb
-SHA256: 2b718b0191712e03317e909163f96d0849abc054e03130d382a706029fe51706
+Size: 5530760
+MD5sum: 175fc1aaacb148626182d38bbbedab31
+SHA1: 8785b7d7ecab81fac82cc267b339b41654b59869
+SHA256: 432290e20afc42819cac28a44e2ce05c0338afee56b795e28134d84f955f1b5b
 Priority: optional
 Homepage: https://github.com/
 Description: Logfire command line tool
@@ -18,10 +18,10 @@ Architecture: arm64
 Maintainer: logfire-ai
 Installed-Size: 14016
 Filename: ./logfire_1.0_linux_arm64.deb
-Size: 5355146
-MD5sum: 84a93caac5a99b2625a6aec2a64f4d84
-SHA1: 0d7c687002a10ea2d706c36be112a18706d52ad4
-SHA256: 1d0a9ce3e41108ee8cd2ea1387e96ab183f380299f4df80f7a97df037201de01
+Size: 5355156
+MD5sum: 7aa1319024c99d9b7ca3325f93849fd0
+SHA1: 4561be687cf1d6af089102b1d8172cfa9677e96e
+SHA256: 1310cb600dab91458fe358cb505a1cb7e7ab7a929d0568eb5bebf3e05db6241e
 Priority: optional
 Homepage: https://github.com/
 Description: Logfire command line tool
@@ -32,10 +32,10 @@ Architecture: amd64
 Maintainer: logfire-ai
 Installed-Size: 14864
 Filename: ./logfire_1.0_linux_amd64v3.deb
-Size: 5879088
-MD5sum: bd56dc80caac73b6fa9f984917ac820d
-SHA1: 2fc4c79ace0cb481626369a956e38a386a42d421
-SHA256: 0f5b02a4fcad2a2d566677638eaeba61d169a06693389653c515488d7c903dcb
+Size: 5879086
+MD5sum: c1936b7f53a44640cc357e0bec3236fb
+SHA1: 8610f1219a6930048b6c343ef2a87d7da2d6e03d
+SHA256: 7fce18af47c4b6c603718bf6bf18ecfc0ed8857b8ba94ab67519f9a585a7f1ae
 Priority: optional
 Homepage: https://github.com/
 Description: Logfire command line tool
