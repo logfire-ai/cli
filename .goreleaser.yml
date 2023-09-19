@@ -74,16 +74,11 @@ release:
 
     - Item 1
     - Item 2
-
-    ## Code changes
-
-    - Item 1
-    - Item 2
   footer: |
     ## Thanks!
 
 brews:
-  - tap:
+  - repository:
       name: tap
       owner: logfire-sh
     ids:
@@ -119,7 +114,8 @@ scoops:
   - name: logfire
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
-      name: logfire-sh
+      name: logfire
+      email: support@logfire.ai
     commit_msg_template: 'Scoop update for {{ .ProjectName }} version {{ .Tag }}'
     homepage: 'https://logfire.ai/'
     description: 'Logfire command line interface.'
@@ -127,8 +123,31 @@ scoops:
     depends: ['git']
     shortcuts: [['logfire.exe', 'logfire']]
     goamd64: v3
-    bucket:
+    repository:
       owner: logfire-sh
       name: cli
       branch: main
-      token: '{{ .Env.GITHUB_TOKEN }}'
+      git:
+        # The Git URL to push.
+        #
+        # Templates: allowed
+        url: 'git@github.com:logfire-sh/cli.git'
+
+        # The SSH private key that should be used to commit to the Git
+        # repository.
+        # This can either be a path or the key contents.
+        #
+        # IMPORTANT: the key must not be password-protected.
+        #
+        # WARNING: do not expose your private key in the configuration file!
+        #
+        # Templates: allowed
+        private_key: '{{ secrets.PRIVATE_KEY }}'
+
+#        # The value to be passed to `GIT_SSH_COMMAND`.
+#        # This is mainly used to specify the SSH private key used to pull/push
+#        # to the Git URL.
+#        #
+#        # Default: 'ssh -i {{ .KeyPath }} -o StrictHostKeyChecking=accept-new -F /dev/null'
+#        # Templates: allowed
+#        ssh_command: 'ssh -i {{ .Env.KEY }} -o SomeOption=yes'
