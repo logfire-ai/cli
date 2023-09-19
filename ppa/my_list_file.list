@@ -1,0 +1,1 @@
+deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-sh.github.io/cli ./
