@@ -78,7 +78,7 @@ release:
     ## Thanks!
 
 brews:
-  - name: logfire-sh
+  - name: logfire
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-sh/cli'
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
