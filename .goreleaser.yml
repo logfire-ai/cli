@@ -78,14 +78,7 @@ release:
     ## Thanks!
 
 brews:
-  - repository:
-      name: tap
-      owner: logfire-ai
-      branch: main
-      git:
-        url: 'git@github.com:logfire-sh/cli.git'
-        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
-    ids:
+  - name: logfire-ai
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-sh/cli'
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
@@ -100,6 +93,13 @@ brews:
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
+    repository:
+      name: cli
+      owner: logfire-ai
+      branch: main
+      git:
+        url: 'git@github.com:logfire-sh/cli.git'
+        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
 
 nfpms:
   - maintainer: logfire-ai
@@ -129,7 +129,7 @@ scoops:
     shortcuts: [['logfire.exe', 'logfire']]
     goamd64: v3
     repository:
-      owner: logfire-sh
+      owner: logfire-ai
       name: cli
       branch: main
       git:
