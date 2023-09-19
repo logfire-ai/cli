@@ -33,93 +33,89 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
           PRIVATE_KEY_PATH: ${{ secrets.PRIVATE_KEY }}
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-
-      - name: List keys
-        run: |
-          git checkout main
-          gpg -K
-
-      - name: Copy .deb files to ppa directory
-        run: |
-          mkdir -p ppa
-          cp dist/*.deb ppa/
-
-      - name: Install dpkg-dev tools
-        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
-
-      - name: Generate Packages and Packages.gz
-        run: |
-          cd ppa
-          dpkg-scanpackages --multiversion . > Packages
-          gzip -k -f Packages
-
-      - name: Generate Release and Release.gpg
-        run: |
-          cd ppa
-          apt-ftparchive release . > Release
-          gpg --batch --default-key "constient-altrova@constient.com" -abs -o - Release > Release.gpg
-
-      - name: Generate InRelease
-        run: |
-          cd ppa
-          gpg --batch --default-key "constient-altrova@constient.com" --clearsign -o - Release > InRelease
-
-      - name: Create .list file
-        run: |
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
-
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Checkout and Push to main
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add ppa/*
-          git commit -m "Add generated PPA files"
-          git push origin main -f
-
-      - name: Clone gh-pages branch
-        run: |
-          git clone --branch gh-pages https://github.com/logfire-sh/cli.git gh-pages
-
-      - name: Copy ppa contents to gh-pages
-        run: |
-          cp -r ppa/* gh-pages/
-
-      - name: Create YUM repository using Docker
-        run: |
-          docker run --rm -v $PWD:/workspace -w /workspace centos:7 bash -c "
-          yum install -y createrepo rpm-sign  # Install rpm-sign for signing
-          mkdir -p yum-repo
-          cp dist/*.rpm yum-repo/
-          echo '%_gpg_name Constient-Altrova@constient.com' > ~/.rpmmacros
-          for rpm in yum-repo/*.rpm; do
-            rpm --addsign \$rpm  # Sign each RPM package
-          done
-          createrepo yum-repo/"
-
-      # - name: Sign RPM packages
-      #   run: |
-      #     sign-rpm-packages.sh
-
-      - name: Copy YUM repo to gh-pages
-        run: |
-          mkdir -p gh-pages/yum-repo
-          cp -r yum-repo/* gh-pages/yum-repo/
-
-      - name: Commit and Push to gh-pages
-        run: |
-          cd gh-pages
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
-          git add .
-          git commit -m "Update GitHub Pages with YUM repo"
-          git push origin gh-pages -f
-        env:
-          GIT_CREDENTIALS: ${{ secrets.TOKEN }}
+#      - name: Import GPG key
+#        uses: crazy-max/ghaction-import-gpg@v6
+#        with:
+#          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+#
+#      - name: List keys
+#        run: |
+#          git checkout main
+#          gpg -K
+#
+#      - name: Copy .deb files to ppa directory
+#        run: |
+#          mkdir -p ppa
+#          cp dist/*.deb ppa/
+#
+#      - name: Install dpkg-dev tools
+#        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
+#
+#      - name: Generate Packages and Packages.gz
+#        run: |
+#          cd ppa
+#          dpkg-scanpackages --multiversion . > Packages
+#          gzip -k -f Packages
+#
+#      - name: Generate Release and Release.gpg
+#        run: |
+#          cd ppa
+#          apt-ftparchive release . > Release
+#          gpg --batch --default-key "constient-altrova@constient.com" -abs -o - Release > Release.gpg
+#
+#      - name: Generate InRelease
+#        run: |
+#          cd ppa
+#          gpg --batch --default-key "constient-altrova@constient.com" --clearsign -o - Release > InRelease
+#
+#      - name: Create .list file
+#        run: |
+#          echo "deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
+#
+#      - name: Fetch all branches
+#        run: git fetch --all
+#
+#      - name: Checkout and Push to main
+#        run: |
+#          git config --local user.email "action@github.com"
+#          git config --local user.name "GitHub Action"
+#          git add ppa/*
+#          git commit -m "Add generated PPA files"
+#          git push origin main -f
+#
+#      - name: Clone gh-pages branch
+#        run: |
+#          git clone --branch gh-pages https://github.com/logfire-sh/cli.git gh-pages
+#
+#      - name: Copy ppa contents to gh-pages
+#        run: |
+#          cp -r ppa/* gh-pages/
+#
+#      - name: Create YUM repository using Docker
+#        run: |
+#          docker run --rm -v $PWD:/workspace -w /workspace centos:7 bash -c "
+#          yum install -y createrepo rpm-sign  # Install rpm-sign for signing
+#          mkdir -p yum-repo
+#          cp dist/*.rpm yum-repo/
+#          echo '%_gpg_name Constient-Altrova@constient.com' > ~/.rpmmacros
+#          for rpm in yum-repo/*.rpm; do
+#            rpm --addsign \$rpm  # Sign each RPM package
+#          done
+#          createrepo yum-repo/"
+#
+#      - name: Copy YUM repo to gh-pages
+#        run: |
+#          mkdir -p gh-pages/yum-repo
+#          cp -r yum-repo/* gh-pages/yum-repo/
+#
+#      - name: Commit and Push to gh-pages
+#        run: |
+#          cd gh-pages
+#          git config --local user.email "action@github.com"
+#          git config --local user.name "GitHub Action"
+#          git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
+#          git add .
+#          git commit -m "Update GitHub Pages with YUM repo"
+#          git push origin gh-pages -f
+#        env:
+#          GIT_CREDENTIALS: ${{ secrets.TOKEN }}
