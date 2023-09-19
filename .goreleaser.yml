@@ -93,9 +93,6 @@ brews:
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
-    repository:
-      name: cli
-      owner: logfire-ai
 
 nfpms:
   - maintainer: logfire-ai
