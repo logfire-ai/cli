@@ -78,7 +78,9 @@ release:
     ## Thanks!
 
 brews:
-  - name: logfire
+  - repository:
+      name: tap
+      owner: logfire-sh
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-sh/cli'
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
@@ -89,7 +91,7 @@ brews:
       - name: git
     commit_author:
       name: logfire
-      email: support@logfire.ai
+      email: constient-altrova@constient.com
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
