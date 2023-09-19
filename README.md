@@ -22,7 +22,7 @@ You can run the following commands from the command-line interface (CLI) by dire
 `logfire` is available on **macOS** and **linux** via [Homebrew](https://brew.sh/).
 
 ```bash
-$ brew tap logfire-ai/tap
+$ brew tap logfire-sh/tap
 $ brew install logfire
 ```
 
