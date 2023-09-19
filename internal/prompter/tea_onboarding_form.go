@@ -65,7 +65,7 @@ const (
 )
 
 var (
-	colorOneBackgroundColorFourForeground = lipgloss.NewStyle().Background(colorOneStyle).Foreground(colorFourStyle)
+	colorOneBackgroundColorFourForeground = lipgloss.NewStyle().Foreground(darkGray)
 	colorOne                              = lipgloss.NewStyle().Foreground(colorOneStyle)
 	colorTwo                              = lipgloss.NewStyle().Foreground(colorTwoStyle)
 	colorThree                            = lipgloss.NewStyle().Foreground(colorThreeStyle)
@@ -84,8 +84,8 @@ var (
 
 	currentPkgNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 	doneStyle           = lipgloss.NewStyle().Margin(1, 2)
-	checkMark           = lipgloss.NewStyle().Background(colorOneStyle).Foreground(colorFourStyle).Faint(true).Render("[✓] ")
-	unCheckMarked       = lipgloss.NewStyle().Background(colorOneStyle).Foreground(colorFourStyle).Faint(true).Render("[ ] ")
+	checkMark           = lipgloss.NewStyle().Foreground(colorFourStyle).Faint(true).Render("[✓] ")
+	unCheckMarked       = lipgloss.NewStyle().Foreground(colorFourStyle).Faint(true).Render("[ ] ")
 
 	highlightedText                 = lipgloss.NewStyle().Foreground(textHiglight)
 	commandBackgroundHighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#f2f2f2")).Background(commandBackgroundHighlight)
@@ -538,7 +538,7 @@ func (m model) renderEmail() string {
 }
 
 func (m model) renderToken() string {
-	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Token"), m.inputs[token].View())
+	return fmt.Sprintf("\n%s\n%s\n", inputStyle.Render("Token [Paste from email]"), m.inputs[token].View())
 }
 
 func (m model) renderAccountSetup() string {
