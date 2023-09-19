@@ -111,7 +111,7 @@ nfpms:
     release: 1
 
 scoops:
-  - name: logfire-ai
+  - name: logfire
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
       name: logfire
