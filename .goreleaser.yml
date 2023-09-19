@@ -96,7 +96,7 @@ brews:
     repository:
       name: cli
       owner: logfire-ai
-      branch: main
+#      branch: main
 #      git:
 #        url: 'git@github.com:logfire-sh/cli.git'
 #        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
