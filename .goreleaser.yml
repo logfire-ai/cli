@@ -91,7 +91,7 @@ brews:
       - name: git
     commit_author:
       name: logfire
-      email: constient-altrova@constient.com
+      email: support@logfire.ai
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
