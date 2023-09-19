@@ -55,7 +55,7 @@ changelog:
       - '^conf:'
 release:
   github:
-    owner: logfire-sh
+    owner: logfire-ai
     #name: "{{ env.REPO_NAME }}"
   draft: true
   prerelease: auto
@@ -80,7 +80,7 @@ release:
 brews:
   - repository:
       name: tap
-      owner: logfire-sh
+      owner: logfire-ai
       branch: main
       git:
         url: 'git@github.com:logfire-sh/cli.git'
@@ -96,13 +96,13 @@ brews:
       - name: git
     commit_author:
       name: logfire
-      email: constient-altrova@constient.com
+      email: support@logfire.ai
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
 
 nfpms:
-  - maintainer: logfire-sh
+  - maintainer: logfire-ai
     id: logfire
     description: 'Logfire command line tool'
     homepage: 'https://github.com/{{ .Env.REPO_NAME }}'
@@ -116,7 +116,7 @@ nfpms:
     release: 1
 
 scoops:
-  - name: logfire
+  - name: logfire-ai
     url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
       name: logfire
