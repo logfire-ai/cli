@@ -80,6 +80,7 @@ jobs:
           git config --local user.email "support@logfire.ai"
           git config --local user.name "Logfire"
           git add ppa/*
+          git pull
           git commit -m "Add generated PPA files"
           git push origin main
 
@@ -115,6 +116,7 @@ jobs:
           git config --local user.name "Logfire"
           git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
           git add .
+          git pull
           git commit -m "Update GitHub Pages with YUM repo"
           git push origin gh-pages
         env:
