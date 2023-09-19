@@ -31,6 +31,7 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          PRIVATE_KEY_PATH: ${{ secrets.PRIVATE_KEY }}
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
