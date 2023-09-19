@@ -81,6 +81,10 @@ brews:
   - repository:
       name: tap
       owner: logfire-sh
+      branch: main
+      git:
+        url: 'git@github.com:logfire-sh/cli.git'
+        private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
     ids:
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-sh/cli'
@@ -96,6 +100,7 @@ brews:
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
+
 nfpms:
   - maintainer: logfire-sh
     id: logfire
@@ -128,26 +133,5 @@ scoops:
       name: cli
       branch: main
       git:
-        # The Git URL to push.
-        #
-        # Templates: allowed
         url: 'git@github.com:logfire-sh/cli.git'
-
-        # The SSH private key that should be used to commit to the Git
-        # repository.
-        # This can either be a path or the key contents.
-        #
-        # IMPORTANT: the key must not be password-protected.
-        #
-        # WARNING: do not expose your private key in the configuration file!
-        #
-        # Templates: allowed
         private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
-
-#        # The value to be passed to `GIT_SSH_COMMAND`.
-#        # This is mainly used to specify the SSH private key used to pull/push
-#        # to the Git URL.
-#        #
-#        # Default: 'ssh -i {{ .KeyPath }} -o StrictHostKeyChecking=accept-new -F /dev/null'
-#        # Templates: allowed
-#        ssh_command: 'ssh -i {{ .Env.KEY }} -o SomeOption=yes'
