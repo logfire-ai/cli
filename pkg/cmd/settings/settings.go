@@ -71,7 +71,7 @@ func SettingsRun(opts *SettingsOptions) {
 	if opts.Interactive && opts.Theme == "" {
 		themeOptions := []string{"Dark", "Light"}
 
-		opts.Theme, err = opts.Prompter.Select("Select a Platform:", "", themeOptions)
+		opts.Theme, err = opts.Prompter.Select("Select a theme:", "", themeOptions)
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Theme\n", cs.FailureIcon())
 			return
