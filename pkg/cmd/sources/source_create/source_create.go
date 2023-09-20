@@ -7,10 +7,10 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
+	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
-	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 

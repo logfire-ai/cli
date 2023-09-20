@@ -100,7 +100,7 @@ func loginRun(opts *LoginOptions) {
 		grpc_ingestion := "https://in-stg.logfire.ai"
 
 		err = cfg.UpdateConfig(nil, nil, nil, nil,
-			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion)
+			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
 		if err != nil {
 			return
 		}
@@ -279,7 +279,7 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	io.StopProgressIndicator()
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}

@@ -19,25 +19,11 @@ You can run the following commands from the command-line interface (CLI) by dire
 
 ### macOS and linux
 
-`logfire` is available on **macOS** and **linux** via [Homebrew](https://brew.sh/), [APT](https://ubuntu.com/server/docs/package-management), [YUM](http://yum.baseurl.org/).
+`logfire` is available on **macOS** and **linux** via [Homebrew](https://brew.sh/).
 
 ```bash
-$ brew tap logfire-sh/tap
+$ brew tap logfire-ai/tap
 $ brew install logfire
-```
-
-```bash
-$ curl -O https://raw.githubusercontent.com/logfire-sh/cli/main/add_logfire_cli_yum.sh
-$ chmod +x add_logfire_cli_yum.sh
-$ ./add_logfire_cli_yum.sh
-$ yum install logfire
-```
-
-```bash
-$ curl -s --compressed "https://logfire-sh.github.io/cli/KEY.gpg" | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/KEY.gpg >/dev/null
-$ sudo curl -s --compressed -o /etc/apt/sources.list.d/my_list_file.list "https://logfire-sh.github.io/cli/my_list_file.list"
-$ sudo apt-get update
-$ sudo apt install logfire
 ```
 
 ### Windows
@@ -52,5 +38,12 @@ $ scoop install logfire-ai/logfire
 ## Release
 
 We are using [goreleaser](https://goreleaser.com/) to automate creation of release artifacts for various operating systems and architectures.
+
+To do a release run the following commands after pushing the code to master branch:
+
+```bash
+$ git tag -a <tag-name> -m <tag-message>
+$ git push origin <tag-name>
+```
 
 GitHub actions will automatically handle syncing and publishing.

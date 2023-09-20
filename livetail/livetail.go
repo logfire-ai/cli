@@ -106,8 +106,9 @@ func (l *Livetail) CreateConnection() {
 	l.FilterService = grpcutil.NewFilterService()
 }
 
-func (l *Livetail) GenerateLogs(stop chan error) {
+func (l *Livetail) GenerateLogs(stop chan error, cfg config.Config) {
 	request.Sources = l.pbSources
+	theme := cfg.Get().Theme
 
 	for {
 		select {
@@ -124,7 +125,7 @@ func (l *Livetail) GenerateLogs(stop chan error) {
 				sort.Sort(ByOffset(response.Records))
 				l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
 				l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
-				newLogs := showLogsWithColor(response.Records)
+				newLogs := showLogsWithColor(response.Records, theme)
 				l.Logs += newLogs
 			}
 
@@ -134,14 +135,23 @@ func (l *Livetail) GenerateLogs(stop chan error) {
 }
 
 // Convert logs with colors
-func showLogsWithColor(records []*pb.FilteredRecord) string {
+func showLogsWithColor(records []*pb.FilteredRecord, theme string) string {
 	stream := ""
-	for _, record := range records {
-		stream += fmt.Sprintf("[yellow]" + record.Dt +
-			"[green] " + record.SourceName +
-			"[blue] " + record.Level + " [white]" +
-			record.Message + "\n")
+	if theme == "dark" {
+		for _, record := range records {
+			stream += fmt.Sprintf("[yellow]" + record.Dt +
+				"[green] " + record.SourceName +
+				"[blue] " + record.Level + " [white]" +
+				record.Message + "\n")
+		}
+
+	} else {
+		for _, record := range records {
+			stream += fmt.Sprintf(`[gray]%s [purple]%s [blue]%s [black]%s`+"\n",
+				record.Dt, record.SourceName, record.Level, record.Message)
+		}
 	}
+
 	return stream
 }
 

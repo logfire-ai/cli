@@ -29,6 +29,17 @@ type Display struct {
 	ViewsList  []models.ViewResponseBody
 }
 
+type Theme struct {
+	BackgroundColor                     tcell.Color
+	PlaceholderColor                    tcell.Color
+	TextColor                           tcell.Color
+	CaretColor                          tcell.Color
+	AutocompleteBackgroundColor         tcell.Color
+	AutocompleteForegroundColor         tcell.Color
+	AutocompleteSelectedForegroundColor tcell.Color
+	AutocompleteSelectedBackgroundColor tcell.Color
+}
+
 type Task struct {
 	Title string `json:"text"`
 	Id    string
@@ -40,6 +51,33 @@ var schemaList []string
 var viewList []string
 
 func NewDisplay(cfg config.Config) *Display {
+	// Create a new theme object.
+	theme := Theme{}
+
+	selectedTheme := cfg.Get().Theme
+
+	if selectedTheme == "dark" {
+		theme.BackgroundColor = tcell.ColorBlack
+		theme.PlaceholderColor = tcell.ColorGray
+		theme.TextColor = tcell.ColorWhite
+		theme.CaretColor = tcell.ColorWhite
+
+		theme.AutocompleteBackgroundColor = tcell.ColorGray
+		theme.AutocompleteForegroundColor = tcell.Color231
+		theme.AutocompleteSelectedForegroundColor = tcell.ColorSlateGray
+		theme.AutocompleteSelectedBackgroundColor = tcell.ColorGray
+	} else {
+		theme.BackgroundColor = tcell.Color231
+		theme.PlaceholderColor = tcell.ColorGray
+		theme.TextColor = tcell.ColorBlack
+		theme.CaretColor = tcell.ColorBlack
+
+		theme.AutocompleteBackgroundColor = tcell.ColorGray
+		theme.AutocompleteForegroundColor = tcell.Color231
+		theme.AutocompleteSelectedForegroundColor = tcell.ColorSlateGray
+		theme.AutocompleteSelectedBackgroundColor = tcell.ColorGray
+	}
+
 	//var sourcesTask []Task
 	//selectedSources := make(map[string]bool)
 	var sourceIds []string
@@ -95,7 +133,7 @@ func NewDisplay(cfg config.Config) *Display {
 		SetLabel("> ").
 		SetFieldWidth(0).
 		SetAcceptanceFunc(tview.InputFieldMaxLength(200)).
-		SetFieldStyle(tcell.StyleDefault)
+		SetFieldStyle(tcell.StyleDefault).SetLabelColor(theme.CaretColor).SetFieldTextColor(theme.TextColor)
 
 	// Set up autocomplete function.
 	var typedText string
@@ -216,34 +254,43 @@ func NewDisplay(cfg config.Config) *Display {
 		return source == tview.AutocompletedTab || source == tview.AutocompletedClick
 	})
 
+	inputField.SetAutocompleteStyles(theme.AutocompleteBackgroundColor, tcell.StyleDefault.Foreground(theme.AutocompleteForegroundColor), tcell.StyleDefault.Background(theme.AutocompleteSelectedForegroundColor).Foreground(theme.AutocompleteSelectedBackgroundColor))
+
+	inputField.SetBackgroundColor(theme.BackgroundColor)
+
 	// BottomHelp
 	BottomHelp := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
 		SetPlaceholder("  3.source [source=source-name,source-name,source-name...] 4.start-date [start-date=now-2d] 5.end-date [end-date=now] 6.field-filter [field-filter=level=info] 7.save-view [save-view=name]").
-		SetPlaceholderTextColor(tcell.ColorGray)
+		SetPlaceholderTextColor(theme.PlaceholderColor)
 
 	BottomHelp.SetDisabled(true)
+	BottomHelp.SetBackgroundColor(theme.BackgroundColor)
 
 	//TopHelp
 	TopHelp := tview.NewInputField().
 		SetFieldWidth(0).
 		SetFieldStyle(tcell.StyleDefault).
 		SetPlaceholder("  Stream > Livetail | 1. livetail 2. view 9.QUIT [q | quit | exit]").
-		SetPlaceholderTextColor(tcell.ColorGray)
+		SetPlaceholderTextColor(theme.PlaceholderColor)
 
 	TopHelp.SetDisabled(true)
+	TopHelp.SetBackgroundColor(theme.BackgroundColor)
 
 	textView := tview.NewTextView().
 		SetDynamicColors(true).
-		SetRegions(true)
+		SetRegions(true).
+		SetWordWrap(true)
+
+	textView.SetBackgroundColor(theme.BackgroundColor)
 
 	// Create the Grid and add items to it.
 	grid := tview.NewGrid().SetRows(1, -1, 1, 1).SetColumns(-1)
 	grid.AddItem(TopHelp, 0, 0, 1, 1, 0, 0, false)
 	grid.AddItem(textView, 1, 0, 1, 1, 0, 0, false)
 	grid.AddItem(inputField, 2, 0, 1, 1, 0, 0, true)
-	grid.AddItem(BottomHelp, 3, 0, 1, 1, 0, 0, false)
+	grid.AddItem(BottomHelp, 3, 0, 1, 1, 0, 0, false).SetBackgroundColor(theme.BackgroundColor)
 
 	return &Display{
 		Grid:       grid,

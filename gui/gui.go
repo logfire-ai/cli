@@ -96,9 +96,14 @@ func display(u *UI, l *livetail.Livetail, stop chan error) {
 				// Case 1: If l.Logs is empty, show "Waiting for logs..." with progress dots
 				if len(l.Logs) == 0 {
 					numDots = (numDots + 1) % 4
-					waitingMessage := "Waiting for logs" + strings.Repeat(".", numDots)
+					var waitingMessage string
+					if u.Config.Get().Theme == "dark" {
+						waitingMessage = "[white]" + "Waiting for logs" + strings.Repeat(".", numDots)
+					} else {
+						waitingMessage = "[black]" + "Waiting for logs" + strings.Repeat(".", numDots)
+					}
 					// Pad the message with spaces to keep it a constant length
-					paddedMessage := fmt.Sprintf("%-20s", waitingMessage)
+					paddedMessage := fmt.Sprintf("%-40s", waitingMessage)
 					u.Display.View.SetTextAlign(tview.AlignCenter)
 					u.Display.View.SetText(paddedMessage)
 				} else {
@@ -400,7 +405,7 @@ func RunLivetail(u *UI, livetailStatus *LivetailStatus, stop chan error) {
 		u.Display.View.SetTextAlign(tview.AlignLeft)
 
 		u.Livetail.ApplyFilter(u.Config, u.SourceFilter, u.StartDateTimeFilter, u.EndDateTimeFilter, u.FieldBasedFilterName, u.FieldBasedFilterValue, u.FieldBasedFilterCondition)
-		go u.Livetail.GenerateLogs(stop)
+		go u.Livetail.GenerateLogs(stop, u.Config)
 		go display(u, u.Livetail, stop)
 		u.Display.View.ScrollToEnd()
 	}
