@@ -28,7 +28,7 @@ var request = &pb.FilterRequest{
 	FieldBasedFilters: []*pb.FieldBasedFilter{},
 	SearchQueries:     []string{},
 	Sources:           []*pb.Source{},
-	BatchSize:         5,
+	BatchSize:         100,
 	IsScrollDown:      true,
 }
 
