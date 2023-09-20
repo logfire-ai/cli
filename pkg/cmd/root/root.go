@@ -3,6 +3,7 @@ package root
 import (
 	"errors"
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmd/settings"
 
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/alerts"
@@ -38,7 +39,7 @@ type PromptRootOptions struct {
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
-	"Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Round trip"}
+	"Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip"}
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
@@ -124,6 +125,8 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 				case choices[9]:
 					update_profile.UpdateProfileCmd(f).Run(cmd, []string{})
 				case choices[10]:
+					settings.SettingsCmd(f).Run(cmd, []string{})
+				case choices[11]:
 					roundtrip.NewCmdRoundTrip(f).Run(cmd, []string{})
 				default:
 					break
@@ -167,6 +170,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	cmd.AddCommand(update_profile.UpdateProfileCmd(f))
 	cmd.AddCommand(bootstrap.NewCmdBootstrap(f))
 	cmd.AddCommand(roundtrip.NewCmdRoundTrip(f))
+	cmd.AddCommand(settings.SettingsCmd(f))
 
 	// go func() {
 	// 	for range cmdCh {
