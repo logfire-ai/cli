@@ -2,18 +2,22 @@ package grpcutil
 
 import (
 	"context"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/grpc"
+
+	//"google.golang.org/grpc/credentials"
+	"log"
+
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	"log"
 )
 
 type FilterService struct {
 	conn   *grpc.ClientConn
-	Client pb.FlinkServiceClient
+	Client pb.FilterServiceClient
 }
 
 func authUnaryInterceptor(kv ...string) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -34,20 +38,19 @@ func (fs *FilterService) CloseConnection() {
 func NewFilterService(kv ...string) *FilterService {
 	cfg, _ := config.NewConfig()
 	grpc_url := cfg.Get().GrpcEndpoint
-	//grpc_url := "localhost:50051"
 	allParams := make([]string, 0, len(kv)+2)
 	allParams = append(allParams, "Authorization", "Bearer "+cfg.Get().Token)
-	for _, arg := range kv {
-		allParams = append(allParams, arg)
-	}
+	allParams = append(allParams, kv...)
+
 	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
-	//conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+	// conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
 
 	// Create a gRPC client
-	client := pb.NewFlinkServiceClient(conn)
+	client := pb.NewFilterServiceClient(conn)
 
 	return &FilterService{
 		conn:   conn,
@@ -83,40 +86,6 @@ func AddOffset(sources []*pb.Source, offset map[string]uint64) []*pb.Source {
 	}
 
 	return sources
-}
-
-func CreateSource(request *pb.Source) {
-	cfg, _ := config.NewConfig()
-	grpc_url := cfg.Get().GrpcEndpoint
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	// Create a gRPC client
-	client := pb.NewFlinkServiceClient(conn)
-
-	_, err = client.CreateSource(context.Background(), request)
-	if err != nil {
-		return
-	}
-	if err != nil {
-		return
-	}
-}
-
-// GetFilteredData makes the actual grpc call to connect with flink-service.
-func GetFilteredData(client pb.FlinkServiceClient, request *pb.FilterRequest) (*pb.FilteredRecords, error) {
-	// Prepare the request payload
-
-	// Invoke the gRPC method
-	response, err := client.GetFilteredData(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
 }
 
 func GetOffsets(offsets map[string]uint64, records []*pb.FilteredRecord) map[string]uint64 {

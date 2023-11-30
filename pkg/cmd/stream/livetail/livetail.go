@@ -97,7 +97,7 @@ func livetailRun(opts *LivetailOptions) {
 		FieldBasedFilters: []*pb.FieldBasedFilter{},
 		SearchQueries:     []string{},
 		Sources:           []*pb.Source{},
-		BatchSize:         100,
+		BatchSize:         15,
 		IsScrollDown:      true,
 	}
 
@@ -235,6 +235,7 @@ func livetailRun(opts *LivetailOptions) {
 	for {
 		response, err := filterService.Client.GetFilteredData(context.Background(), request)
 		if err != nil {
+			//log.Fatal(err)
 			continue
 		}
 

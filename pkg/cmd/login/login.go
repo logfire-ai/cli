@@ -36,6 +36,7 @@ type LoginOptions struct {
 	Password string
 	Token    string
 	Staging  bool
+	Local    bool
 }
 
 func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
@@ -83,6 +84,7 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.Password, "password", "p", "", "Password of the user.")
 	cmd.Flags().StringVarP(&opts.Token, "token", "t", "", "Single Sign in token of the user.")
 	cmd.Flags().BoolVarP(&opts.Staging, "staging", "s", false, "Use staging server?")
+	cmd.Flags().BoolVarP(&opts.Local, "local", "l", false, "Use local server?")
 	return cmd
 }
 
@@ -98,6 +100,18 @@ func loginRun(opts *LoginOptions) {
 		endpoint := "https://api-stg.logfire.ai/"
 		grpc_endpoint := "api-stg.logfire.ai:443"
 		grpc_ingestion := "https://in-stg.logfire.ai"
+
+		err = cfg.UpdateConfig(nil, nil, nil, nil,
+			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
+		if err != nil {
+			return
+		}
+	}
+
+	if opts.Local {
+		endpoint := "http://localhost:8888/"
+		grpc_endpoint := "localhost:8888"
+		grpc_ingestion := "http://localhost:8888/logfire.sh"
 
 		err = cfg.UpdateConfig(nil, nil, nil, nil,
 			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
@@ -284,6 +298,12 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 		return err
 	}
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
+
+
+	if !response.UserBody.Onboarded {
+		fmt.Fprintf(io.Out, "\n%s Looks like your onboarding isn't done yet. Complete it now with `logfire bootstrap` for the full experience! \n \n", cs.WarningIcon())
+	}
+
 	return nil
 }
 
@@ -352,6 +372,10 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	fmt.Fprintf(IO.Out, "%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.Email))
+
+	if !response.UserBody.Onboarded {
+		fmt.Fprintf(IO.Out, "\n%s Looks like your onboarding isn't done yet. Complete it now with `logfire bootstrap` for the full experience! \n", cs.WarningIcon())
+	}
 
 	return nil
 }
