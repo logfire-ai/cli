@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -41,6 +42,8 @@ type UI struct {
 
 	StartDateUnParsed string
 	EndDateUnParsed   string
+
+	Ctx context.Context
 }
 
 type LivetailStatus struct {
@@ -50,8 +53,6 @@ type LivetailStatus struct {
 var livetailStatus = &LivetailStatus{
 	LivetailEnabled: false,
 }
-
-var stop = make(chan error)
 
 func NewUI(cfg config.Config) *UI {
 
@@ -76,20 +77,22 @@ func NewUI(cfg config.Config) *UI {
 
 	// go checkWaitingForLogs(ui, ui.Livetail)
 
+	ui.Ctx = context.Background()
+
 	ui.Livetail.CreateConnection()
 
 	time.Sleep(200 * time.Millisecond)
 
-	RunLivetail(ui, livetailStatus, stop)
+	RunLivetail(ui, livetailStatus)
 	return ui
 }
 
-func display(u *UI, l *livetail.Livetail, stop chan error) {
+func display(u *UI, l *livetail.Livetail) {
 	var numDots int
 
 	for {
 		select {
-		case <-stop:
+		case <-u.Ctx.Done():
 			return
 		default:
 			u.app.QueueUpdateDraw(func() {
@@ -160,8 +163,8 @@ func splitFieldFilterValue(input string) (field, operator, value string) {
 var sourceNamesList []string
 var sourceIds []string
 
-func (u *UI) runRootCmd() {
-	StopLivetail(u, livetailStatus, stop)
+func (u *UI) runQuitCmd() {
+	StopLivetail(u, livetailStatus)
 	u.app.Stop()
 }
 
@@ -186,36 +189,36 @@ func (u *UI) SetDisplayCapture() {
 							}
 						}
 
-						StopLivetail(u, livetailStatus, stop)
+						StopLivetail(u, livetailStatus)
 
 						u.SourceFilter = sourceIds
 
 						time.Sleep(500 * time.Millisecond)
 
-						RunLivetail(u, livetailStatus, stop)
+						RunLivetail(u, livetailStatus)
 
 					} else if strings.Split(input, "=")[0] == "start-date" {
-						StopLivetail(u, livetailStatus, stop)
+						StopLivetail(u, livetailStatus)
 
 						u.StartDateTimeFilter = filters.ShortDateTimeToGoDate(strings.Split(input, "=")[1])
 						u.StartDateUnParsed = strings.Split(input, "=")[1]
 
 						time.Sleep(500 * time.Millisecond)
 
-						RunLivetail(u, livetailStatus, stop)
+						RunLivetail(u, livetailStatus)
 
 					} else if strings.Split(input, "=")[0] == "end-date" {
-						StopLivetail(u, livetailStatus, stop)
+						StopLivetail(u, livetailStatus)
 
 						u.EndDateTimeFilter = filters.ShortDateTimeToGoDate(strings.Split(input, "=")[1])
 						u.EndDateUnParsed = strings.Split(input, "=")[1]
 
 						time.Sleep(500 * time.Millisecond)
 
-						RunLivetail(u, livetailStatus, stop)
+						RunLivetail(u, livetailStatus)
 
 					} else if strings.Split(input, "=")[0] == "field-filter" {
-						StopLivetail(u, livetailStatus, stop)
+						StopLivetail(u, livetailStatus)
 
 						field, operator, value := splitFieldFilterValue(input)
 
@@ -225,7 +228,7 @@ func (u *UI) SetDisplayCapture() {
 
 						time.Sleep(500 * time.Millisecond)
 
-						RunLivetail(u, livetailStatus, stop)
+						RunLivetail(u, livetailStatus)
 
 					} else if strings.Split(input, "=")[0] == "save-view" {
 						name := strings.Split(input, "=")[1]
@@ -276,12 +279,12 @@ func (u *UI) SetDisplayCapture() {
 						}
 
 						if livetailStatus.LivetailEnabled {
-							StopLivetail(u, livetailStatus, stop)
+							StopLivetail(u, livetailStatus)
 
 							time.Sleep(200 * time.Millisecond)
 						}
 
-						RunLivetail(u, livetailStatus, stop)
+						RunLivetail(u, livetailStatus)
 					}
 				}
 				return nil
@@ -291,18 +294,18 @@ func (u *UI) SetDisplayCapture() {
 			case true:
 				switch input {
 				case "start":
-					RunLivetail(u, livetailStatus, stop)
+					RunLivetail(u, livetailStatus)
 				case "stop":
-					StopLivetail(u, livetailStatus, stop)
+					StopLivetail(u, livetailStatus)
 				case "q":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "quit":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "exit":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "1":
 				case "2":
-					StopLivetail(u, livetailStatus, stop)
+					StopLivetail(u, livetailStatus)
 
 					ResetFilters(u)
 
@@ -328,7 +331,7 @@ func (u *UI) SetDisplayCapture() {
 				case "7":
 					u.Display.input.SetText("save-view=")
 				case "9":
-					u.runRootCmd()
+					u.runQuitCmd()
 				default:
 					u.Display.BottomHelp.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
 
@@ -342,23 +345,23 @@ func (u *UI) SetDisplayCapture() {
 			case false:
 				switch input {
 				case "start":
-					RunLivetail(u, livetailStatus, stop)
+					RunLivetail(u, livetailStatus)
 				case "stop":
-					StopLivetail(u, livetailStatus, stop)
+					StopLivetail(u, livetailStatus)
 				case "q":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "quit":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "exit":
-					u.runRootCmd()
+					u.runQuitCmd()
 				case "1":
-					StopLivetail(u, livetailStatus, stop)
+					StopLivetail(u, livetailStatus)
 
 					ResetFilters(u)
 
 					time.Sleep(200 * time.Millisecond)
 
-					RunLivetail(u, livetailStatus, stop)
+					RunLivetail(u, livetailStatus)
 
 					u.Display.Livetail = true
 					u.Display.TopHelp.SetPlaceholder("  Stream > Livetail | 1. livetail 2. view 9.QUIT [q | quit | exit]").
@@ -370,7 +373,7 @@ func (u *UI) SetDisplayCapture() {
 					u.Display.input.SetText("view=")
 					u.Display.input.Autocomplete()
 				case "9":
-					u.runRootCmd()
+					u.runQuitCmd()
 				default:
 					u.Display.BottomHelp.SetPlaceholder("  Invalid command").SetPlaceholderTextColor(tcell.ColorRed)
 
@@ -391,7 +394,7 @@ func (u *UI) SetDisplayCapture() {
 
 var mu sync.Mutex
 
-func RunLivetail(u *UI, livetailStatus *LivetailStatus, stop chan error) {
+func RunLivetail(u *UI, livetailStatus *LivetailStatus) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -405,20 +408,20 @@ func RunLivetail(u *UI, livetailStatus *LivetailStatus, stop chan error) {
 		u.Display.View.SetTextAlign(tview.AlignLeft)
 
 		u.Livetail.ApplyFilter(u.Config, u.SourceFilter, u.StartDateTimeFilter, u.EndDateTimeFilter, u.FieldBasedFilterName, u.FieldBasedFilterValue, u.FieldBasedFilterCondition)
-		go u.Livetail.GenerateLogs(stop, u.Config)
-		go display(u, u.Livetail, stop)
+		go u.Livetail.GenerateLogs(u.Ctx, u.Config)
+		go display(u, u.Livetail)
 		u.Display.View.ScrollToEnd()
 	}
 }
 
-func StopLivetail(u *UI, livetailStatus *LivetailStatus, stop chan error) {
+func StopLivetail(u *UI, livetailStatus *LivetailStatus) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	if livetailStatus.LivetailEnabled {
 		livetailStatus.LivetailEnabled = false
-		stop <- errors.New("stop")
-		stop <- errors.New("stop")
+		_, cancel := context.WithCancel(u.Ctx)
+		defer cancel()
 	}
 }
 
