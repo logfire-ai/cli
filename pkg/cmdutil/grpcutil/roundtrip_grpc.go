@@ -2,6 +2,7 @@ package grpcutil
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,7 +48,9 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 
 			response, err := filterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
-				continue
+				log.Printf("Request: %v", request)
+				log.Printf("Error %v", err)
+				return
 			}
 
 			if len(response.Records) > 0 {

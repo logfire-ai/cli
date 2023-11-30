@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+
+	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -75,7 +76,10 @@ func NewCmdSql(f *cmdutil.Factory) *cobra.Command {
 func GetRecommendations(opts *SQLQueryOptions, cfg config.Config) {
 	opts.IO.StartProgressIndicatorWithLabel("Getting recommendations, please wait...")
 
-	recommendations, _ := APICalls.GetRecommendations(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, cfg.Get().Role)
+	recommendations, err := APICalls.GetRecommendations(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, cfg.Get().Role)
+	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s",err)
+	}
 
 	var options []string
 
@@ -230,7 +234,7 @@ func createGrpcSource(sources []sourceModels.Source) []*pb.Source {
 }
 
 // getSQL makes the actual grpc call to connect with flink-service.
-func getSQL(client pb.FlinkServiceClient, sources []*pb.Source, opts *SQLQueryOptions) (*pb.SQLResponse, error) {
+func getSQL(client pb.FilterServiceClient, sources []*pb.Source, opts *SQLQueryOptions) (*pb.SQLResponse, error) {
 	// Prepare the request payload
 	request := &pb.SQLRequest{
 		Sql:       opts.SQLQuery,

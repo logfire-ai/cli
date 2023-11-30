@@ -223,7 +223,7 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 	defer conn.Close()
 
 	// Create a gRPC client
-	grpcClient := pb.NewFlinkServiceClient(conn)
+	grpcClient := pb.NewFilterServiceClient(conn)
 
 	grpcClient.CreateSource(context.Background(), pbSource)
 

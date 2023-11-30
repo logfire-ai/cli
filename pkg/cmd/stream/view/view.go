@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -82,7 +81,7 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 		FieldBasedFilters: []*pb.FieldBasedFilter{},
 		SearchQueries:     []string{},
 		Sources:           []*pb.Source{},
-		BatchSize:         100,
+		BatchSize:         15,
 		IsScrollDown:      true,
 	}
 
@@ -109,36 +108,11 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 		return
 	}
 
-	if !view.DateFilter.StartDate.IsZero() {
-		request.DateTimeFilter.StartTimeStamp = timestamppb.New(view.DateFilter.StartDate)
-
-		if !view.DateFilter.EndDate.IsZero() {
-			request.DateTimeFilter.EndTimeStamp = timestamppb.New(view.DateFilter.EndDate)
-		}
-	}
-
-	if len(view.SearchFilter) != 0 {
-		for _, v := range view.SearchFilter {
-			if v.Key != "" {
-				if v.Condition != "" {
-					if v.Value != "" {
-						request.FieldBasedFilters = append(request.FieldBasedFilters, &pb.FieldBasedFilter{
-							FieldName:  v.Key,
-							FieldValue: v.Value,
-							Operator:   pb.FieldBasedFilter_Operator(pb.FieldBasedFilter_Operator_value[v.Condition]),
-						})
-					}
-				}
-			}
-		}
-	}
-
-	if len(view.TextFilter) != 0 {
-		request.SearchQueries = append(request.SearchQueries, view.TextFilter...)
-	}
-
 	pbSources := grpcutil.CreateGrpcSource(view.SourcesFilter)
 	var sourcesOffset = make(map[string]uint64)
+
+	request.Sources = pbSources
+	request.ViewID = view.Id
 
 	filterService := grpcutil.NewFilterService()
 	defer filterService.CloseConnection()

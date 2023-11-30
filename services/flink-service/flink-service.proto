@@ -1,10 +1,18 @@
 syntax = "proto3";
 
-package sh.logfire;
+package ai.logfire;
 
-option go_package = "logfire/flink-service";
+option go_package = "github.com/logfire";
 
 import "google/protobuf/timestamp.proto";
+
+service FilterService {
+  rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
+  rpc SubmitSQL (SQLRequest) returns (SQLResponse) {}
+  rpc SubmitAlertRequest(AlertRequest) returns (RegisteredAlert) {}
+  rpc DeleteAlertRequest(RegisteredAlert) returns (Empty) {}
+  rpc CreateSource(Source) returns (Empty) {}
+}
 
 enum SeverityLevel {
   INFO = 0;
@@ -19,6 +27,39 @@ enum SeverityLevel {
   ALERT = 9;
 }
 
+message RegisteredAlert {
+  string alertID = 1;
+}
+
+message Empty {
+
+}
+
+message SourceInfo {
+  Source source = 1;
+  optional string latestTimestamp = 2;
+}
+
+message SQLRequest {
+  string sql = 1;
+  repeated Source sources = 2;
+  uint32 batchSize = 3;
+  DateTimeFilter dateTimeFilter = 4;
+  string teamID = 5;
+}
+
+message SQLResponse {
+  string data = 1;
+  Source source = 2;
+}
+
+message RecordDetailsRequest {
+  string sourceName = 1;
+  uint64 offset = 3;
+  string sourceID = 4;
+  string teamID = 5;
+}
+
 message DateTimeFilter {
   google.protobuf.Timestamp startTimeStamp = 1;
   google.protobuf.Timestamp endTimeStamp = 2;
@@ -26,10 +67,6 @@ message DateTimeFilter {
 
 message RecordDetails {
   string record = 1;
-}
-
-message Empty {
-
 }
 
 message Source {
@@ -65,13 +102,15 @@ message FieldBasedFilter {
   Operator operator = 3;
 }
 
-message FilterRequest   {
-  repeated SeverityLevel severityLevels = 1;
-  DateTimeFilter dateTimeFilter = 2;
-  repeated string searchQueries = 3;
-  string sqlQuery = 4;
-  repeated FieldBasedFilter fieldBasedFilters = 5;
-  repeated Source sources = 6;
+message FilterRequest {
+  string teamID = 1;
+  string viewID = 2;
+  repeated SeverityLevel severityLevels = 3;
+  DateTimeFilter dateTimeFilter = 4;
+  repeated string searchQueries = 5;
+  string sqlQuery = 6;
+  repeated FieldBasedFilter fieldBasedFilters = 7;
+  repeated Source sources = 8;
   uint32 batchSize = 9;
   bool isScrollDown = 10;
 }
@@ -95,20 +134,132 @@ message FilterResponse {
   string jobName = 2;
 }
 
-message SQLRequest {
-  string sql = 1;
-  repeated Source sources = 2;
-  uint32 batchSize = 3;
-  DateTimeFilter dateTimeFilter = 4;
+message AlertJob {
+  repeated AlertRequest alertRequests = 1;
 }
 
-message SQLResponse {
-  string data = 1;
-  Source source = 2;
+message AlertDetails {
+  string name = 1;
+  string description = 2;
+  SeverityLevel alertSeverity = 3;
+  repeated string alertLabels = 4;
+  string runbook = 5;
 }
 
-service FlinkService {
-  rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
-  rpc SubmitSQL (SQLRequest) returns (SQLResponse) {}
-  rpc CreateSource(Source) returns (Empty) {}
+message Window {
+  message TumblingWindow {
+    uint64 timeIntervalMs = 1;
+  }
+
+  oneof windowType {
+    TumblingWindow tumblingWindow = 1;
+  }
+}
+
+message ViewBasedAlertRequest {
+  repeated Source sources = 1;
+  repeated FieldBasedFilter fieldBasedFilters = 2;
+  bool alertWhenHasMoreRecords = 3;
+  uint32 numberOfRecords = 4;
+  uint32 withinSeconds = 5;
+  string alertId = 6;
+  SeverityLevel alertSeverity = 7;
+}
+
+
+message CEPRequest {
+  string partitionBy = 1;
+  uint64 withinIntervalSeconds = 2;
+  string measures = 3;
+  string afterMatchSkip = 4;
+  string pattern = 5;
+  string define = 6;
+  Source source = 7;
+  repeated FieldBasedFilter fieldBasedFilters = 8;
+  repeated FieldBasedFilter fieldBasedFiltersAfterCep = 9;
+}
+
+
+message StructuredAlertRequest {
+  message Aggregation {
+    string fieldName = 1;
+
+    enum AggregationFunction {
+      COUNT = 0;
+      DISTINCT = 1;
+      SUM = 2;
+      MIN = 3;
+      AVG = 4;
+      FIRST_VALUE = 5;
+      LAST_VALUE = 6;
+      VARIANCE_POPULATION = 7;
+      VARIANCE_SAMPLE = 8;
+      STANDARD_DEVIATION_SAMPLE = 9;
+      STANDARD_DEVIATION_POPULATION = 10;
+    }
+
+    AggregationFunction aggregationFunction = 2;
+  }
+
+  repeated FieldBasedFilter fieldBasedFilters = 1;
+  enum AlertWhen {
+    EQUALS = 0;
+    NOT_EQUALS = 1;
+    GREATER_THAN = 2;
+    GREATER_THAN_EQUALS = 3;
+    LESS_THAN = 4;
+    LESS_THAN_EQUALS = 5;
+  }
+  AlertWhen alertWhen = 2;
+  double alertValue = 3;
+  Aggregation aggregationRequest = 4;
+  Window window = 5;
+  Source source = 6;
+}
+
+message AlertActions {
+  message WebhookAction {
+    string name = 1;
+    string url = 2;
+    enum HttpMethod {
+      POST = 0;
+      HEAD = 1;
+      GET = 2;
+      PUT = 3;
+      PATCH = 4;
+    }
+    HttpMethod httpMethod = 3;
+
+    message HeaderDetails {
+      string headerName = 1;
+      string headerValue = 2;
+    }
+    repeated HeaderDetails headerDetails = 4;
+
+    message BasicAuthentication {
+      string username = 1;
+      string password = 2;
+    }
+
+    BasicAuthentication basicAuthentication = 5;
+  }
+
+
+  oneof actionType {
+    WebhookAction webhookAction = 1;
+  }
+}
+
+
+message AlertRequest {
+
+  AlertDetails details = 1;
+
+  oneof alertQueryType {
+    StructuredAlertRequest structuredAlertRequest = 2;
+    CEPRequest cepRequest = 3;
+    ViewBasedAlertRequest viewBasedAlertRequest = 4;
+  }
+
+  string alertId = 5;
 }

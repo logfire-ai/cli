@@ -113,6 +113,18 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		id := uuid.New()
 
+		istLocation, err := time.LoadLocation("Asia/Kolkata")
+		if err != nil {
+			fmt.Println("Error loading IST location:", err)
+			return
+		}
+
+		// Get the current time in the IST time zone
+		currentTime := time.Now().In(istLocation)
+
+		// Format and print the time
+		formattedTime := currentTime.Format("2006-01-02 15:04:05")
+
 		cmd := exec.Command("curl",
 			"--location",
 			cfg.Get().GrpcIngestion,
@@ -125,7 +137,7 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			"--header",
 			fmt.Sprintf("Github-Run: %v", opts.Run),
 			"--data",
-			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
+			fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]",formattedTime, id),
 		)
 
 		go grpcutil.WaitForLog(cfg, id, opts.TeamId, opts.SourceId, stop)
@@ -223,18 +235,31 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 		id := uuid.New()
 
+		istLocation, err := time.LoadLocation("Asia/Kolkata")
+		if err != nil {
+			fmt.Println("Error loading IST location:", err)
+			return
+		}
+
+		// Get the current time in the IST time zone
+		currentTime := time.Now().In(istLocation)
+
+		// Format and print the time
+		formattedTime := currentTime.Format("2006-01-02 15:04:05")
+
 		cmd := exec.Command("curl",
 			"--location",
 			cfg.Get().GrpcIngestion,
 			"--header",
 			"Content-Type: application/json",
 			"--header",
-			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
-			"--header",
 			"Diagnostic: True",
+			"--header",
+			fmt.Sprintf("Authorization: Bearer %s", sourceToken),
 			"--data",
-			fmt.Sprintf("[{\"dt\":\"2023-06-15T6:00:39.351Z\",\"message\":\"%s\"}]", id),
+			fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]", formattedTime, id),
 		)
+
 		if err != nil {
 			log.Fatal(err)
 		}

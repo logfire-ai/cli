@@ -28,7 +28,7 @@ var request = &pb.FilterRequest{
 	FieldBasedFilters: []*pb.FieldBasedFilter{},
 	SearchQueries:     []string{},
 	Sources:           []*pb.Source{},
-	BatchSize:         100,
+	BatchSize:         15,
 	IsScrollDown:      true,
 }
 
@@ -106,18 +106,20 @@ func (l *Livetail) CreateConnection() {
 	l.FilterService = grpcutil.NewFilterService()
 }
 
-func (l *Livetail) GenerateLogs(stop chan error, cfg config.Config) {
+func (l *Livetail) GenerateLogs(ctx context.Context, cfg config.Config) {
 	request.Sources = l.pbSources
 	theme := cfg.Get().Theme
 
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		default:
 			response, err := l.FilterService.Client.GetFilteredData(context.Background(), request)
 			if err != nil {
-				stop <- err
+				_, cancel := context.WithCancel(ctx)
+				defer cancel()
+
 				return
 			}
 
@@ -186,7 +188,7 @@ func addOffset(sources []*pb.Source, offset map[string]uint64) []*pb.Source {
 }
 
 // getFilteredData makes the actual grpc call to connect with flink-service.
-// func getFilteredData(client pb.FlinkServiceClient, sources []*pb.Source) (*pb.FilteredRecords, error) {
+// func getFilteredData(client pb.FilterServiceClient, sources []*pb.Source) (*pb.FilteredRecords, error) {
 // 	// Invoke the gRPC method
 // 	request.Sources = sources
 
