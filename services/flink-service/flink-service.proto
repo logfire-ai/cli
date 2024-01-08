@@ -104,16 +104,17 @@ message FieldBasedFilter {
 
 message FilterRequest {
   string teamID = 1;
-  string viewID = 2;
-  repeated SeverityLevel severityLevels = 3;
+  string accountID = 2;
+  string viewID = 3;
   DateTimeFilter dateTimeFilter = 4;
-  repeated string searchQueries = 5;
-  string sqlQuery = 6;
-  repeated FieldBasedFilter fieldBasedFilters = 7;
-  repeated Source sources = 8;
-  uint32 batchSize = 9;
-  bool isScrollDown = 10;
+  string sqlQuery = 5;
+  repeated FieldBasedFilter fieldBasedFilters = 6;
+  repeated Source sources = 7;
+  uint32 batchSize = 8;
+  bool isScrollDown = 9;
+  repeated string searchQueries = 10;
 }
+
 
 message FilteredRecord {
   uint64 offset = 1;
