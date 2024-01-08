@@ -3,6 +3,7 @@ package models
 type UserBody struct {
 	ProfileID string `json:"profileId"`
 	TeamID    string `json:"teamId"`
+	AccountID string `json:"accountId"`
 	Onboarded bool   `json:"onboarded"`
 	Email     string `json:"email"`
 	Role      string `json:"role"`

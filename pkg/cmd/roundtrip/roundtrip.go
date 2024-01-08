@@ -1,6 +1,7 @@
 package roundtrip
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -66,6 +67,7 @@ type PromptRoundTripOptions struct {
 	SourceName string
 	Platform   string
 	Run        int
+	Ctx        context.Context
 }
 
 func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
@@ -76,6 +78,8 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 		HttpClient: f.HttpClient,
 		Config:     f.Config,
 	}
+
+	opts.Ctx = context.Background()
 
 	cmd := &cobra.Command{
 		Use:     "roundtrip",
@@ -96,8 +100,6 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 
 	return cmd
 }
-
-var stop = make(chan bool)
 
 func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
@@ -125,7 +127,9 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		// Format and print the time
 		formattedTime := currentTime.Format("2006-01-02 15:04:05")
 
-		cmd := exec.Command("curl",
+		ctxCmd, cancelCmd := context.WithTimeout(context.Background(), 5*time.Second)
+
+		cmd := exec.CommandContext(ctxCmd, "curl", "bash", "-c",
 			"--location",
 			cfg.Get().GrpcIngestion,
 			"--header",
@@ -137,10 +141,12 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			"--header",
 			fmt.Sprintf("Github-Run: %v", opts.Run),
 			"--data",
-			fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]",formattedTime, id),
+			fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]", formattedTime, id),
 		)
 
-		go grpcutil.WaitForLog(cfg, id, opts.TeamId, opts.SourceId, stop)
+		ctx, cancel := context.WithCancel(opts.Ctx)
+
+		go grpcutil.WaitForLog(cfg, id, opts.TeamId, cfg.Get().AccountId, opts.SourceId, ctx, cancel, cancelCmd)
 
 		start := time.Now()
 
@@ -149,14 +155,12 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		timeout := 20 * time.Second
 
 		select {
-		case <-stop:
+		case <-ctx.Done():
+			cancelCmd()
 		case <-time.After(time.Until(start.Add(timeout))):
 			fmt.Println("Request timed out.")
-			close(stop) // Signal the goroutine to stop
 			os.Exit(1)
 		}
-
-		<-stop
 
 		elapsed := time.Since(start)
 
@@ -247,7 +251,9 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		// Format and print the time
 		formattedTime := currentTime.Format("2006-01-02 15:04:05")
 
-		cmd := exec.Command("curl",
+		ctxCmd, cancelCmd := context.WithTimeout(context.Background(), 10*time.Second)
+
+		cmd := exec.CommandContext(ctxCmd, "curl", "bash", "-c",
 			"--location",
 			cfg.Get().GrpcIngestion,
 			"--header",
@@ -260,11 +266,9 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 			fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]", formattedTime, id),
 		)
 
-		if err != nil {
-			log.Fatal(err)
-		}
+		ctx, cancel := context.WithCancel(opts.Ctx)
 
-		go grpcutil.WaitForLog(cfg, id, opts.TeamId, opts.SourceId, stop)
+		go grpcutil.WaitForLog(cfg, id, opts.TeamId, cfg.Get().AccountId, opts.SourceId, ctx, cancel, cancelCmd)
 
 		start := time.Now()
 
@@ -273,14 +277,12 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 		timeout := 20 * time.Second
 
 		select {
-		case <-stop:
+		case <-ctx.Done():
+			cancelCmd()
 		case <-time.After(time.Until(start.Add(timeout))):
 			fmt.Println("Request timed out.")
-			close(stop) // Signal the goroutine to stop
 			os.Exit(1)
 		}
-
-		<-stop
 
 		elapsed := time.Since(start)
 

@@ -2,17 +2,20 @@ package grpcutil
 
 import (
 	"context"
+	"time"
+
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
-func GetLog(token string, endpoint string, teamId string, sourceId string, stop chan error) {
+func GetLog(token string,  endpoint string, teamId string, accountId string, sourceId string, stop chan error) {
 	request := &pb.FilterRequest{
 		DateTimeFilter: &pb.DateTimeFilter{},
 		Sources:        []*pb.Source{},
+		TeamID: teamId,
+		AccountID: accountId,
 		BatchSize:      1,
 		IsScrollDown:   true,
 	}
