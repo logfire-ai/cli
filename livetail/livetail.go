@@ -29,7 +29,7 @@ var request = &pb.FilterRequest{
 	SearchQueries:     []string{},
 	Sources:           []*pb.Source{},
 	BatchSize:         15,
-	IsScrollDown:      true,
+	IsScrollDown:      false,
 }
 
 func NewLivetail() (*Livetail, error) {
@@ -66,6 +66,9 @@ func (livetail *Livetail) ApplyFilter(
 	client := &http.Client{}
 
 	var sources []models.Source
+
+	request.AccountID = cfg.Get().AccountId
+	request.TeamID = cfg.Get().TeamId
 
 	if sourceFilter != nil {
 		for _, sourceId := range sourceFilter {
@@ -116,6 +119,7 @@ func (l *Livetail) GenerateLogs(ctx context.Context, cfg config.Config) {
 			return
 		default:
 			response, err := l.FilterService.Client.GetFilteredData(context.Background(), request)
+
 			if err != nil {
 				_, cancel := context.WithCancel(ctx)
 				defer cancel()
