@@ -82,7 +82,7 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 		SearchQueries:     []string{},
 		Sources:           []*pb.Source{},
 		BatchSize:         15,
-		IsScrollDown:      true,
+		IsScrollDown:      false,
 	}
 
 	cs := opts.IO.ColorScheme()
@@ -111,6 +111,8 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 	pbSources := grpcutil.CreateGrpcSource(view.SourcesFilter)
 	var sourcesOffset = make(map[string]uint64)
 
+	request.AccountID = cfg.Get().AccountId
+	request.TeamID = opts.TeamId
 	request.Sources = pbSources
 	request.ViewID = view.Id
 

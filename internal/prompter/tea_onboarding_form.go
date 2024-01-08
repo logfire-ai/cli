@@ -276,7 +276,7 @@ var step = "signup"
 var subStep = "email"
 
 func waitForLog(m *model) {
-	go grpcutil.GetLog(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.sourceId, stop)
+	go grpcutil.GetLog(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, stop)
 	err := <-stop
 	if err != nil {
 		m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
@@ -365,7 +365,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				err = m.config.UpdateConfig(nil, nil, nil, nil, nil, &team.ID, nil, nil, nil, nil)
+				err = m.config.UpdateConfig(nil, nil, nil, nil, nil, &team.ID, nil, nil, nil, nil, nil)
 				if err != nil {
 					m.err = err
 					return m, nil

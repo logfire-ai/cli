@@ -65,7 +65,7 @@ func PromptStreamRun(opts *PromptStreamOptions) {
 		teamid, _ := pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		err := cfg.UpdateConfig(nil, nil, nil, nil,
-			nil, &teamid, nil, nil, nil, nil)
+			nil, &teamid, &cfg.Get().AccountId, nil, nil, nil, nil)
 		if err != nil {
 			return
 		}

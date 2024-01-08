@@ -13,11 +13,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string, stop chan bool) {
+func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, accountId string, sourceId string, ctx context.Context, cancel context.CancelFunc, cancelCmd context.CancelFunc) {
 	var request = &pb.FilterRequest{
 		DateTimeFilter: &pb.DateTimeFilter{},
 		Sources:        []*pb.Source{},
-		BatchSize:      100,
+		TeamID:         teamId,
+		AccountID:      accountId,
+		BatchSize:      1,
 		IsScrollDown:   true,
 	}
 
@@ -42,7 +44,7 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		default:
 
@@ -54,12 +56,14 @@ func WaitForLog(cfg config.Config, id uuid.UUID, teamId string, sourceId string,
 			}
 
 			if len(response.Records) > 0 {
-				for _, r := range response.Records {
-					if r.Message == id.String() {
-						stop <- true
-					}
+				if response.Records[0].Message == id.String() {
+					cancelCmd()
+					cancel()
 				}
 			}
+
+			// time.Sleep(500 * time.Millisecond)
 		}
+
 	}
 }

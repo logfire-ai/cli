@@ -2,14 +2,15 @@ package settings
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"strings"
 )
 
 type SettingsOptions struct {
@@ -85,7 +86,7 @@ func SettingsRun(opts *SettingsOptions) {
 
 	loweredTheme := strings.ToLower(opts.Theme)
 
-	err = cfg.UpdateConfig(nil, nil, nil, nil, nil, nil, nil, nil, nil, &loweredTheme)
+	err = cfg.UpdateConfig(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, &loweredTheme)
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to apply settings\n", cs.FailureIcon())
 		return

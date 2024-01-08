@@ -17,13 +17,14 @@ type AuthConfig struct {
 	RefreshToken  string `mapstructure:"refresh_token"`
 	EndPoint      string `mapstructure:"endpoint"`
 	TeamId        string `mapstructure:"team_id"`
+	AccountId     string `mapstructure:"account_id"`
 	GrpcEndpoint  string `mapstructure:"grpc_endpoint"`
 	GrpcIngestion string `mapstructure:"grpc_ingestion"`
 	Theme         string `mapstructure:"theme"`
 }
 
 type Config interface {
-	UpdateConfig(*string, *string, *string, *string, *string, *string, *string, *string, *string, *string) error
+	UpdateConfig(*string, *string, *string, *string, *string, *string, *string, *string, *string, *string, *string) error
 	DeleteConfig() error
 	HasEnvToken() bool
 	Get() *AuthConfig
@@ -50,6 +51,7 @@ func NewConfig() (Config, error) {
 	viper.SetDefault("grpc_endpoint", "api.logfire.ai:443")
 	viper.SetDefault("grpc_ingestion", "https://in.logfire.ai")
 	viper.SetDefault("team_id", "")
+	viper.SetDefault("account_id", "")
 	viper.SetDefault("theme", "dark")
 
 	// Check if the config file exists
@@ -79,7 +81,7 @@ func (c *cfg) Get() *AuthConfig {
 }
 
 // UpdateConfig updates the configuration values and writes them to the config file
-func (c *cfg) UpdateConfig(username, role, token, profileID, refreshToken, teamid, endpoint, grpcEndpoint, grpcIngestion, theme *string) error {
+func (c *cfg) UpdateConfig(username, role, token, profileID, refreshToken, teamid, accountid, endpoint, grpcEndpoint, grpcIngestion, theme *string) error {
 	// Write the updated configuration to the file
 
 	if username != nil {
@@ -110,6 +112,11 @@ func (c *cfg) UpdateConfig(username, role, token, profileID, refreshToken, teami
 	if teamid != nil {
 		viper.Set("team_id", *teamid)
 		c.AuthCfg.TeamId = *teamid
+	}
+
+	if accountid != nil {
+		viper.Set("account_id", *accountid)
+		c.AuthCfg.AccountId = *accountid
 	}
 
 	if endpoint != nil {

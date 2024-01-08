@@ -98,7 +98,7 @@ func livetailRun(opts *LivetailOptions) {
 		SearchQueries:     []string{},
 		Sources:           []*pb.Source{},
 		BatchSize:         15,
-		IsScrollDown:      true,
+		IsScrollDown:      false,
 	}
 
 	cs := opts.IO.ColorScheme()
@@ -191,7 +191,7 @@ func livetailRun(opts *LivetailOptions) {
 		}
 	}
 
-	if opts.SaveView == true {
+	if opts.SaveView {
 		err := APICalls.CreateView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, sources, opts.SearchFilter,
 			opts.FieldBasedFilterName, opts.FieldBasedFilterValue, opts.FieldBasedFilterCondition,
 			opts.StartDateTimeFilter, opts.EndDateTimeFilter, opts.ViewName)
@@ -228,6 +228,8 @@ func livetailRun(opts *LivetailOptions) {
 	var sourcesOffset = make(map[string]uint64)
 
 	request.Sources = pbSources
+	request.AccountID = cfg.Get().AccountId
+	request.TeamID = opts.TeamId
 
 	filterService := grpcutil.NewFilterService()
 	defer filterService.CloseConnection()

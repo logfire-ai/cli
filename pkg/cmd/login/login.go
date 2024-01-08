@@ -97,12 +97,12 @@ func loginRun(opts *LoginOptions) {
 	}
 
 	if opts.Staging {
-		endpoint := "https://api-stg.logfire.ai/"
-		grpc_endpoint := "api-stg.logfire.ai:443"
-		grpc_ingestion := "https://in-stg.logfire.ai"
+		endpoint := "https://api-staging.logfire.ai/"
+		grpc_endpoint := "api-staging.logfire.ai:443"
+		grpc_ingestion := "https://in-staging.logfire.ai"
 
 		err = cfg.UpdateConfig(nil, nil, nil, nil,
-			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
+			nil, nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
 		if err != nil {
 			return
 		}
@@ -114,7 +114,7 @@ func loginRun(opts *LoginOptions) {
 		grpc_ingestion := "http://localhost:8888/logfire.sh"
 
 		err = cfg.UpdateConfig(nil, nil, nil, nil,
-			nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
+			nil, nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
 		if err != nil {
 			return
 		}
@@ -293,12 +293,11 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	io.StopProgressIndicator()
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, &response.UserBody.AccountID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(io.Out, "\n%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.UserBody.Email))
-
 
 	if !response.UserBody.Onboarded {
 		fmt.Fprintf(io.Out, "\n%s Looks like your onboarding isn't done yet. Complete it now with `logfire bootstrap` for the full experience! \n \n", cs.WarningIcon())
@@ -366,7 +365,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, nil, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, &response.UserBody.AccountID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}
