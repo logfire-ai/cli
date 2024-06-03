@@ -1,7 +1,6 @@
 package prompter
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -279,7 +278,8 @@ func waitForLog(m *model) {
 	go grpcutil.GetLog(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, stop)
 	err := <-stop
 	if err != nil {
-		m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
+		// m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
+		m.err = err
 		m.nextInput()
 	}
 	subStep = "awesome"
@@ -298,9 +298,9 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					m.err = err
 					return m, nil
 				} else if msg == "already registered user. Sent link to login" {
-					m.err = errors.New("you are already a user, please use logfire commands")
-					os.Exit(0)
-					return m, nil
+					// m.err = errors.New("you are already a user, please use logfire commands")
+					// os.Exit(0)
+					// return m, nil
 				}
 				subStep = "token"
 				m.nextInput()
