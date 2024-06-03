@@ -80,10 +80,10 @@ release:
 brews:
   - repository:
       name: tap
-      owner: logfire-sh
+      owner: logfire-ai
     description: 'Logfire command line interface'
-    homepage: 'https://github.com/logfire-sh/cli'
-    url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
+    homepage: 'https://github.com/logfire-ai/cli'
+    url_template: 'https://github.com/logfire-ai/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     download_strategy: CurlDownloadStrategy
     folder: Formula
     license: 'Apache 2.0'
@@ -112,7 +112,7 @@ nfpms:
 
 scoops:
   - name: logfire
-    url_template: 'https://github.com/logfire-sh/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
+    url_template: 'https://github.com/logfire-ai/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
     commit_author:
       name: logfire
       email: support@logfire.ai
@@ -128,5 +128,5 @@ scoops:
       name: cli
       branch: main
       git:
-        url: 'git@github.com:logfire-sh/cli.git'
+        url: 'git@github.com:logfire-ai/cli.git'
         private_key: '{{ .Env.PRIVATE_KEY_PATH }}'
