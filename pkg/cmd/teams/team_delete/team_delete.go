@@ -2,15 +2,17 @@ package team_delete
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type TeamDeleteOptions struct {
@@ -43,15 +45,20 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire teams delete
 
 			# start argument setup
-			$ logfire teams delete --teamid <team-id>
+			$ logfire teams delete --team-name <team-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
+			cfg, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "Failed to read config\n")
+			}
+
 			if opts.IO.CanPrompt() {
 				opts.Interactive = true
 			}
 
 			if !opts.Interactive && opts.TeamId == "" {
-				fmt.Fprint(opts.IO.ErrOut, "team id is required.\n")
+				opts.TeamId = cfg.Get().TeamId
 			}
 
 			teamDeleteRun(opts)
@@ -68,11 +75,24 @@ func teamDeleteRun(opts *TeamDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive && opts.TeamId == "" {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			opts.TeamId = cfg.Get().TeamId
 		}
 	}
 

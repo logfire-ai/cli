@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 
 	"github.com/MakeNowJust/heredoc"
@@ -56,7 +57,7 @@ func NewSourceDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sources delete
 
 			# start argument setup
-			$ logfire sources delete --team-id <team-id> --source-id <source-id>
+			$ logfire sources delete --team-name <team-name> --source-id <source-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -65,7 +66,7 @@ func NewSourceDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 
 			if !opts.Interactive {
 				if opts.TeamId == "" {
-					fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+					fmt.Fprint(opts.IO.ErrOut, "team-name is required.\n")
 					return
 				}
 
@@ -79,7 +80,7 @@ func NewSourceDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team ID for which the source is to be deleted.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team ID for which the source is to be deleted.")
 	cmd.Flags().StringVar(&opts.SourceId, "source-id", "", "Source ID for which the source is to be deleted.")
 	return cmd
 }
@@ -93,6 +94,19 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 		return
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive && opts.TeamId == "" && opts.SourceId == "" {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
@@ -100,7 +114,7 @@ func sourceDeleteRun(opts *SourceDeleteOptions) {
 
 	} else {
 		if opts.TeamId == "" || opts.SourceId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s team-id and source-id both are required.\n", cs.FailureIcon())
+			fmt.Fprintf(opts.IO.ErrOut, "%s team-name and source-id both are required.\n", cs.FailureIcon())
 		}
 	}
 

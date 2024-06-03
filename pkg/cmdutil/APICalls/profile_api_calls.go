@@ -428,3 +428,63 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 
 	return nil
 }
+
+func UpdateFlag(cfg config.Config, profileID, teamId, endpoint string) error {
+	var response UpdateProfileModels.UpdateFlagResponse
+
+	updateFlagReq := UpdateProfileModels.UpdateFlagRequest{
+		TeamId: teamId,
+	}
+
+	client := &http.Client{}
+
+	reqBody, err := json.Marshal(updateFlagReq)
+	if err != nil {
+		fmt.Printf("Failed to marshal request body: %v\n", err)
+		return err
+	}
+
+	url := endpoint + "/" + profileID + "/update-flags"
+
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
+		return err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Failed to read response body: %v\n", err)
+		return err
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		fmt.Printf("Failed to unmarshal JSON: %v\n", err)
+		return err
+	}
+
+	if !response.IsSuccessful {
+		return errors.New(response.Message[0])
+	}
+
+	// err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
+	// 	&response.BearerToken.RefreshToken, nil, &response.UserBody.AccountID, nil, nil, nil, nil)
+	// if err != nil {
+	// 	fmt.Printf("Failed to update config: %v\n", err)
+	// 	return err
+	// }
+
+	return nil
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -46,7 +47,7 @@ func NewPauseAlertCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire alerts pause
 
 			# start argument setup
-			$ logfire alerts pause --team-id <team-id> --alert-pause <true|false> --alert-id <alert-id> (multiple alerts are allowed)
+			$ logfire alerts pause --team-name <team-name> --alert-pause <true|false> --alert-id <alert-id> (multiple alerts are allowed)
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -56,7 +57,7 @@ func NewPauseAlertCmd(f *cmdutil.Factory) *cobra.Command {
 			PauseAlertRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id from which alert is to be pause or unpaused.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name from which alert is to be pause or unpaused.")
 	cmd.Flags().BoolVarP(&opts.AlertPause, "alert-pause", "p", false, "Alert pause true or false.")
 	cmd.Flags().StringSliceVarP(&opts.AlertId, "alert-id", "a", nil, "alerts to be paused or unpaused. (multiple alerts are allowed)")
 	return cmd
@@ -69,6 +70,19 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 		opts.AlertId, _ = pre_defined_prompters.AskAlertIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
@@ -78,12 +92,11 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 			os.Exit(0)
 		}
 
-		opts.AlertPause, err = opts.Prompter.Confirm("Do you want to pause the alerts? (Yes = Pause, No = Un-pause", false)
+		opts.AlertPause, _ = opts.Prompter.Confirm("Do you want to pause the alerts? (Yes = Pause, No = Un-pause", false)
 
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.AlertId == nil {

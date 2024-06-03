@@ -293,7 +293,7 @@ func PasswordSignin(io *iostreams.IOStreams, cfg config.Config, cs *iostreams.Co
 	io.StopProgressIndicator()
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, &response.UserBody.AccountID, nil, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.TeamBody.Id, &response.UserBody.AccountID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -365,7 +365,7 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
-		&response.BearerToken.RefreshToken, &response.UserBody.TeamID, &response.UserBody.AccountID, nil, nil, nil, nil)
+		&response.BearerToken.RefreshToken, &response.TeamBody.Id, &response.UserBody.AccountID, nil, nil, nil, nil)
 	if err != nil {
 		return err
 	}

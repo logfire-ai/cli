@@ -2,16 +2,17 @@ package views_delete
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type ViewsDeleteOptions struct {
@@ -45,7 +46,7 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire views delete
 
 			# start argument setup
-			$ logfire views delete --team-id <team-id> --view-id <view-id>
+			$ logfire views delete --team-name <team-name> --view-id <view-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -55,7 +56,7 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			viewDeleteRun(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team id to be deleted.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name to be deleted.")
 	cmd.Flags().StringVar(&opts.ViewId, "view-id", "", "View id to be deleted.")
 	return cmd
 }
@@ -67,14 +68,26 @@ func viewDeleteRun(opts *ViewsDeleteOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		opts.ViewId, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.ViewId == "" {

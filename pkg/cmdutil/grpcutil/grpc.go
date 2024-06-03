@@ -8,7 +8,6 @@ import (
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/grpc"
 
-	//"google.golang.org/grpc/credentials"
 	"log"
 
 	"google.golang.org/grpc/credentials"

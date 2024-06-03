@@ -15,6 +15,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -94,7 +95,7 @@ func NewCmdRoundTrip(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the sources will be fetched.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which the sources will be fetched.")
 	cmd.Flags().StringVarP(&opts.SourceId, "source-id", "s", "", "Source ID for which the roundtrip is tested)")
 	cmd.Flags().IntVarP(&opts.Run, "run", "r", 0, "Number of rounds")
 
@@ -105,6 +106,19 @@ func PromptRoundTripRun(opts *PromptRoundTripOptions) {
 
 	cfg, _ := opts.Config()
 	cs := opts.IO.ColorScheme()
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
 
 	if opts.TeamId != "" && opts.SourceId != "" {
 

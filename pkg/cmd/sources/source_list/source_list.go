@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/olekukonko/tablewriter"
 
@@ -52,7 +53,7 @@ func NewSourceListCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sources list
 
 			# start argument setup
-			$ logfire sources list --team-id <team-id>
+			$ logfire sources list --team-name <team-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -60,7 +61,7 @@ func NewSourceListCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if opts.TeamId == "" && !opts.Interactive {
-				fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+				fmt.Fprint(opts.IO.ErrOut, "team-name is required.\n")
 				return
 			}
 
@@ -68,7 +69,7 @@ func NewSourceListCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team ID for which the sources will be fetched.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team ID for which the sources will be fetched.")
 	return cmd
 }
 
@@ -80,11 +81,24 @@ func sourceListRun(opts *SourceListOptions) {
 		return
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive && opts.TeamId == "" {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
+			fmt.Fprintf(opts.IO.ErrOut, "%s team-name is required.\n", cs.FailureIcon())
 			return
 		}
 	}

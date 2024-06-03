@@ -2,10 +2,16 @@ package models
 
 type UserBody struct {
 	ProfileID string `json:"profileId"`
-	TeamID    string `json:"teamId"`
 	AccountID string `json:"accountId"`
 	Onboarded bool   `json:"onboarded"`
 	Email     string `json:"email"`
+	Role      string `json:"role"`
+}
+
+type TeamBody struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	AccountId string `json:"accountId"`
 	Role      string `json:"role"`
 }
 
@@ -21,6 +27,7 @@ type Response struct {
 	Code         int         `json:"code"`
 	Email        string      `json:"email"`
 	UserBody     UserBody    `json:"userBody"`
+	TeamBody     TeamBody    `json:"teamBody"`
 	BearerToken  BearerToken `json:"bearerToken"`
 	Message      []string    `json:"message"`
 }

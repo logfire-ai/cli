@@ -2,16 +2,18 @@ package integrations_delete
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type DeleteIntegrationOptions struct {
@@ -44,7 +46,7 @@ func NewDeleteIntegrationCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire integrations delete
 
 			# start argument setup
-			$ logfire integrations delete --team-id <team-id> --integration-id <integration-id>
+			$ logfire integrations delete --team-name <team-name> --integration-id <integration-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -54,7 +56,7 @@ func NewDeleteIntegrationCmd(f *cmdutil.Factory) *cobra.Command {
 			DeleteIntegrationRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id from which integrationId is to be deleted.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name from which integrationId is to be deleted.")
 	cmd.Flags().StringVarP(&opts.IntegrationId, "integration-id", "i", "", "Integration to be deleted.")
 	return cmd
 }
@@ -66,6 +68,19 @@ func DeleteIntegrationRun(opts *DeleteIntegrationOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		if opts.TeamId == "" && opts.IntegrationId == "" {
 			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
@@ -74,8 +89,7 @@ func DeleteIntegrationRun(opts *DeleteIntegrationOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.IntegrationId == "" {

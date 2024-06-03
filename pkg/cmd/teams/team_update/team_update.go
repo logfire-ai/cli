@@ -2,15 +2,17 @@ package team_update
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type TeamUpdateOptions struct {
@@ -44,9 +46,14 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire teams update
 
 			# start argument setup
-			$ logfire teams update --teamid <team-id> --name <new-name>
+			$ logfire teams update --team-name <team-name> --name <new-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
+			cfg, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(opts.IO.ErrOut, "Failed to read config\n")
+			}
+
 			if opts.IO.CanPrompt() {
 				opts.Interactive = true
 			}
@@ -56,7 +63,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if !opts.Interactive && opts.TeamId == "" {
-				fmt.Fprint(opts.IO.ErrOut, "team id is required.\n")
+				opts.TeamId = cfg.Get().TeamId
 			}
 
 			teamUpdateRun(opts)
@@ -64,7 +71,7 @@ func NewUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&opts.TeamName, "name", "", "new team name to be updated.")
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id to be updated.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name to be updated.")
 	return cmd
 }
 
@@ -73,6 +80,19 @@ func teamUpdateRun(opts *TeamUpdateOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
 	}
 
 	if opts.Interactive && opts.TeamId == "" && opts.TeamName == "" {
@@ -85,7 +105,7 @@ func teamUpdateRun(opts *TeamUpdateOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.TeamName == "" {

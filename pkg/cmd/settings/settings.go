@@ -9,9 +9,14 @@ import (
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
+	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
+
+var choices = []string{"Change default team", "Change theme"}
 
 type SettingsOptions struct {
 	IO       *iostreams.IOStreams
@@ -22,7 +27,9 @@ type SettingsOptions struct {
 
 	Interactive bool
 
-	Theme string
+	Theme  string
+	TeamId string
+	Choice string
 }
 
 func SettingsCmd(f *cmdutil.Factory) *cobra.Command {
@@ -68,8 +75,27 @@ func SettingsRun(opts *SettingsOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
 	}
+	client := http.Client{}
 
-	if opts.Interactive && opts.Theme == "" {
+	if opts.TeamId != "" {
+		opts.TeamId = helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		err = APICalls.UpdateFlag(cfg, cfg.Get().ProfileID, opts.TeamId, cfg.Get().EndPoint)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to update default team\n", cs.FailureIcon())
+			return
+		}
+	}
+
+	if opts.Interactive && opts.Theme == "" && opts.TeamId == "" {
+		opts.Choice, err = opts.Prompter.Select("What do you want to do?", "", choices)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())
+			return
+		}
+	}
+
+	if opts.Interactive && opts.Choice == "Change theme" {
 		themeOptions := []string{"Dark", "Light"}
 
 		opts.Theme, err = opts.Prompter.Select("Select a theme:", "", themeOptions)
@@ -77,11 +103,21 @@ func SettingsRun(opts *SettingsOptions) {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read Theme\n", cs.FailureIcon())
 			return
 		}
-	} else {
-		if opts.Theme == "" {
-			fmt.Fprint(opts.IO.ErrOut, "theme is required.\n")
+	}
+
+	if opts.Interactive && opts.Choice == "Change default team" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+
+		err = APICalls.UpdateFlag(cfg, cfg.Get().ProfileID, opts.TeamId, cfg.Get().EndPoint)
+		if err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to update default team\n", cs.FailureIcon())
 			return
 		}
+	}
+
+	if opts.Theme == "" && opts.TeamId == "" {
+		fmt.Fprint(opts.IO.ErrOut, "atleast one flag is required.\n")
+		return
 	}
 
 	loweredTheme := strings.ToLower(opts.Theme)

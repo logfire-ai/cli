@@ -7,10 +7,11 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
+	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
@@ -81,7 +82,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sources create
 
 			# start argument setup
-			$ logfire sources create --teamid <team-id> --name <source-name> --platform <platform>
+			$ logfire sources create --team-name <team-name> --name <source-name> --platform <platform>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -92,7 +93,7 @@ func NewSourceCreateCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the source will be created.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which the source will be created.")
 	cmd.Flags().StringVarP(&opts.SourceName, "name", "n", "", "Name of the source to be created.")
 	cmd.Flags().StringVarP(&opts.Platform, "platform", "p", "", "Platform name for which you want to create source.")
 	return cmd
@@ -104,6 +105,19 @@ func SourceCreateRun(opts *SourceCreateOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
+	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
 	}
 
 	if opts.Interactive && opts.TeamId == "" && opts.SourceName == "" && opts.Platform == "" {
@@ -122,7 +136,7 @@ func SourceCreateRun(opts *SourceCreateOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+			fmt.Fprint(opts.IO.ErrOut, "team-name is required.\n")
 			return
 		}
 

@@ -1,8 +1,8 @@
 package root
 
 import (
-	"errors"
 	"fmt"
+
 	"github.com/logfire-sh/cli/pkg/cmd/settings"
 
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -23,6 +23,7 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmd/signup"
 	"github.com/logfire-sh/cli/pkg/cmd/sources"
 	"github.com/logfire-sh/cli/pkg/cmd/stream"
+	"github.com/logfire-sh/cli/pkg/cmd/tail"
 	"github.com/logfire-sh/cli/pkg/cmd/teams"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
@@ -39,7 +40,7 @@ type PromptRootOptions struct {
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
-	"Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip"}
+	"Tail", "Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip"}
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
@@ -51,7 +52,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 
 	cfg, err := f.Config()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read configuration: %s\n", err)
+		return nil, fmt.Errorf("failed to read configuration: %s", err)
 	}
 
 	cmd := &cobra.Command{
@@ -113,20 +114,22 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 				case choices[3]:
 					teams.NewCmdTeam(f).Run(cmd, []string{})
 				case choices[4]:
-					stream.NewCmdStream(f).Run(cmd, []string{})
+					tail.NewTailCmd(f).Run(cmd, []string{})
 				case choices[5]:
-					views.NewCmdViews(f).Run(cmd, []string{})
+					stream.NewCmdStream(f).Run(cmd, []string{})
 				case choices[6]:
-					alerts.NewCmdAlerts(f).Run(cmd, []string{})
+					views.NewCmdViews(f).Run(cmd, []string{})
 				case choices[7]:
-					integrations.NewCmdIntegrations(f).Run(cmd, []string{})
+					alerts.NewCmdAlerts(f).Run(cmd, []string{})
 				case choices[8]:
-					sql.NewCmdSql(f).Run(cmd, []string{})
+					integrations.NewCmdIntegrations(f).Run(cmd, []string{})
 				case choices[9]:
-					update_profile.UpdateProfileCmd(f).Run(cmd, []string{})
+					sql.NewCmdSql(f).Run(cmd, []string{})
 				case choices[10]:
-					settings.SettingsCmd(f).Run(cmd, []string{})
+					update_profile.UpdateProfileCmd(f).Run(cmd, []string{})
 				case choices[11]:
+					settings.SettingsCmd(f).Run(cmd, []string{})
+				case choices[12]:
 					roundtrip.NewCmdRoundTrip(f).Run(cmd, []string{})
 				default:
 					break
@@ -161,6 +164,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	cmd.AddCommand(logout.NewLogoutCmd(f))
 	cmd.AddCommand(sources.NewCmdSource(f))
 	cmd.AddCommand(teams.NewCmdTeam(f))
+	cmd.AddCommand(tail.NewTailCmd(f))
 	cmd.AddCommand(stream.NewCmdStream(f))
 	cmd.AddCommand(views.NewCmdViews(f))
 	cmd.AddCommand(alerts.NewCmdAlerts(f))
@@ -183,7 +187,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 
 func NotLoggedInPromptRun(opts *PromptRootOptions) {
 	if opts.Interactive {
-		err := errors.New("")
+		var err error
 		opts.NotLoggedInChoice, err = opts.Prompter.Select("What do you want to do?", "", NotLoggedInChoices)
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "Failed to read choice\n")
@@ -198,7 +202,7 @@ func PromptRootRun(opts *PromptRootOptions) {
 	}
 
 	if opts.Interactive {
-		err := errors.New("")
+		var err error
 		opts.Choice, err = opts.Prompter.Select("What do you want to do?", "", choices)
 		if err != nil {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())

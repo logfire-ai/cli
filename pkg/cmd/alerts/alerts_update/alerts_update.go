@@ -2,16 +2,18 @@ package alerts_update
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type AlertUpdateOptions struct {
@@ -48,7 +50,7 @@ func NewAlertUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire alerts update
 
 			# start argument setup
-			$ logfire alerts update --team-id <team-id> --name <name> --view-id <view-id> 
+			$ logfire alerts update --team-name <team-name> --name <name> --view-id <view-id> 
 			--number-of-records <0-1000000> --within-seconds <0-10000> --integrations-id <integrations-id> (multiple-integrations-ids supported)
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -59,10 +61,10 @@ func NewAlertUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			UpdateMemberRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id for which alert is to be created.")
-	cmd.Flags().StringVarP(&opts.AlertId, "alert-id", "a", "", "Team id for which alert is to be created.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which alert is to be created.")
+	cmd.Flags().StringVarP(&opts.AlertId, "alert-id", "a", "", "alert id for which alert is to be updated.")
 	cmd.Flags().StringVarP(&opts.Name, "name", "n", "", "Name for the alert.")
-	cmd.Flags().StringVarP(&opts.ViewId, "view-id", "v", "", "View id for which alert is to be created.")
+	cmd.Flags().StringVarP(&opts.ViewId, "view-id", "v", "", "View id for which alert is to be updated.")
 	cmd.Flags().Uint32VarP(&opts.NumberOfRecords, "number-of-records", "r", 0, "number of records at when alerts should be triggered.")
 	cmd.Flags().Uint32VarP(&opts.WithinSeconds, "within-seconds", "w", 0, "Time range where number of records should occur for alerts to be triggered.")
 	cmd.Flags().StringSliceVarP(&opts.IntegrationsId, "integrations-id", "i", nil, "integration to be alerted. (multiple integrations are allowed")
@@ -76,40 +78,53 @@ func UpdateMemberRun(opts *AlertUpdateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		opts.AlertId, _ = pre_defined_prompters.AskAlertId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
-		updateName, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the alert name?"), false)
+		updateName, _ := opts.Prompter.Confirm("Do you want to update the alert name?", false)
 		if updateName {
 			opts.Name, _ = opts.Prompter.Input("Enter a new name for the alert:", "")
 		}
 
-		updateView, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the view?"), false)
+		updateView, _ := opts.Prompter.Confirm("Do you want to update the view?", false)
 		if updateView {
 			opts.ViewId, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 		}
 
-		updateNOR, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the number of records?"), false)
+		updateNOR, _ := opts.Prompter.Confirm("Do you want to update the number of records?", false)
 		if updateNOR {
 			nor, _ := opts.Prompter.InputInt("number of records at when alerts should be triggered.", 0)
 			opts.NumberOfRecords = uint32(nor)
 		}
 
-		updateWS, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the Within-Seconds?"), false)
+		updateWS, _ := opts.Prompter.Confirm("Do you want to update the Within-Seconds?", false)
 		if updateWS {
 			ws, _ := opts.Prompter.InputInt("Time range where number of records should occur for alerts to be triggered.", 0)
 			opts.WithinSeconds = uint32(ws)
 		}
 
-		updateIntegrations, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the integrations?"), false)
+		updateIntegrations, _ := opts.Prompter.Confirm("Do you want to update the integrations?", false)
 		if updateIntegrations {
 			opts.IntegrationsId, _ = pre_defined_prompters.AskAlertIntegrationIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
+			fmt.Fprint(opts.IO.ErrOut, "team-name is required.")
 			os.Exit(0)
 		}
 
