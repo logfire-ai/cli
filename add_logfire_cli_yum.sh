@@ -2,8 +2,8 @@
 
 # Define the repository details
 REPO_NAME="logfire-cli"
-REPO_URL="https://logfire-sh.github.io/cli/yum-repo/"
-GPG_KEY_URL="https://logfire-sh.github.io/cli/KEY.gpg"
+REPO_URL="https://logfire-ai.github.io/cli/yum-repo/"
+GPG_KEY_URL="https://logfire-ai.github.io/cli/KEY.gpg"
 
 # Create the .repo file
 echo "Creating $REPO_NAME.repo in /etc/yum.repos.d/..."
