@@ -79,7 +79,7 @@ release:
 
 brews:
   - repository:
-      name: tap
+      name: homebrew-tap
       owner: logfire-ai
     description: 'Logfire command line interface'
     homepage: 'https://github.com/logfire-ai/cli'
