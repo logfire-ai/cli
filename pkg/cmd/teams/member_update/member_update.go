@@ -2,16 +2,18 @@ package member_update
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 var RoleOptions = map[string]int{
@@ -51,7 +53,7 @@ func NewMemberUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire teams update-member
 
 			# start argument setup
-			$ logfire teams update-member --teamid <team-id> --memberid <member-id> --role <admin|member>
+			$ logfire teams update-member --team-name <team-name> --member-id <member-id> --role <admin|member>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -62,8 +64,8 @@ func NewMemberUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id for which member is to be updated.")
-	cmd.Flags().StringVar(&opts.MemberId, "memberid", "", "Member id of the member to be updated")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name for which member is to be updated.")
+	cmd.Flags().StringVar(&opts.MemberId, "member-id", "", "Member id of the member to be updated")
 	cmd.Flags().StringVar(&opts.Role, "role", "", "role to which the member has to be updated")
 	return cmd
 }
@@ -75,6 +77,19 @@ func UpdateMemberRun(opts *MemberUpdateOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive && opts.TeamId == "" {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
@@ -83,7 +98,7 @@ func UpdateMemberRun(opts *MemberUpdateOptions) {
 		opts.Role, _ = opts.Prompter.Select("Select a new role:", "", []string{"admin", "member"})
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprint(opts.IO.ErrOut, "team-id is required.")
+			fmt.Fprint(opts.IO.ErrOut, "team-name is required.")
 			os.Exit(0)
 		}
 

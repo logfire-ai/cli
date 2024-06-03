@@ -7,8 +7,6 @@ import (
 	"github.com/logfire-sh/cli/gui"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
-	"github.com/logfire-sh/cli/pkg/cmd/stream/livetail"
-	"github.com/logfire-sh/cli/pkg/cmd/stream/view"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
@@ -48,8 +46,6 @@ func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(livetail.NewLivetailCmd(f))
-	cmd.AddCommand(view.NewViewStreamOptionsCmd(f))
 	return cmd
 }
 

@@ -46,7 +46,7 @@ func NewViewListCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire views list
 
 			# start argument setup
-			$ logfire views list --team-id <team-id>
+			$ logfire views list --team-name <team-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -56,7 +56,7 @@ func NewViewListCmd(f *cmdutil.Factory) *cobra.Command {
 			viewsListRun(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team id to be deleted.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name to be deleted.")
 	return cmd
 }
 
@@ -73,8 +73,7 @@ func viewsListRun(opts *ViewListOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 	}

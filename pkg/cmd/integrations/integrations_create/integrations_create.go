@@ -2,17 +2,19 @@ package integrations_create
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
-	"strings"
 )
 
 type CreateIntegrationOptions struct {
@@ -52,7 +54,7 @@ func NewCreateIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire integrations create
 
 			# start argument setup
-			$ logfire integrations create --team-id <team-id> --name <name> --description <description>
+			$ logfire integrations create --team-name <team-name> --name <name> --description <description>
 			  --integration-type <email | webhook | slack> --id <email-id | webhook-id | slack-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -63,7 +65,7 @@ func NewCreateIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			CreateIntegrationRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id for which Integration is to be created.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which Integration is to be created.")
 	cmd.Flags().StringVarP(&opts.Name, "name", "n", "", "Name for the Integration.")
 	cmd.Flags().StringVarP(&opts.Description, "description", "d", "", "Description for the Integration.")
 	cmd.Flags().StringVarP(&opts.IntegrationType, "integration-type", "", "", "Type of Integration [email, webhook, slack] (Any one).")
@@ -77,6 +79,19 @@ func CreateIntegrationRun(opts *CreateIntegrationOptions) {
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
 	}
 
 	if opts.Interactive && opts.TeamId == "" && opts.Name == "" && opts.Description == "" && opts.IntegrationType == "" && opts.Id == "" {
@@ -107,8 +122,7 @@ func CreateIntegrationRun(opts *CreateIntegrationOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.Name == "" {

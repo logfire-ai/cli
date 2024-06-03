@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -57,7 +58,7 @@ func NewCmdSql(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sql
 
 			# start argument setup
-			$ logfire sql --team-id <team-id> --query <query>
+			$ logfire sql --team-name <team-name> --query <query>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -67,7 +68,7 @@ func NewCmdSql(f *cmdutil.Factory) *cobra.Command {
 			SqlQueryRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id to be queried.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name to be queried.")
 	cmd.Flags().StringVarP(&opts.SQLQuery, "sql-query", "q", "", "SQL Query.")
 
 	return cmd
@@ -78,7 +79,7 @@ func GetRecommendations(opts *SQLQueryOptions, cfg config.Config) {
 
 	recommendations, err := APICalls.GetRecommendations(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId, cfg.Get().Role)
 	if err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s",err)
+		fmt.Fprintf(opts.IO.ErrOut, "%s", err)
 	}
 
 	var options []string
@@ -102,20 +103,31 @@ func GetRecommendations(opts *SQLQueryOptions, cfg config.Config) {
 		}
 	}
 
-	if len(selectedQueryParsed) > 1 {
+	if len(selectedQueryParsed) != 0 {
 		opts.SQLQuery = selectedQueryParsed
-		fmt.Fprintf(opts.IO.Out, "Query: %s\n", selectedQueryParsed)
 	} else {
 		log.Fatal("Query not found in the input.")
 	}
 }
 
 func SqlQueryRun(opts *SQLQueryOptions) {
-
 	cs := opts.IO.ColorScheme()
 	cfg, err := opts.Config()
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
+	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
 	}
 
 	if opts.Interactive && opts.TeamId == "" && opts.SQLQuery == "" {
@@ -136,7 +148,7 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.SQLQuery == "" {
@@ -169,9 +181,8 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 		return
 	}
 
-	if len(response.Data) > 0 {
-		showQuery(opts.IO, response.Data)
-	}
+	showQuery(opts.IO, response.Data)
+
 }
 
 // Convert logs with colors
@@ -231,22 +242,4 @@ func createGrpcSource(sources []sourceModels.Source) []*pb.Source {
 		grpcSources = append(grpcSources, &pbSource)
 	}
 	return grpcSources
-}
-
-// getSQL makes the actual grpc call to connect with flink-service.
-func getSQL(client pb.FilterServiceClient, sources []*pb.Source, opts *SQLQueryOptions) (*pb.SQLResponse, error) {
-	// Prepare the request payload
-	request := &pb.SQLRequest{
-		Sql:       opts.SQLQuery,
-		Sources:   sources,
-		BatchSize: 100,
-	}
-
-	// Invoke the gRPC method
-	response, err := client.SubmitSQL(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
 }

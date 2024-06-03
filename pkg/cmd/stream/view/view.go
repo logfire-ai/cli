@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
@@ -59,7 +60,7 @@ func NewViewStreamOptionsCmd(f *cmdutil.Factory) *cobra.Command {
 		`),
 		Example: heredoc.Doc(`
 			# start stream of logs from specific view
-			$ logfire stream view --team-id <team-id> --view-id <view-id>
+			$ logfire stream view --team-name <team-name> --view-id <view-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -70,7 +71,7 @@ func NewViewStreamOptionsCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team ID for which the sources will be fetched.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which the sources will be fetched.")
 	cmd.Flags().StringVarP(&opts.ViewId, "view-id", "v", "", "Team ID for which the sources will be fetched.")
 	return cmd
 }
@@ -92,8 +93,21 @@ func ViewStreamRun(opts *ViewStreamOptions) {
 		return
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.TeamId == "" {
-		fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
+		fmt.Fprintf(opts.IO.ErrOut, "%s team-name is required.\n", cs.FailureIcon())
 		os.Exit(0)
 	}
 

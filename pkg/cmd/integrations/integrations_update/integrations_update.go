@@ -2,16 +2,18 @@ package integrations_update
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
 )
 
 type UpdateIntegrationOptions struct {
@@ -46,7 +48,7 @@ func NewUpdateIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire integrations update
 
 			# start argument setup
-			$ logfire integrations update --team-id <team-id> --integration-id <integration-id> 
+			$ logfire integrations update --team-name <team-name> --integration-id <integration-id> 
 				--name <name> --description <description>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -57,7 +59,7 @@ func NewUpdateIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			UpdateIntegrationRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id for which Integration is to be updated.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which Integration is to be updated.")
 	cmd.Flags().StringVarP(&opts.IntegrationId, "integration-id", "", "", "Integration id for which settings are to be updated.")
 	cmd.Flags().StringVarP(&opts.Name, "name", "n", "", "Name for the Integration.")
 	cmd.Flags().StringVarP(&opts.Description, "description", "d", "", "Description for the Integration.")
@@ -72,26 +74,38 @@ func UpdateIntegrationRun(opts *UpdateIntegrationOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		if opts.TeamId == "" && opts.IntegrationId == "" && opts.Name == "" && opts.Description == "" {
 			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 			opts.IntegrationId, _ = pre_defined_prompters.AskIntegrationId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
-			updateName, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the alert name?"), false)
+			updateName, _ := opts.Prompter.Confirm("Do you want to update the alert name?", false)
 			if updateName {
 				opts.Name, _ = opts.Prompter.Input("Enter a new name for the alert:", "")
 			}
 
-			updateDescription, _ := opts.Prompter.Confirm(fmt.Sprintf("Do you want to update the Description?"), false)
+			updateDescription, _ := opts.Prompter.Confirm("Do you want to update the Description?", false)
 			if updateDescription {
 				opts.Description, _ = pre_defined_prompters.AskViewId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 			}
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.TeamId != "" && opts.IntegrationId != "" && opts.Name == "" && opts.Description == "" {

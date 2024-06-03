@@ -70,7 +70,7 @@ jobs:
 
       - name: Create .list file
         run: |
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-sh.github.io/cli ./" > ppa/my_list_file.list
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/KEY.gpg] https://logfire-ai.github.io/cli ./" > ppa/my_list_file.list
 
       - name: Fetch all branches
         run: git fetch --all
@@ -86,7 +86,7 @@ jobs:
 
       - name: Clone gh-pages branch
         run: |
-          git clone --branch gh-pages https://github.com/logfire-sh/cli.git gh-pages
+          git clone --branch gh-pages https://github.com/logfire-ai/cli.git gh-pages
 
       - name: Copy ppa contents to gh-pages
         run: |
@@ -114,7 +114,7 @@ jobs:
           cd gh-pages
           git config --local user.email "support@logfire.ai"
           git config --local user.name "Logfire"
-          git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-sh/cli.git
+          git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/logfire-ai/cli.git
           git add .
           git pull
           git commit -m "Update GitHub Pages with YUM repo"

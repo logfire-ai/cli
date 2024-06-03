@@ -10,6 +10,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/logfire-sh/cli/internal/config"
 	sourceModel "github.com/logfire-sh/cli/pkg/cmd/sources/models"
+	filterModel "github.com/logfire-sh/cli/pkg/cmd/sql/models"
 	"github.com/logfire-sh/cli/pkg/cmd/views/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	"github.com/rivo/tview"
@@ -17,16 +18,17 @@ import (
 
 type Display struct {
 	*tview.Grid
-	View       *tview.TextView
-	input      *tview.InputField
-	BottomHelp *tview.InputField
-	TopHelp    *tview.InputField
-	List       *tview.List
-	Window     *winman.WindowBase
-	App        *tview.Application
-	Livetail   bool
-	SourceList []sourceModel.Source
-	ViewsList  []models.ViewResponseBody
+	View                  *tview.TextView
+	input                 *tview.InputField
+	BottomHelp            *tview.InputField
+	TopHelp               *tview.InputField
+	List                  *tview.List
+	Window                *winman.WindowBase
+	App                   *tview.Application
+	Livetail              bool
+	SourceList            []sourceModel.Source
+	ViewsList             []models.ViewResponseBody
+	FilterRecommendations filterModel.RecommendFilterResponse
 }
 
 type Theme struct {
@@ -129,6 +131,30 @@ func NewDisplay(cfg config.Config) *Display {
 		}
 	}
 
+	filterRecommendations, err := APICalls.GetFilterRecommendations(cfg.Get().Token, cfg.Get().EndPoint,
+		cfg.Get().TeamId,
+		cfg.Get().Role)
+	if err != nil {
+		log.Fatalln(fmt.Sprint(err))
+	}
+
+	filters := []filterModel.FilterItem{}
+
+	for _, recommendation := range filterRecommendations.Data.Recommendations {
+		filters = append(filters, recommendation.Filter)
+	}
+
+	operationSymbols := map[string]string{
+		"CONTAINS":            ":",
+		"DOES_NOT_CONTAIN":    "!:",
+		"EQUALS":              "=",
+		"NOT_EQUALS":          "!=",
+		"GREATER_THAN":        ">",
+		"GREATER_THAN_EQUALS": ">=",
+		"LESS_THAN":           "<",
+		"LESS_THAN_EQUALS":    "<=",
+	}
+
 	inputField := tview.NewInputField().
 		SetLabel("> ").
 		SetFieldWidth(0).
@@ -161,6 +187,14 @@ func NewDisplay(cfg config.Config) *Display {
 				}
 			} else {
 				// If the current text is "field-filter=", show the schemaList suggestions
+				for _, word := range filters {
+					if strings.HasPrefix(strings.ToLower(word.Field), strings.ToLower(field)) && !strings.Contains(
+						currentText, word.Field) {
+						entries = append(entries, fmt.Sprintf("%s%s%s", word.Field, operationSymbols[word.Condition],
+							word.Value))
+					}
+				}
+
 				for _, word := range schemaList {
 					if strings.HasPrefix(strings.ToLower(word), strings.ToLower(field)) && !strings.Contains(currentText, word) {
 						entries = append(entries, word)
@@ -223,7 +257,7 @@ func NewDisplay(cfg config.Config) *Display {
 				inputField.SetText(updatedText)
 			} else if strings.HasPrefix(typedText, "field-filter=") {
 				// If the current text is "field-filter=", show the schemaList suggestions
-				if contains(schemaList, text) {
+				if typedText == "field-filter=" {
 					inputField.SetText("field-filter=" + text)
 				} else {
 					// If a field is already selected, suggest the appropriate operators
@@ -293,14 +327,15 @@ func NewDisplay(cfg config.Config) *Display {
 	grid.AddItem(BottomHelp, 3, 0, 1, 1, 0, 0, false).SetBackgroundColor(theme.BackgroundColor)
 
 	return &Display{
-		Grid:       grid,
-		View:       textView,
-		input:      inputField,
-		BottomHelp: BottomHelp,
-		TopHelp:    TopHelp,
-		App:        app,
-		SourceList: sourcesList,
-		ViewsList:  views,
+		Grid:                  grid,
+		View:                  textView,
+		input:                 inputField,
+		BottomHelp:            BottomHelp,
+		TopHelp:               TopHelp,
+		App:                   app,
+		SourceList:            sourcesList,
+		ViewsList:             views,
+		FilterRecommendations: filterRecommendations,
 	}
 }
 

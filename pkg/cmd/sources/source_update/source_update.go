@@ -9,6 +9,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -49,7 +50,7 @@ func NewSourceUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sources update
 
 			# start argument setup
-			$ logfire sources update --teamid <team-id> --sourceid <source-id> --name <new-name>
+			$ logfire sources update --team-name <team-name> --source-id <source-id> --name <new-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -58,7 +59,7 @@ func NewSourceUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 
 			if !opts.Interactive {
 				if opts.TeamId == "" {
-					fmt.Fprint(opts.IO.ErrOut, "team-id is required.\n")
+					fmt.Fprint(opts.IO.ErrOut, "team-name is required.\n")
 					return
 				}
 
@@ -77,8 +78,8 @@ func NewSourceUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team ID for which the source will be updated.")
-	cmd.Flags().StringVar(&opts.SourceId, "sourceid", "", "Source ID for which the source will be updated.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name for which the source will be updated.")
+	cmd.Flags().StringVar(&opts.SourceId, "source-id", "", "Source ID for which the source will be updated.")
 	cmd.Flags().StringVar(&opts.SourceName, "name", "", "New name for the source to be updated.")
 	return cmd
 }
@@ -89,6 +90,19 @@ func sourceUpdateRun(opts *SourceUpdateOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 		return
+	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
 	}
 
 	if opts.Interactive && opts.TeamId == "" && opts.SourceId == "" && opts.SourceName == "" {
@@ -103,8 +117,7 @@ func sourceUpdateRun(opts *SourceUpdateOptions) {
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			return
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.SourceName == "" {

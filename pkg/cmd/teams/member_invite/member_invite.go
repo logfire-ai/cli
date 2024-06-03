@@ -2,17 +2,19 @@ package member_invite
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
-	"os"
-	"strings"
 )
 
 type MemberInviteOptions struct {
@@ -46,7 +48,7 @@ func NewMemberInviteCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire teams invite-members
 
 			# start argument setup
-			$ logfire teams invite-members --teamid <team-id> --email <email> --email <email> (multiple values supported)
+			$ logfire teams invite-members --team-name <team-name> --email <email> --email <email> (multiple values supported)
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -57,7 +59,7 @@ func NewMemberInviteCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id for which members are to be invited.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name for which members are to be invited.")
 	cmd.Flags().StringSliceVarP(&opts.Email, "email", "e", nil, "Email addresses (multiple values supported).")
 	return cmd
 }
@@ -68,6 +70,20 @@ func InviteMembersRun(opts *MemberInviteOptions) {
 	if err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
+
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive && opts.TeamId == "" && opts.Email == nil {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
@@ -79,8 +95,7 @@ func InviteMembersRun(opts *MemberInviteOptions) {
 		opts.Email = strings.Split(emails, ",")
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 		if opts.Email == nil {

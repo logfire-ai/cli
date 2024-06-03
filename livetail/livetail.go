@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/logfire-sh/cli/internal/config"
@@ -20,6 +21,7 @@ type Livetail struct {
 	Logs          string
 	pbSources     []*pb.Source
 	sourcesOffset map[string]uint64
+	offsetMutex   sync.Mutex // Mutex to protect sourcesOffset map
 	FilterService *grpcutil.FilterService
 }
 
@@ -129,8 +131,17 @@ func (l *Livetail) GenerateLogs(ctx context.Context, cfg config.Config) {
 
 			if len(response.Records) > 0 {
 				sort.Sort(ByOffset(response.Records))
+
+				// Lock the mutex before accessing sourcesOffset
+				l.offsetMutex.Lock()
 				l.sourcesOffset = getOffsets(l.sourcesOffset, response.Records)
+				l.offsetMutex.Unlock()
+
+				// Lock the mutex before accessing pbSources
+				l.offsetMutex.Lock()
 				l.pbSources = addOffset(l.pbSources, l.sourcesOffset)
+				l.offsetMutex.Unlock()
+
 				newLogs := showLogsWithColor(response.Records, theme)
 				l.Logs += newLogs
 			}

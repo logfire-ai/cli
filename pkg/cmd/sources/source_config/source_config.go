@@ -55,7 +55,7 @@ func NewSourceConfigCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire sources configuration
 
 			# start argument setup
-			$ logfire sources configuration --team-id <team-id>  --source-id <source-id>
+			$ logfire sources configuration --team-name <team-name>  --source-id <source-id>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -67,7 +67,7 @@ func NewSourceConfigCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&opts.SourceId, "source-id", "", "Source ID for which the source is to be deleted.")
-	cmd.Flags().StringVar(&opts.TeamId, "team-id", "", "Team ID for which the sources will be fetched.")
+	cmd.Flags().StringVar(&opts.TeamId, "team-name", "", "Team name for which the sources will be fetched.")
 	return cmd
 }
 
@@ -83,7 +83,7 @@ func sourceListRun(opts *SourceConfigurationOptions) {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s team-id is required.\n", cs.FailureIcon())
+			fmt.Fprintf(opts.IO.ErrOut, "%s team-name is required.\n", cs.FailureIcon())
 			return
 		}
 

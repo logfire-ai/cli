@@ -10,6 +10,7 @@ import (
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"github.com/logfire-sh/cli/pkg/cmdutil/pre_defined_prompters"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/olekukonko/tablewriter"
@@ -45,7 +46,7 @@ func NewListIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire integrations list
 
 			# start argument setup
-			$ logfire integrations list --team-id <team-id>
+			$ logfire integrations list --team-name <team-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if opts.IO.CanPrompt() {
@@ -55,7 +56,7 @@ func NewListIntegrationsCmd(f *cmdutil.Factory) *cobra.Command {
 			ListIntegrationsRun(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.TeamId, "team-id", "t", "", "Team id from which integrations are to be listed.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name from which integrations are to be listed.")
 	return cmd
 }
 
@@ -66,14 +67,26 @@ func ListIntegrationsRun(opts *ListIntegrationsOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
+		}
+
+		opts.TeamId = teamId
+	}
+
 	if opts.Interactive {
 		if opts.TeamId == "" {
 			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 		}
 	} else {
 		if opts.TeamId == "" {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Team id is required.\n", cs.FailureIcon())
-			os.Exit(0)
+			opts.TeamId = cfg.Get().TeamId
 		}
 
 	}

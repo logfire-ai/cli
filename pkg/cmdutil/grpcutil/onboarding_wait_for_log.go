@@ -2,22 +2,21 @@ package grpcutil
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	"github.com/logfire-sh/cli/pkg/cmdutil/APICalls"
 	pb "github.com/logfire-sh/cli/services/flink-service"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func GetLog(token string,  endpoint string, teamId string, accountId string, sourceId string, stop chan error) {
+func GetLog(token string, endpoint string, teamId string, accountId string, sourceId string, stop chan error) {
 	request := &pb.FilterRequest{
 		DateTimeFilter: &pb.DateTimeFilter{},
 		Sources:        []*pb.Source{},
-		TeamID: teamId,
-		AccountID: accountId,
+		TeamID:         teamId,
+		AccountID:      accountId,
 		BatchSize:      1,
-		IsScrollDown:   true,
 	}
 
 	var sources []models.Source
@@ -31,8 +30,6 @@ func GetLog(token string,  endpoint string, teamId string, accountId string, sou
 	pbSources := CreateGrpcSource(sources)
 
 	request.Sources = pbSources
-
-	request.DateTimeFilter.StartTimeStamp = timestamppb.New(time.Now().Add(-1 * time.Second))
 
 	filterService := NewFilterService()
 	defer filterService.CloseConnection()
@@ -48,6 +45,8 @@ func GetLog(token string,  endpoint string, teamId string, accountId string, sou
 				stop <- err
 				return
 			}
+
+			log.Printf("Response: %s\n", response.Records)
 
 			if len(response.Records) > 0 {
 				stop <- nil
