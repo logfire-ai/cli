@@ -11,7 +11,7 @@ You can run the following commands from the command-line interface (CLI) by dire
 - login
 - signup
 - logout
-- teams (list, create, list-members)
+- teams (list, create, list-member)
 - sources (list, create, delete)
 - stream (livetail)
 
