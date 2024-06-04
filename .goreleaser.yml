@@ -27,12 +27,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    #replacements:
-    # darwin: Darwin
-    #linux: Linux
-    #windows: Windows
-    #386: x86
-    #amd64: x86_64
 snapshot:
   name_template: SNAPSHOT-{{ .Tag }}-{{ .Commit }}
 checksum:
@@ -56,7 +50,6 @@ changelog:
 release:
   github:
     owner: logfire-ai
-    #name: "{{ env.REPO_NAME }}"
   draft: true
   prerelease: auto
   discussion_category_name: General
@@ -76,7 +69,6 @@ release:
     - Item 2
   footer: |
     ## Thanks!
-
 brews:
   - repository:
       name: homebrew-tap
@@ -95,7 +87,6 @@ brews:
     install: bin.install "logfire"
     test: |
       system "#{bin/logfire}"
-
 nfpms:
   - maintainer: logfire-ai
     id: logfire
@@ -105,11 +96,8 @@ nfpms:
     formats:
       - deb
       - rpm
-    #replacements:
-    # darwin: Darwin
     bindir: /usr/bin
     release: 1
-
 scoops:
   - name: logfire
     url_template: 'https://github.com/logfire-ai/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
