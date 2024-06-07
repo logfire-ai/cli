@@ -1,6 +1,7 @@
 package prompter
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -275,11 +276,10 @@ var step = "signup"
 var subStep = "email"
 
 func waitForLog(m *model) {
-	go grpcutil.GetLog(m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, stop)
+	go grpcutil.GetLog(m.config, m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, m.sourceToken, stop)
 	err := <-stop
 	if err != nil {
-		// m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
-		m.err = err
+		m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
 		m.nextInput()
 	}
 	subStep = "awesome"
@@ -489,32 +489,8 @@ func (m model) renderCurlCommand() string {
 	return fmt.Sprintf(
 		`
 %s
-%s %s %s \
-%s %s \
-%s %s \
-%s %s
-
-%s
-
-%s %s %s %s %s
-%s
 `,
-		continueStyle.Render("******************************************************************************************"),
-		colorThree.Render(`curl`),
-		colorThree.Render(`--location`),
-		colorThree.Render(`'https://in.logfire.ai'`),
-		colorThree.Render(`--header`),
-		colorThree.Render(`'Content-Type: application/json'`),
-		colorThree.Render(`--header`),
-		colorThree.Render(`'Authorization: Bearer `+m.sourceToken+`'`),
-		colorThree.Render(`--data`),
-		colorThree.Render(`'[{"dt":"2023-06-15T6:00:39.351Z","message":"Hello from Logfire fluentd!"}]'`),
-		colorTwo.Render("\nCopy the command and paste it in another terminal to test the source"),
-		`Press`, commandBackgroundHighlightStyle.Render(`Enter`),
-		`or`,
-		commandBackgroundHighlightStyle.Render(`Tab`),
-		`after you have copied`,
-		continueStyle.Render("******************************************************************************************"),
+		`Press `+commandBackgroundHighlightStyle.Render(` Enter `)+` or `+commandBackgroundHighlightStyle.Render(` Tab `)+`to finish setting up your account.`,
 	)
 }
 
@@ -588,9 +564,9 @@ func (m model) View() string {
 		return fmt.Sprintf("%s", m.err)
 	}
 
-	waitingForLog := continueStyle.Render(fmt.Sprintf("\nWaiting for logs... %s", m.spinner.View()))
+	waitingForLog := continueStyle.Render(fmt.Sprintf("\nSetting up your account... %s", m.spinner.View()))
 
-	awesomeLogReceived := colorTwo.Render("\nAwesome! log received\n")
+	awesomeLogReceived := colorTwo.Render("\nAwesome! your account is ready\n")
 
 	continueMessage := continueStyle.Render("\nContinue ->")
 
