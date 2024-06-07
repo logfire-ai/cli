@@ -8,9 +8,9 @@ import (
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/grpc"
 
+	//"google.golang.org/grpc/credentials"
 	"log"
 
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -41,8 +41,8 @@ func NewFilterService(kv ...string) *FilterService {
 	allParams = append(allParams, "Authorization", "Bearer "+cfg.Get().Token)
 	allParams = append(allParams, kv...)
 
-	conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
-	// conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+	// conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+	conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
 
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
