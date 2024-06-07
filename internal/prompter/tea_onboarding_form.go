@@ -305,7 +305,7 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 					// return m, nil
 				}
 				subStep = "token"
-				m.nextInput()
+				m.nextInput() 
 			}
 		case "token":
 			if m.inputs[token].Value() != "" {
