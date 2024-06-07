@@ -276,6 +276,8 @@ var step = "signup"
 var subStep = "email"
 
 func waitForLog(m *model) {
+	time.Sleep(1100 * time.Millisecond)
+
 	go grpcutil.GetLog(m.config, m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, m.sourceToken, stop)
 	err := <-stop
 	if err != nil {
@@ -612,8 +614,33 @@ func (m model) View() string {
 		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) + m.renderConfig() + finishMessage
 
 	case "complete":
+		currentTime := time.Now()
+		formattedTime := currentTime.Format("2006-01-02 15:04:05")
 
 		fmt.Println("Thank you for signing up")
+
+		fmt.Printf(
+			`
+%s
+%s %s %s \
+%s %s \
+%s %s \
+%s %s
+
+%s
+`,
+			continueStyle.Render("******************************************************************************************"),
+			colorThree.Render(`curl`),
+			colorThree.Render(`--location`),
+			colorThree.Render(`'https://in.logfire.ai'`),
+			colorThree.Render(`--header`),
+			colorThree.Render(`'Content-Type: application/json'`),
+			colorThree.Render(`--header`),
+			colorThree.Render(`'Authorization: Bearer `+m.sourceToken+`'`),
+			colorThree.Render(`--data`),
+			colorThree.Render(`'[{"dt":"`+formattedTime+`","message":"Hello from Logfire!"}]'`),
+			colorTwo.Render("\nOpen Web app or run `logfire stream` to start streaming logs, You can test the ingestion by copying the command and pasting it in any terminal"),
+		)
 
 		os.Exit(0)
 
