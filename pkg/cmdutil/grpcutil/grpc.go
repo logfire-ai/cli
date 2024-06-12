@@ -58,7 +58,6 @@ func NewFilterService(kv ...string) *FilterService {
 		RootCAs: systemRoots,
 	})
 
-	log.Printf("Connecting to gRPC server at %s", grpcURL)
 	// conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
 	// conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
 	conn, err := grpc.Dial(grpcURL,
