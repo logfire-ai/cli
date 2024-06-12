@@ -3,6 +3,9 @@ package alerts
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/alerts/alerts_create"
@@ -13,7 +16,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type PromptAlertOptions struct {
@@ -27,7 +29,7 @@ type PromptAlertOptions struct {
 	Choice      string
 }
 
-var choices = []string{"Create", "List", "Delete", "Pause", "Update"}
+var choices = []string{"Create", "List", "Delete", "Pause", "Update", "Exit"}
 
 func NewCmdAlerts(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptAlertOptions{
@@ -60,6 +62,8 @@ func NewCmdAlerts(f *cmdutil.Factory) *cobra.Command {
 				alerts_pause.NewPauseAlertCmd(f).Run(cmd, []string{})
 			case choices[4]:
 				alerts_update.NewAlertUpdateCmd(f).Run(cmd, []string{})
+			case "Exit":
+				os.Exit(0)
 			}
 		},
 	}

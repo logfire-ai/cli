@@ -37,6 +37,15 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 	pbSources := CreateGrpcSource(sources)
 	request.Sources = pbSources
 
+	// send test log
+
+	istLocation, err := time.LoadLocation("UTC")
+	if err != nil {
+		log.Println("Error loading IST location:", err)
+		stop <- err
+		return
+	}
+
 	filterService := NewFilterService()
 	defer filterService.CloseConnection()
 
@@ -46,17 +55,11 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 			stop <- nil
 			return
 		default:
-			istLocation, err := time.LoadLocation("UTC")
-			if err != nil {
-				log.Println("Error loading IST location:", err)
-				stop <- err
-				return
-			}
-
 			currentTime := time.Now().In(istLocation)
 			formattedTime := currentTime.Format("2006-01-02 15:04:05")
 
 			ctxCmd, cancelCmd := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelCmd()
 
 			cmd := exec.CommandContext(ctxCmd, "curl",
 				"--location",
@@ -73,14 +76,9 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 			// Start the curl command
 			if err := cmd.Start(); err != nil {
 				log.Println("Error starting curl command:", err)
-				cancelCmd()
 				stop <- err
 				return
 			}
-
-			// Allow the command to run for a short period before cancelling it
-			time.Sleep(1100 * time.Millisecond)
-			cancelCmd()
 
 			// Wait for the curl command to complete
 			if err := cmd.Wait(); err != nil && err.Error() != "signal: killed" {
@@ -89,6 +87,8 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 				stop <- err
 				return
 			}
+			// Allow the command to run for a short period before cancelling it
+			time.Sleep(1100 * time.Millisecond)
 
 			// Check response from filter service
 			response, err := filterService.Client.GetFilteredData(context.Background(), request)

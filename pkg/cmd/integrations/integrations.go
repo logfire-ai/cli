@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -27,7 +28,7 @@ type PromptIntegrationsOptions struct {
 	Choice      string
 }
 
-var choices = []string{"Create", "List", "Delete", "Update"}
+var choices = []string{"Create", "List", "Delete", "Update", "Exit"}
 
 func NewCmdIntegrations(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptIntegrationsOptions{
@@ -58,6 +59,8 @@ func NewCmdIntegrations(f *cmdutil.Factory) *cobra.Command {
 				integrations_delete.NewDeleteIntegrationCmd(f).Run(cmd, []string{})
 			case choices[3]:
 				integrations_update.NewUpdateIntegrationsCmd(f).Run(cmd, []string{})
+			case "Exit":
+				os.Exit(0)
 			}
 		},
 	}

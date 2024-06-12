@@ -2,6 +2,7 @@ package root
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/logfire-sh/cli/pkg/cmd/settings"
 
@@ -40,7 +41,7 @@ type PromptRootOptions struct {
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
-	"Tail", "Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip"}
+	"Tail", "Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip", "Exit"}
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
@@ -63,7 +64,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 		Example: heredoc.Doc(`
 			$ logfire login
 			$ logfire stream livetail
-			
+
 		`),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// require that the user is authenticated before running most commands
@@ -131,6 +132,8 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 					settings.SettingsCmd(f).Run(cmd, []string{})
 				case choices[12]:
 					roundtrip.NewCmdRoundTrip(f).Run(cmd, []string{})
+				case "Exit":
+					os.Exit(0)
 				default:
 					break
 				}

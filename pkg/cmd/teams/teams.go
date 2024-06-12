@@ -3,6 +3,9 @@ package teams
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/teams/member_invite"
@@ -16,7 +19,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type PromptTeamsOptions struct {
@@ -30,7 +32,7 @@ type PromptTeamsOptions struct {
 	Choice      string
 }
 
-var choices = []string{"Create team", "List teams", "Delete team", "Update team", "Invite members", "List members", "Remove member", "Update member"}
+var choices = []string{"Create team", "List teams", "Delete team", "Update team", "Invite members", "List members", "Remove member", "Update member", "Exit"}
 
 func NewCmdTeam(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptTeamsOptions{
@@ -69,6 +71,8 @@ func NewCmdTeam(f *cmdutil.Factory) *cobra.Command {
 				member_remove.NewMemberRemoveCmd(f).Run(cmd, []string{})
 			case choices[7]:
 				member_update.NewMemberUpdateCmd(f).Run(cmd, []string{})
+			case "Exit":
+				os.Exit(0)
 			}
 		},
 	}

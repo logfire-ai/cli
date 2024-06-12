@@ -2,15 +2,17 @@ package grpcutil
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"log"
+	"time"
 
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 	pb "github.com/logfire-sh/cli/services/flink-service"
 	"google.golang.org/grpc"
-
-	//"google.golang.org/grpc/credentials"
-	"log"
-
+	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -30,25 +32,50 @@ func authUnaryInterceptor(kv ...string) func(ctx context.Context, method string,
 func (fs *FilterService) CloseConnection() {
 	err := fs.conn.Close()
 	if err != nil {
-		return
+		log.Printf("Failed to close connection: %v", err)
 	}
 }
 
 func NewFilterService(kv ...string) *FilterService {
 	cfg, _ := config.NewConfig()
-	grpc_url := cfg.Get().GrpcEndpoint
-	allParams := make([]string, 0, len(kv)+2)
-	allParams = append(allParams, "Authorization", "Bearer "+cfg.Get().Token)
-	allParams = append(allParams, kv...)
+	grpcURL := cfg.Get().GrpcEndpoint
+	allParams := append([]string{"Authorization", "Bearer " + cfg.Get().Token}, kv...)
 
+	// Retry policy
+	backoffConfig := backoff.Config{
+		BaseDelay:  1 * time.Second,
+		Multiplier: 1.6,
+		Jitter:     0.2,
+		MaxDelay:   5 * time.Second,
+	}
+
+	// Load system CA certs
+	systemRoots, err := x509.SystemCertPool()
+	if err != nil {
+		log.Fatalf("Failed to load system cert pool: %v", err)
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		RootCAs: systemRoots,
+	})
+
+	log.Printf("Connecting to gRPC server at %s", grpcURL)
 	// conn, err := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
-	conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+	// conn, err := grpc.Dial(grpc_url, grpc.WithInsecure(), grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)), grpc.WithUserAgent("Logfire-cli"))
+	conn, err := grpc.Dial(grpcURL,
+		grpc.WithTransportCredentials(creds),
+		grpc.WithUnaryInterceptor(authUnaryInterceptor(allParams...)),
+		grpc.WithUserAgent("Logfire-cli"),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff:           backoffConfig,
+			MinConnectTimeout: 10 * time.Second,
+		}),
+	)
 
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
 
-	// Create a gRPC client
+	log.Printf("Successfully connected to gRPC server")
 	client := pb.NewFilterServiceClient(conn)
 
 	return &FilterService{

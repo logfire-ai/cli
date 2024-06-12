@@ -3,6 +3,7 @@ package settings
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -16,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var choices = []string{"Change default team", "Change theme"}
+var choices = []string{"Change default team", "Change theme", "Exit"}
 
 type SettingsOptions struct {
 	IO       *iostreams.IOStreams
@@ -93,6 +94,10 @@ func SettingsRun(opts *SettingsOptions) {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read choice\n", cs.FailureIcon())
 			return
 		}
+	}
+
+	if opts.Interactive && opts.Choice == "Exit" {
+		os.Exit(0)
 	}
 
 	if opts.Interactive && opts.Choice == "Change theme" {

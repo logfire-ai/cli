@@ -368,7 +368,7 @@ func OnboardingFlow(profileID, authToken, endpoint, firstName, lastName, role st
 	return nil
 }
 
-func TokenSignIn(cfg config.Config, token, endpoint string) error {
+func TokenSignIn(cfg config.Config, token, endpoint string) (error, bool) {
 	var response LoginModels.Response
 
 	signinReq := LoginModels.SigninRequest{
@@ -381,14 +381,14 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 	reqBody, err := json.Marshal(signinReq)
 	if err != nil {
 		fmt.Printf("Failed to marshal request body: %v\n", err)
-		return err
+		return err, false
 	}
 
 	url := endpoint + "api/auth/signin"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return err
+		return err, false
 	}
 	req.Header.Set("User-Agent", "Logfire-cli")
 	req.Header.Add("Content-Type", "application/json")
@@ -400,33 +400,37 @@ func TokenSignIn(cfg config.Config, token, endpoint string) error {
 			os.Exit(1)
 		}
 
-		return err
+		return err, false
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Failed to read response body: %v\n", err)
-		return err
+		return err, false
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Printf("Failed to unmarshal JSON: %v\n", err)
-		return err
+		return err, false
 	}
 
 	if !response.IsSuccessful {
-		return errors.New(response.Message[0])
+		return errors.New(response.Message[0]), false
 	}
 
 	err = cfg.UpdateConfig(&response.UserBody.Email, &response.UserBody.Role, &response.BearerToken.AccessToken, &response.UserBody.ProfileID,
 		&response.BearerToken.RefreshToken, nil, &response.UserBody.AccountID, nil, nil, nil, nil)
 	if err != nil {
 		fmt.Printf("Failed to update config: %v\n", err)
-		return err
+		return err, false
 	}
 
-	return nil
+	if response.UserBody.Onboarded {
+		return nil, true
+	}
+
+	return nil, false
 }
 
 func UpdateFlag(cfg config.Config, profileID, teamId, endpoint string) error {

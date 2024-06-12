@@ -3,6 +3,9 @@ package views
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
 	"github.com/logfire-sh/cli/pkg/cmd/views/views_delete"
@@ -10,7 +13,6 @@ import (
 	"github.com/logfire-sh/cli/pkg/cmdutil"
 	"github.com/logfire-sh/cli/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 type PromptViewsOptions struct {
@@ -24,7 +26,7 @@ type PromptViewsOptions struct {
 	Choice      string
 }
 
-var choices = []string{"List", "Delete"}
+var choices = []string{"List", "Delete", "Exit"}
 
 func NewCmdViews(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptViewsOptions{
@@ -51,6 +53,8 @@ func NewCmdViews(f *cmdutil.Factory) *cobra.Command {
 				views_list.NewViewListCmd(f).Run(cmd, []string{})
 			case choices[1]:
 				views_delete.NewDeleteCmd(f).Run(cmd, []string{})
+			case "Exit":
+				os.Exit(0)
 			}
 		},
 	}
