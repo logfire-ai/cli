@@ -66,7 +66,7 @@ func NewLoginCmd(f *cmdutil.Factory) *cobra.Command {
 			# authenticate against logfire.ai by magic link token
 				# First request a Magic link to your email address
 				$ logfire login --email <name@example.com>
-	
+
 				# Second authenticate using the token received on your email address
 				$ logfire login --token <token>
 		`),
@@ -120,7 +120,7 @@ func loginRun(opts *LoginOptions) {
 		}
 	}
 
-	var choiceList = []string{"Magic link", "Password"}
+	var choiceList = []string{"Magic link", "Password", "Exit"}
 
 	if opts.Interactive && opts.Token == "" && opts.Email == "" && opts.Password == "" {
 		choice, err := opts.Prompter.Select("Select login method (Default: Magic link)", "Magic link", choiceList)
@@ -187,6 +187,9 @@ func loginRun(opts *LoginOptions) {
 				fmt.Fprintf(opts.IO.ErrOut, "\n%s Failed to sign in\n", cs.FailureIcon())
 				return
 			}
+
+		case "Exit":
+			os.Exit(0)
 		}
 	} else {
 		isEmpty := func(s string) bool {

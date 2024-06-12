@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/logfire-sh/cli/internal/config"
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -28,7 +29,7 @@ type PromptSourceOptions struct {
 	Choice      string
 }
 
-var choices = []string{"Create", "List", "Delete", "Update", "Configuration"}
+var choices = []string{"Create", "List", "Delete", "Update", "Configuration", "Exit"}
 
 func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 	opts := &PromptSourceOptions{
@@ -61,6 +62,8 @@ func NewCmdSource(f *cmdutil.Factory) *cobra.Command {
 				source_update.NewSourceUpdateCmd(f).Run(cmd, []string{})
 			case choices[4]:
 				source_config.NewSourceConfigCmd(f).Run(cmd, []string{})
+			case "Exit":
+				os.Exit(0)
 			}
 		},
 	}
