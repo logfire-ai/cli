@@ -1,11 +1,8 @@
 package grpcutil
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"log"
-	"os/exec"
 	"time"
 
 	"github.com/logfire-sh/cli/internal/config"
@@ -37,15 +34,6 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 	pbSources := CreateGrpcSource(sources)
 	request.Sources = pbSources
 
-	// send test log
-
-	istLocation, err := time.LoadLocation("UTC")
-	if err != nil {
-		log.Println("Error loading IST location:", err)
-		stop <- err
-		return
-	}
-
 	filterService := NewFilterService()
 	defer filterService.CloseConnection()
 
@@ -55,40 +43,14 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 			stop <- nil
 			return
 		default:
-			currentTime := time.Now().In(istLocation)
-			formattedTime := currentTime.Format("2006-01-02 15:04:05")
-
-			ctxCmd, cancelCmd := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancelCmd()
-
-			cmd := exec.CommandContext(ctxCmd, "curl",
-				"--location",
-				config.Get().GrpcIngestion,
-				"--header", "Content-Type: application/json",
-				"--header", fmt.Sprintf("Authorization: Bearer %s", sourceToken),
-				"--data", fmt.Sprintf("[{\"dt\":\"%s\",\"message\":\"%s\"}]", formattedTime, "Hello from Logfire!"),
-			)
-
-			var out bytes.Buffer
-			cmd.Stdout = &out
-			cmd.Stderr = &out
-
-			// Start the curl command
-			if err := cmd.Start(); err != nil {
-				log.Println("Error starting curl command:", err)
-				stop <- err
-				return
+			_, err := APICalls.LogIngestFlow(config.Get().GrpcIngestion, sourceToken)
+			if err != nil {
+				log.Printf("Error: %s", err.Error())
+				continue
 			}
 
-			// Wait for the curl command to complete
-			if err := cmd.Wait(); err != nil && err.Error() != "signal: killed" {
-				log.Println("Error waiting for curl command:", err)
-				log.Println("Curl output:", out.String())
-				stop <- err
-				return
-			}
-			// Allow the command to run for a short period before cancelling it
-			time.Sleep(1100 * time.Millisecond)
+			// wait some time to process log messages
+			time.Sleep(1 * time.Second)
 
 			// Check response from filter service
 			response, err := filterService.Client.GetFilteredData(context.Background(), request)
