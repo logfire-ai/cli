@@ -281,7 +281,8 @@ func waitForLog(m *model) {
 	go grpcutil.GetLog(m.config, m.config.Get().Token, m.config.Get().EndPoint, m.config.Get().TeamId, m.config.Get().AccountId, m.sourceId, m.sourceToken, stop)
 	err := <-stop
 	if err != nil {
-		m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
+		m.err = err
+		// m.err = errors.New("we apologize for the inconvenience. There seems to be an error on our end or with our server.\nPlease try again later or contact our support team for assistance")
 		m.nextInput()
 	}
 	subStep = "awesome"
@@ -294,24 +295,23 @@ func (m *model) handleKeyPres() (tea.Model, tea.Cmd) {
 		switch subStep {
 		case "email":
 			if m.inputs[email].Value() != "" {
-				msg, err := APICalls.SignupFlow(m.inputs[email].Value(), m.config.Get().EndPoint)
+				_, err := APICalls.SignupFlow(m.inputs[email].Value(), m.config.Get().EndPoint)
 				if err != nil {
 
 					m.err = err
 					return m, nil
-				} else if msg == "already registered user. Sent link to login" {
-					// m.err = errors.New("you are already a user, please use logfire commands")
-					// os.Exit(0)
-					// return m, nil
 				}
 				subStep = "token"
-				m.nextInput() 
+				m.nextInput()
 			}
 		case "token":
 			if m.inputs[token].Value() != "" {
-				err := APICalls.TokenSignIn(m.config, m.inputs[token].Value(), m.config.Get().EndPoint)
+				err, onboarded := APICalls.TokenSignIn(m.config, m.inputs[token].Value(), m.config.Get().EndPoint)
 				if err != nil {
 					m.err = err
+					return m, nil
+				} else if onboarded {
+					m.err = errors.New("you have already onboarded. Please use `logfire stream` to start streaming logs or `logfire` to interact with the cli and create teams, sources and more")
 					return m, nil
 				}
 				step = "account-setup"
@@ -617,10 +617,7 @@ func (m model) View() string {
 		currentTime := time.Now()
 		formattedTime := currentTime.Format("2006-01-02 15:04:05")
 
-		fmt.Println("Thank you for signing up")
-
-		fmt.Printf(
-			`
+		curlCmd := fmt.Sprintf(`
 %s
 %s %s %s \
 %s %s \
@@ -628,7 +625,7 @@ func (m model) View() string {
 %s %s
 
 %s
-`,
+		`,
 			continueStyle.Render("******************************************************************************************"),
 			colorThree.Render(`curl`),
 			colorThree.Render(`--location`),
@@ -642,9 +639,7 @@ func (m model) View() string {
 			colorTwo.Render("\nOpen Web app or run `logfire stream` to start streaming logs, You can test the ingestion by copying the command and pasting it in any terminal"),
 		)
 
-		os.Exit(0)
-
-		return "Completed!"
+		return renderWelcome() + renderSection("Signup", true) + m.renderEmail() + m.renderToken() + renderSection("Account setup", true) + m.renderAccountSetup() + renderSection("Create a Team", true) + m.renderTeamName() + renderSection("Send logs", true) + m.renderSource() + m.renderCurlCommand() + awesomeLogReceived + renderSection("Config source", false) + m.renderConfig() + finishMessage + curlCmd + "Completed!"
 	}
 
 	return ""
