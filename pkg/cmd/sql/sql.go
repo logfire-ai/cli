@@ -168,9 +168,11 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	// Prepare the request payload
 	request := &pb.SQLRequest{
-		Sql:       opts.SQLQuery,
-		Sources:   pbSources,
-		BatchSize: 100,
+		Sql:        opts.SQLQuery,
+		Sources:    pbSources,
+		BatchSize:  100,
+		TeamID:     opts.TeamId,
+		TotalCount: 0,
 	}
 
 	filterService := grpcutil.NewFilterService()
@@ -178,15 +180,18 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	response, err := filterService.Client.SubmitSQL(context.Background(), request)
 	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
 	}
+
+	fmt.Println("Query executed successfully.", response)
 
 	showQuery(opts.IO, response.Data)
 
 }
 
 // Convert logs with colors
-func showQuery(io *iostreams.IOStreams, records string) {
+func showQuery(_ *iostreams.IOStreams, records string) {
 	var parsedData models.SQLResponse
 	err := json.Unmarshal([]byte(records), &parsedData)
 	if err != nil {
