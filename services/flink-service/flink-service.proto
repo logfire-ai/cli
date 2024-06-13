@@ -8,10 +8,77 @@ import "google/protobuf/timestamp.proto";
 
 service FilterService {
   rpc GetFilteredData (FilterRequest) returns (FilteredRecords) {}
+  rpc GetStreamData (FilterRequest) returns (stream FilteredRecords) {}
   rpc SubmitSQL (SQLRequest) returns (SQLResponse) {}
   rpc SubmitAlertRequest(AlertRequest) returns (RegisteredAlert) {}
   rpc DeleteAlertRequest(RegisteredAlert) returns (Empty) {}
-  rpc CreateSource(Source) returns (Empty) {}
+  rpc GetOffsetData (OffsetRequest) returns (OffsetResponse) {}
+}
+
+service MetaService {
+  rpc GetBarGraph (GraphRequest) returns (stream GraphResponse) {}
+  rpc GetStatus (GraphRequest) returns (stream GraphResponse) {}
+}
+
+service NotificationService {
+  rpc ReceiveNotification (ReceiveNotificationRequest) returns (stream ReceiveNotificationResponse) {}
+
+  rpc SendNotification (SendNotificationRequest) returns (SendNotificationResponse) {}
+}
+
+enum RecordType {
+  TYPE_SOURCE = 0;
+  TYPE_VIEW = 1;
+  // Add more types as needed
+}
+
+message OffsetRequest {
+  string teamID = 1;
+  repeated string IDs = 2;
+  RecordType type = 3;
+}
+
+message OffsetResponse {
+  repeated OffsetRecord offsetRecords = 1;
+  RecordType type = 3;
+}
+
+message OffsetRecord {
+  string ID = 1;
+  int64 maxOffset = 2;
+  int64 minOffset = 3;
+}
+
+message SendNotificationRequest {
+  string notification = 1;
+  string profileID = 2;
+}
+
+message SendNotificationResponse {
+  string status = 1; // Could be a message like "Success" or "Failed"
+  google.protobuf.Timestamp timestamp = 2; // Time when the notification was processed
+}
+
+message ReceiveNotificationResponse {
+  string notification = 1;
+  google.protobuf.Timestamp timestamp = 2; // Time when the notification was sent
+}
+
+message ReceiveNotificationRequest {
+  string profileID = 1;
+}
+
+
+message GraphRequest {
+  string teamID = 1;
+  string accountID = 2;
+  repeated Source sources = 3;
+  DateTimeFilter dateTimeFilter = 4;
+  repeated FieldBasedFilter fieldBasedFilters = 5;
+}
+
+message GraphResponse {
+  string meta = 1;
 }
 
 enum SeverityLevel {
@@ -46,11 +113,16 @@ message SQLRequest {
   uint32 batchSize = 3;
   DateTimeFilter dateTimeFilter = 4;
   string teamID = 5;
+  uint32 totalCount = 6;
+  uint32 perPage = 7;
 }
 
 message SQLResponse {
   string data = 1;
   Source source = 2;
+  uint32 totalCount = 3;
+  uint32 perPage = 4;
+  bool hasNext = 5;
 }
 
 message RecordDetailsRequest {
@@ -115,13 +187,13 @@ message FilterRequest {
   repeated string searchQueries = 10;
 }
 
-
 message FilteredRecord {
   uint64 offset = 1;
   string message = 2;
   string dt = 3;
   string level = 4;
   string sourceName = 5;
+  string sourceID = 6;
 }
 
 message FilteredRecords {
