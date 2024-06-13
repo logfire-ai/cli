@@ -74,7 +74,6 @@ func NewFilterService(kv ...string) *FilterService {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
 
-	log.Printf("Successfully connected to gRPC server")
 	client := pb.NewFilterServiceClient(conn)
 
 	return &FilterService{
