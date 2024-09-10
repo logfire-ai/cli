@@ -9,9 +9,10 @@ var IntegrationMap map[string]int = map[string]int{
 
 type CreateIntegrationRequest struct {
 	Name            string `json:"name" validate:"required"`
-	IntegrationType int    `json:"type" validate:"required"`
+	IntegrationType int    `json:"integration_type" validate:"required"`
+	AlertType       int    `json:"alert_type" validate:"required"`
 	Description     string `json:"description,omitempty"`
-	Id              string `json:"email,omitempty"`
+	Id              string `json:"address,omitempty"`
 }
 
 type CreateIntegrationResponse struct {

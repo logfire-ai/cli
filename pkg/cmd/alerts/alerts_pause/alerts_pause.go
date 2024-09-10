@@ -58,7 +58,7 @@ func NewPauseAlertCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name from which alert is to be pause or unpaused.")
-	cmd.Flags().BoolVarP(&opts.AlertPause, "alert-pause", "p", false, "Alert pause true or false.")
+	cmd.Flags().BoolVarP(&opts.AlertPause, "alert-pause", "p", false, "Un-pause leave empty, Pause set to true")
 	cmd.Flags().StringSliceVarP(&opts.AlertId, "alert-id", "a", nil, "alerts to be paused or unpaused. (multiple alerts are allowed)")
 	return cmd
 }
@@ -83,7 +83,7 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 		opts.TeamId = teamId
 	}
 
-	if opts.Interactive {
+	if opts.Interactive && opts.TeamId == "" && len(opts.AlertId) == 0 {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 		opts.AlertId, _ = pre_defined_prompters.AskAlertIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
 
@@ -93,7 +93,6 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 		}
 
 		opts.AlertPause, _ = opts.Prompter.Confirm("Do you want to pause the alerts? (Yes = Pause, No = Un-pause", false)
-
 	} else {
 		if opts.TeamId == "" {
 			opts.TeamId = cfg.Get().TeamId
@@ -112,7 +111,6 @@ func PauseAlertRun(opts *PauseAlertOptions) {
 	} else {
 		if opts.AlertPause == false {
 			fmt.Fprintf(opts.IO.Out, "%s Alerts unpaused successfully!\n", cs.SuccessIcon())
-
 		} else {
 			fmt.Fprintf(opts.IO.Out, "%s Alerts paused successfully!\n", cs.SuccessIcon())
 		}

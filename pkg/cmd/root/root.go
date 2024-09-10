@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/logfire-sh/cli/pkg/cmd/delete_profile"
+	"github.com/logfire-sh/cli/pkg/cmd/set_password"
+
 	"github.com/logfire-sh/cli/pkg/cmd/settings"
 
 	"github.com/logfire-sh/cli/internal/prompter"
@@ -41,7 +44,7 @@ type PromptRootOptions struct {
 }
 
 var choices = []string{"Reset password", "Logout", "Sources", "Teams",
-	"Tail", "Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip", "Exit"}
+	"Tail", "Start Stream", "Views", "Alerts", "Integrations", "SQL", "Update profile", "Settings", "Round trip", "Delete profile", "Exit"}
 
 var NotLoggedInChoices = []string{"Signup", "Login"}
 
@@ -132,6 +135,9 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 					settings.SettingsCmd(f).Run(cmd, []string{})
 				case choices[12]:
 					roundtrip.NewCmdRoundTrip(f).Run(cmd, []string{})
+				case choices[13]:
+					delete_profile.DeleteProfileCmd(f).Run(cmd, []string{})
+
 				case "Exit":
 					os.Exit(0)
 				default:
@@ -164,6 +170,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	cmd.AddCommand(signup.NewSignupCmd(f))
 	cmd.AddCommand(login.NewLoginCmd(f))
 	cmd.AddCommand(reset_password.NewResetPasswordCmd(f))
+	cmd.AddCommand(set_password.NewSetPasswordCmd(f))
 	cmd.AddCommand(logout.NewLogoutCmd(f))
 	cmd.AddCommand(sources.NewCmdSource(f))
 	cmd.AddCommand(teams.NewCmdTeam(f))
@@ -178,6 +185,7 @@ func NewCmdRoot(f *cmdutil.Factory, cmdCh chan bool) (*cobra.Command, error) {
 	cmd.AddCommand(bootstrap.NewCmdBootstrap(f))
 	cmd.AddCommand(roundtrip.NewCmdRoundTrip(f))
 	cmd.AddCommand(settings.SettingsCmd(f))
+	cmd.AddCommand(delete_profile.DeleteProfileCmd(f))
 
 	// go func() {
 	// 	for range cmdCh {

@@ -45,7 +45,7 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			$ logfire teams delete
 
 			# start argument setup
-			$ logfire teams delete --team-name <team-name>
+			$ logfire teams delete --name <team-name>
 		`),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg, err := opts.Config()
@@ -64,7 +64,7 @@ func NewDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 			teamDeleteRun(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.TeamId, "teamid", "", "Team id to be deleted.")
+	cmd.Flags().StringVarP(&opts.TeamId, "name", "n", "", "Team name to be deleted.")
 	return cmd
 }
 

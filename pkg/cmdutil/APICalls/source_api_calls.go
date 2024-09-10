@@ -2,7 +2,6 @@ package APICalls
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,11 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/logfire-sh/cli/internal/config"
-	pb "github.com/logfire-sh/cli/services/flink-service"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
 	"github.com/logfire-sh/cli/pkg/cmd/sources/models"
 )
@@ -211,21 +205,6 @@ func CreateSource(token, endpoint string, teamId, sourceName, platform string) (
 		fmt.Print(sourceResp)
 		return models.Source{}, errors.New("failed to create source")
 	}
-
-	pbSource := &pb.Source{
-		SourceID: "source_topic_" + sourceResp.Data.ID,
-		TeamID:   teamId,
-	}
-
-	cfg, _ := config.NewConfig()
-	grpc_url := cfg.Get().GrpcEndpoint
-	conn, _ := grpc.Dial(grpc_url, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	defer conn.Close()
-
-	// Create a gRPC client
-	grpcClient := pb.NewFilterServiceClient(conn)
-
-	grpcClient.CreateSource(context.Background(), pbSource)
 
 	return sourceResp.Data, nil
 }

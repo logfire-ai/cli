@@ -97,9 +97,9 @@ func loginRun(opts *LoginOptions) {
 	}
 
 	if opts.Staging {
-		endpoint := "https://api-staging.logfire.ai/"
-		grpc_endpoint := "api-staging.logfire.ai:443"
-		grpc_ingestion := "https://in-staging.logfire.ai"
+		endpoint := "https://staging.api.logfire.ai/"
+		grpc_endpoint := "staging.api.logfire.ai:443"
+		grpc_ingestion := "https://staging.in.logfire.ai"
 
 		err = cfg.UpdateConfig(nil, nil, nil, nil,
 			nil, nil, nil, &endpoint, &grpc_endpoint, &grpc_ingestion, nil)
@@ -375,9 +375,9 @@ func TokenSignin(IO *iostreams.IOStreams, cfg config.Config, cs *iostreams.Color
 
 	fmt.Fprintf(IO.Out, "%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(response.Email))
 
-	if !response.UserBody.Onboarded {
-		fmt.Fprintf(IO.Out, "\n%s Looks like your onboarding isn't done yet. Complete it now with `logfire bootstrap` for the full experience! \n", cs.WarningIcon())
-	}
+	//if !response.UserBody.Onboarded {
+	//	fmt.Fprintf(IO.Out, "\n%s Looks like your onboarding isn't done yet. Complete it now with `logfire bootstrap` for the full experience! \n", cs.WarningIcon())
+	//}
 
 	return nil
 }

@@ -89,12 +89,12 @@ func SignupRun(opts *SignupOptions) {
 		return s == ""
 	}
 
-	if !opts.Interactive && isEmpty(opts.Email) {
+	if !opts.Interactive && isEmpty(opts.Email) && isEmpty(opts.credentialToken) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Email address is required\n", cs.FailureIcon())
 		return
 	}
 
-	if opts.Interactive && isEmpty(opts.Email) {
+	if opts.Interactive && isEmpty(opts.Email) && isEmpty(opts.credentialToken) {
 		interactive = true
 		opts.Email, err = opts.Prompter.Input("Enter your email:", "")
 		if err != nil {
@@ -151,12 +151,12 @@ func SignupRun(opts *SignupOptions) {
 		return
 	} else {
 		registerMessage := fmt.Sprintf("%s Thank You for Registering. An email has been sent to your address %s\n", cs.SuccessIcon(), cs.Bold(email))
-		fmt.Fprint(opts.IO.ErrOut, registerMessage)
+		fmt.Fprint(opts.IO.Out, registerMessage)
 	}
 
 	if !interactive {
 		onboardingMessage := fmt.Sprintf("Use %s to complete your onboarding process \n", cs.Blue("\"logfire signup --token <token received on email> --first-name <first-name> --last-name <last-name> --role <role>\""))
-		fmt.Fprint(opts.IO.ErrOut, onboardingMessage)
+		fmt.Fprint(opts.IO.Out, onboardingMessage)
 	}
 
 	if interactive {

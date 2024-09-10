@@ -81,7 +81,7 @@ func DeleteAlertRun(opts *DeleteAlertOptions) {
 		opts.TeamId = teamId
 	}
 
-	if opts.Interactive {
+	if opts.Interactive && opts.TeamId == "" && opts.AlertId == nil {
 		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 
 		opts.AlertId, _ = pre_defined_prompters.AskAlertIds(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter, opts.TeamId)

@@ -150,6 +150,36 @@ func CreateAlertRun(opts *CreateAlertOption) {
 		}
 	}
 
+	if opts.TeamId == "" {
+		fmt.Fprintf(opts.IO.ErrOut, "%s team-name is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
+	if opts.Name == "" {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Name is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
+	if opts.ViewId == "" {
+		fmt.Fprintf(opts.IO.ErrOut, "%s View id is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
+	if opts.NumberOfRecords == 0 {
+		fmt.Fprintf(opts.IO.ErrOut, "%s NumberOfRecords is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
+	if opts.WithinSeconds == 0 {
+		fmt.Fprintf(opts.IO.ErrOut, "%s WithinSeconds is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
+	if opts.IntegrationsId == nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Integrations id is required.\n", cs.FailureIcon())
+		os.Exit(0)
+	}
+
 	err = APICalls.CreateAlert(opts.HttpClient(), cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId,
 		opts.Name, opts.ViewId, opts.NumberOfRecords, opts.WithinSeconds, opts.IntegrationsId)
 	if err != nil {
