@@ -173,6 +173,7 @@ func UpdateMember(client *http.Client, token string, endpoint string, teamId str
 
 func MembersList(client *http.Client, token, endpoint string, teamId string) ([]models.TeamMemberRes, error) {
 	url := endpoint + "api/team/" + teamId + "/members"
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return []models.TeamMemberRes{}, err

@@ -63,7 +63,7 @@ func NewMemberListCmd(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.TeamId, "team-name", "t", "Team name for which members are to be fetched.")
+	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name for which members are to be fetched.")
 	return cmd
 }
 

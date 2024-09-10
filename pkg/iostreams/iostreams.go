@@ -81,6 +81,15 @@ type IOStreams struct {
 	TempFileOverride *os.File
 }
 
+func NewIOStreams(in fileReader, out fileWriter, errOut io.Writer, term term) *IOStreams {
+	return &IOStreams{
+		In:     in,
+		Out:    out,
+		ErrOut: errOut,
+		term:   term,
+	}
+}
+
 func (s *IOStreams) ColorEnabled() bool {
 	if s.colorOverride {
 		return s.colorEnabled

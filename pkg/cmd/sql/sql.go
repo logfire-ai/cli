@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/logfire-sh/cli/pkg/cmdutil/grpcutil"
 	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
@@ -69,7 +70,7 @@ func NewCmdSql(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&opts.TeamId, "team-name", "t", "", "Team name to be queried.")
-	cmd.Flags().StringVarP(&opts.SQLQuery, "sql-query", "q", "", "SQL Query.")
+	cmd.Flags().StringVarP(&opts.SQLQuery, "query", "q", "", "SQL Query.")
 
 	return cmd
 }
@@ -108,6 +109,26 @@ func GetRecommendations(opts *SQLQueryOptions, cfg config.Config) {
 	} else {
 		log.Fatal("Query not found in the input.")
 	}
+}
+
+func replaceNamesWithIDsInFromClause(query string, data []sourceModels.Source) string {
+	// Regex to find the FROM clause and the names within it
+	fromClauseRegex := regexp.MustCompile(`(?i)FROM\s+([\w, ]+)(\s|$)`)
+	fromClauseMatch := fromClauseRegex.FindStringSubmatch(query)
+
+	if len(fromClauseMatch) > 0 {
+		fromClause := fromClauseMatch[1]
+
+		// Replace each name in the FROM clause with the corresponding ID
+		for _, item := range data {
+			fromClause = strings.ReplaceAll(fromClause, item.Name, item.ID)
+		}
+
+		// Reconstruct the query with the updated FROM clause
+		return fromClauseRegex.ReplaceAllString(query, fmt.Sprintf("FROM %s ", fromClause))
+	}
+
+	return query // Return original query if no FROM clause is found
 }
 
 func SqlQueryRun(opts *SQLQueryOptions) {
@@ -166,11 +187,16 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	pbSources := createGrpcSource(sources)
 
+	// Convert Source names to IDs
+	opts.SQLQuery = replaceNamesWithIDsInFromClause(opts.SQLQuery, sources)
+
 	// Prepare the request payload
 	request := &pb.SQLRequest{
-		Sql:       opts.SQLQuery,
-		Sources:   pbSources,
-		BatchSize: 100,
+		Sql:        opts.SQLQuery,
+		Sources:    pbSources,
+		BatchSize:  100,
+		TeamID:     opts.TeamId,
+		TotalCount: 0,
 	}
 
 	filterService := grpcutil.NewFilterService()
@@ -178,15 +204,18 @@ func SqlQueryRun(opts *SQLQueryOptions) {
 
 	response, err := filterService.Client.SubmitSQL(context.Background(), request)
 	if err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", cs.FailureIcon(), err.Error())
 		return
 	}
+
+	// fmt.Println("Query executed successfully.", response)
 
 	showQuery(opts.IO, response.Data)
 
 }
 
 // Convert logs with colors
-func showQuery(io *iostreams.IOStreams, records string) {
+func showQuery(_ *iostreams.IOStreams, records string) {
 	var parsedData models.SQLResponse
 	err := json.Unmarshal([]byte(records), &parsedData)
 	if err != nil {

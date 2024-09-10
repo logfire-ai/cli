@@ -2,6 +2,7 @@ package views_list
 
 import (
 	"fmt"
+	"github.com/logfire-sh/cli/pkg/cmdutil/helpers"
 	"net/http"
 	"os"
 
@@ -67,15 +68,27 @@ func viewsListRun(opts *ViewListOptions) {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Failed to read config\n", cs.FailureIcon())
 	}
 
-	if opts.Interactive {
-		if opts.TeamId == "" {
-			opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
+	client := http.Client{}
+
+	if opts.TeamId != "" {
+		teamId := helpers.TeamNameToTeamId(&client, cfg, opts.IO, cs, opts.Prompter, opts.TeamId)
+
+		if teamId == "" {
+			fmt.Fprintf(opts.IO.ErrOut, "%s no team with name: %s found.\n", cs.FailureIcon(), opts.TeamId)
+			return
 		}
+
+		opts.TeamId = teamId
+	}
+
+	if opts.Interactive && opts.TeamId == "" {
+		opts.TeamId, _ = pre_defined_prompters.AskTeamId(opts.HttpClient(), cfg, opts.IO, cs, opts.Prompter)
 	} else {
 		if opts.TeamId == "" {
 			opts.TeamId = cfg.Get().TeamId
-		}
 
+			println("opts.TeamId: ", opts.TeamId)
+		}
 	}
 
 	list, err := APICalls.ListView(cfg.Get().Token, cfg.Get().EndPoint, opts.TeamId)

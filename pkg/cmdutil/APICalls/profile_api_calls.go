@@ -492,3 +492,46 @@ func UpdateFlag(cfg config.Config, profileID, teamId, endpoint string) error {
 
 	return nil
 }
+
+func DeleteProfile(client *http.Client, token string, endpoint string, profileId string) error {
+	req, err := http.NewRequest("DELETE", endpoint+"api/profile/"+profileId, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", "Logfire-cli")
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			fmt.Printf("\nError: Connection failed (Server down or no internet)\n")
+			os.Exit(1)
+		}
+
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var ResetPasswordResp UpdateProfileModels.UpdateProfileResponse
+	err = json.Unmarshal(body, &ResetPasswordResp)
+	if err != nil {
+		return err
+	}
+
+	if !ResetPasswordResp.IsSuccessful {
+		return errors.New("failed to delete profile")
+	}
+
+	return nil
+}

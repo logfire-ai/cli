@@ -59,7 +59,8 @@ func GetAlertIntegrations(client *http.Client, token string, endpoint string, te
 func CreateIntegration(client *http.Client, token string, endpoint string, teamId string, name, description, Id, integrationType string) error {
 	data := IntegrationModels.CreateIntegrationRequest{
 		Name:            name,
-		IntegrationType: IntegrationModels.IntegrationMap[integrationType],
+		IntegrationType: 2,
+		AlertType:       IntegrationModels.IntegrationMap[integrationType],
 		Description:     description,
 		Id:              Id,
 	}
@@ -68,6 +69,8 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Req body:", string(reqBody))
 
 	req, err := http.NewRequest("POST", endpoint+"api/team/"+teamId+"/integration", bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -92,6 +95,9 @@ func CreateIntegration(client *http.Client, token string, endpoint string, teamI
 	if err != nil {
 		return err
 	}
+
+	bodyStr := string(body)
+	fmt.Println("Response body:", bodyStr)
 
 	var CreateIntegrationResp IntegrationModels.CreateIntegrationResponse
 	err = json.Unmarshal(body, &CreateIntegrationResp)

@@ -15,7 +15,7 @@ type Options struct {
 	Ctx context.Context
 }
 
-func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, sourceToken string, stop chan error) {
+func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, sourceToken string, stop chan error) []*pb.FilteredRecord {
 	request := &pb.FilterRequest{
 		DateTimeFilter: &pb.DateTimeFilter{},
 		Sources:        []*pb.Source{},
@@ -26,8 +26,9 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 
 	source, err := APICalls.GetSource(token, endpoint, teamId, sourceId)
 	if err != nil {
+		log.Println("Error getting source:", err)
 		stop <- err
-		return
+		return nil
 	}
 
 	sources := []models.Source{source}
@@ -41,7 +42,7 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 		select {
 		case <-stop:
 			stop <- nil
-			return
+			return nil
 		default:
 			_, err := APICalls.LogIngestFlow(config.Get().GrpcIngestion, sourceToken)
 			if err != nil {
@@ -57,12 +58,12 @@ func GetLog(config config.Config, token, endpoint, teamId, accountId, sourceId, 
 			if err != nil {
 				log.Println("Error getting filtered data:", err)
 				stop <- err
-				return
+				return nil
 			}
 
 			if len(response.Records) > 0 {
 				stop <- nil
-				return
+				return response.Records
 			}
 			time.Sleep(500 * time.Millisecond)
 		}
